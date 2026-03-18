@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#e67e22">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="عقاري">
+  <link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>إضافة عقار - عقاري</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+.steps-bar{background:var(--card);border-bottom:1px solid var(--border);padding:14px 20px;position:sticky;top:60px;z-index:90;display:flex;align-items:center;}
+.step-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;}
+.step-item:not(:last-child)::after{content:'';position:absolute;top:15px;left:-50%;width:100%;height:2px;background:var(--border);z-index:0;transition:background 0.3s;}
+.step-item.done:not(:last-child)::after{background:var(--accent);}
+.step-circle{width:30px;height:30px;border-radius:50%;background:var(--gray-light);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:800;color:var(--gray);transition:all 0.3s;z-index:1;position:relative;}
+.step-item.active .step-circle{background:var(--accent);border-color:var(--accent);color:white;box-shadow:0 4px 12px rgba(230,126,34,0.4);}
+.step-item.done .step-circle{background:var(--success);border-color:var(--success);color:white;}
+.step-lbl{font-size:0.62rem;font-weight:700;color:var(--gray);}
+.step-item.active .step-lbl{color:var(--accent);}
+.step-item.done .step-lbl{color:var(--success);}
+/* Cards */
+.fc{background:var(--card);border-radius:15px;border:1px solid var(--border);margin-bottom:12px;overflow:hidden;}
+.fc-head{padding:13px 14px 11px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;}
+.fc-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:0.92rem;flex-shrink:0;}
+.fc-title{font-size:0.86rem;font-weight:800;}
+.fc-body{padding:14px;}
+/* Type toggle */
+.tt{display:flex;background:var(--gray-light);border-radius:11px;padding:3px;gap:3px;}
+.tt-btn{flex:1;padding:9px;border:none;border-radius:9px;font-family:var(--font);font-size:0.84rem;font-weight:700;cursor:pointer;color:var(--gray);background:transparent;transition:all 0.25s;display:flex;align-items:center;justify-content:center;gap:5px;}
+.tt-btn.active.sale{background:var(--card);color:#27ae60;box-shadow:var(--shadow-sm);}
+.tt-btn.active.rent{background:var(--card);color:#2980b9;box-shadow:var(--shadow-sm);}
+/* Category selector */
+.cat-sel{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+.cat-opt{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;border:2px solid var(--border);border-radius:13px;cursor:pointer;color:var(--text-secondary);font-size:0.7rem;font-weight:700;background:var(--gray-light);transition:all 0.2s;}
+.cat-opt i{font-size:1.3rem;color:var(--gray);}
+.cat-opt.selected{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+.cat-opt.selected i{color:var(--accent);}
+/* Subtype selector */
+.subtype-sel{display:flex;gap:8px;margin-bottom:12px;}
+.subtype-opt{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:0.8rem;font-weight:700;cursor:pointer;background:var(--gray-light);color:var(--text-secondary);display:flex;align-items:center;justify-content:center;gap:5px;transition:all 0.2s;}
+.subtype-opt.selected{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+/* Input */
+.il{font-size:0.73rem;font-weight:700;color:var(--text-secondary);display:flex;align-items:center;gap:4px;margin-bottom:5px;}
+.il i{color:var(--accent);font-size:0.76rem;}
+.if{padding:11px 13px;border:1.5px solid var(--border);border-radius:11px;background:var(--bg);color:var(--text);font-family:var(--font);font-size:0.88rem;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
+.if:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
+.if.error{border-color:var(--danger);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+/* Stepper */
+.stpr{display:flex;align-items:center;background:var(--gray-light);border-radius:11px;border:1.5px solid var(--border);overflow:hidden;}
+.stpr-btn{width:40px;height:43px;border:none;background:transparent;cursor:pointer;font-size:1.05rem;font-weight:700;color:var(--text-secondary);display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.stpr-btn:hover{background:var(--accent-light);color:var(--accent);}
+.stpr-val{flex:1;text-align:center;font-weight:800;font-size:0.92rem;color:var(--text);}
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:7px;}
+.chip{display:flex;align-items:center;gap:5px;padding:8px 13px;border:1.5px solid var(--border);border-radius:99px;cursor:pointer;font-size:0.76rem;font-weight:700;color:var(--text-secondary);background:var(--gray-light);transition:all 0.2s;}
+.chip i{font-size:0.82rem;color:var(--gray);}
+.chip.on{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+.chip.on i{color:var(--accent);}
+/* Amenities grid */
+.amn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+.amn-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:11px 4px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;font-size:0.68rem;font-weight:700;color:var(--text-secondary);background:var(--gray-light);text-align:center;transition:all 0.2s;}
+.amn-item i{font-size:1.1rem;color:var(--gray);}
+.amn-item.selected{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+.amn-item.selected i{color:var(--accent);}
+/* Upload */
+.upload-zone{border:2px dashed var(--border);border-radius:14px;padding:22px 14px;text-align:center;cursor:pointer;background:var(--gray-light);transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.upload-zone:hover{border-color:var(--accent);background:var(--accent-light);}
+.upload-zone i{font-size:2.2rem;color:var(--accent);}
+.upload-zone input{display:none;}
+.img-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px;}
+.img-thumb{aspect-ratio:1;border-radius:11px;overflow:hidden;position:relative;background:var(--border);}
+.img-thumb img{width:100%;height:100%;object-fit:cover;}
+.remove-img-btn{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.65);border:none;cursor:pointer;color:white;font-size:0.65rem;display:flex;align-items:center;justify-content:center;}
+.img-main-badge{position:absolute;bottom:0;left:0;right:0;background:rgba(230,126,34,0.88);color:white;font-size:0.58rem;text-align:center;padding:3px;font-weight:700;}
+/* Map */
+#mapPicker{width:100%;height:230px;border-radius:12px;overflow:hidden;border:1.5px solid var(--border);margin-top:9px;}
+.map-coord-pill{margin-top:7px;padding:7px 12px;background:rgba(39,174,96,0.1);border:1px solid rgba(39,174,96,0.3);border-radius:8px;font-size:0.74rem;font-weight:700;color:var(--success);display:none;align-items:center;gap:5px;}
+.map-coord-pill.show{display:flex;}
+/* Nav btns */
+.nav-btns{display:flex;gap:9px;margin-bottom:8px;}
+.btn-prev{flex:0.35;padding:13px;border-radius:12px;background:var(--gray-light);border:1.5px solid var(--border);font-family:var(--font);font-size:0.88rem;font-weight:700;cursor:pointer;color:var(--text-secondary);display:flex;align-items:center;justify-content:center;gap:5px;}
+.btn-next{flex:0.65;padding:13px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-hover));border:none;font-family:var(--font);font-size:0.9rem;font-weight:800;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:var(--shadow-accent);}
+.btn-next:hover{transform:translateY(-1px);}
+.btn-next:disabled{opacity:0.7;cursor:not-allowed;transform:none;}
+/* dynamic fields */
+.dyn{display:none;}
+.dyn.show{display:block;}
+/* Price wrap */
+.price-wrap{position:relative;}
+.price-prefix{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-weight:800;color:var(--accent);font-size:0.88rem;pointer-events:none;}
+.price-wrap .if{padding-right:28px;}
+</style>
+</head>
+<body>
+<header>
+  <a href="javascript:history.back()" class="header-icon-btn"><i class="fas fa-arrow-right"></i></a>
+  <div style="font-size:1rem;font-weight:800">إضافة عقار</div>
+  <div style="width:38px"></div>
+</header>
+
+<div class="steps-bar">
+  <div class="step-item active" id="si1"><div class="step-circle" id="sc1">1</div><div class="step-lbl">العقار</div></div>
+  <div class="step-item" id="si2"><div class="step-circle" id="sc2">2</div><div class="step-lbl">الموقع</div></div>
+  <div class="step-item" id="si3"><div class="step-circle" id="sc3">3</div><div class="step-lbl">الصور</div></div>
+</div>
+
+<div class="container" style="padding-top:14px;padding-bottom:30px">
+
+<!-- ═══ STEP 1 ═══ -->
+<div id="step1">
+
+  <!-- نوع العملية -->
+  <div class="fc">
+    <div class="fc-head"><div class="fc-icon" style="background:rgba(39,174,96,0.12)"><i class="fas fa-exchange-alt" style="color:#27ae60"></i></div><div class="fc-title">نوع العملية</div></div>
+    <div class="fc-body">
+      <div class="tt">
+        <button type="button" class="tt-btn active sale" id="btSale" onclick="setPropType('sale')"><i class="fas fa-tag"></i>للبيع</button>
+        <button type="button" class="tt-btn" id="btRent" onclick="setPropType('rent')"><i class="fas fa-key"></i>للإيجار</button>
+      </div>
+      <input type="hidden" id="propType" value="sale">
+    </div>
+  </div>
+
+  <!-- تصنيف العقار -->
+  <div class="fc">
+    <div class="fc-head"><div class="fc-icon" style="background:rgba(41,128,185,0.12)"><i class="fas fa-layer-group" style="color:#2980b9"></i></div><div class="fc-title">تصنيف العقار</div></div>
+    <div class="fc-body">
+      <div class="subtype-sel">
+        <button type="button" class="subtype-opt selected" id="stRes" onclick="setPropSubtype('residential',this)"><i class="fas fa-home"></i>سكني</button>
+        <button type="button" class="subtype-opt" id="stCom" onclick="setPropSubtype('commercial',this)"><i class="fas fa-store"></i>تجاري</button>
+      </div>
+      <input type="hidden" id="propSubtype" value="residential">
+      <!-- Residential categories -->
+      <div id="catRes">
+        <div class="cat-sel">
+          <div class="cat-opt selected" onclick="setPropCat('apartment',this)"><i class="fas fa-building"></i>شقة</div>
+          <div class="cat-opt" onclick="setPropCat('villa',this)"><i class="fas fa-home"></i>فيلا</div>
+          <div class="cat-opt" onclick="setPropCat('house',this)"><i class="fas fa-archway"></i>دار عربي</div>
+          <div class="cat-opt" onclick="setPropCat('palace',this)"><i class="fas fa-landmark"></i>قصر</div>
+          <div class="cat-opt" onclick="setPropCat('land',this)"><i class="fas fa-vector-square"></i>أرض</div>
+        </div>
+      </div>
+      <!-- Commercial categories -->
+      <div id="catCom" class="dyn">
+        <div class="cat-sel">
+          <div class="cat-opt selected" onclick="setPropCat('commercial',this)"><i class="fas fa-store"></i>محل</div>
+          <div class="cat-opt" onclick="setPropCat('office',this)"><i class="fas fa-briefcase"></i>مكتب</div>
+          <div class="cat-opt" onclick="setPropCat('warehouse',this)"><i class="fas fa-warehouse"></i>مستودع</div>
+          <div class="cat-opt" onclick="setPropCat('land',this)"><i class="fas fa-vector-square"></i>أرض تجارية</div>
+          <div class="cat-opt" onclick="setPropCat('building',this)"><i class="fas fa-city"></i>مبنى كامل</div>
+        </div>
+      </div>
+      <input type="hidden" id="propCategory" value="apartment">
+    </div>
+  </div>
+
+  <!-- السعر والمساحة -->
+  <div class="fc">
+    <div class="fc-head"><div class="fc-icon" style="background:rgba(230,126,34,0.12)"><i class="fas fa-dollar-sign" style="color:var(--accent)"></i></div><div class="fc-title">السعر والمساحة</div></div>
+    <div class="fc-body">
+      <div style="margin-bottom:12px">
+        <div class="il"><i class="fas fa-dollar-sign"></i>السعر (USD) <span id="rentLbl" style="display:none;font-weight:400;color:var(--gray)">/ شهرياً</span></div>
+        <div class="price-wrap"><span class="price-prefix">$</span><input type="number" class="if" id="propPrice" placeholder="مثال: 50000" min="1" required></div>
+      </div>
+      <div class="row2">
+        <div><div class="il"><i class="fas fa-ruler-combined"></i>المساحة (م²)</div><input type="number" class="if" id="propArea" placeholder="200" min="1" required></div>
+        <div><div class="il"><i class="fas fa-calendar-alt"></i>عمر العقار (سنة)</div><input type="number" class="if" id="propAge" placeholder="0" value="0" min="0"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- مواصفات: سكني (شقة/فيلا/قصر) -->
+  <div class="fc" id="specsResidential">
+    <div class="fc-head"><div class="fc-icon" style="background:rgba(142,68,173,0.12)"><i class="fas fa-door-open" style="color:#8e44ad"></i></div><div class="fc-title">المواصفات</div></div>
+    <div class="fc-body">
+      <div class="row2" style="margin-bottom:12px">
+        <div><div class="il"><i class="fas fa-bed"></i>غرف النوم</div>
+          <div class="stpr"><button type="button" class="stpr-btn" onclick="stpr('propRooms',-1,1,15)">−</button><div class="stpr-val" id="propRoomsV">3</div><button type="button" class="stpr-btn" onclick="stpr('propRooms',1,1,15)">+</button></div>
+          <input type="hidden" id="propRooms" value="3">
+        </div>
+        <div><div class="il"><i class="fas fa-bath"></i>الحمامات</div>
+          <div class="stpr"><button type="button" class="stpr-btn" onclick="stpr('propBathrooms',-1,0,10)">−</button><div class="stpr-val" id="propBathroomsV">2</div><button type="button" class="stpr-btn" onclick="stpr('propBathrooms',1,0,10)">+</button></div>
+          <input type="hidden" id="propBathrooms" value="2">
+        </div>
+      </div>
+      <div><div class="il"><i class="fas fa-layer-group"></i>الدور</div>
+        <div class="stpr" style="width:fit-content;min-width:140px"><button type="button" class="stpr-btn" onclick="stpr('propFloor',-1,0,50)">−</button><div class="stpr-val" id="propFloorV">1</div><button type="button" class="stpr-btn" onclick="stpr('propFloor',1,0,50)">+</button></div>
+        <input type="hidden" id="propFloor" value="1">
+      </div>
+      <div style="margin-top:12px"><div class="chips" id="chipsResidential">
+        <div class="chip" id="chipFurnished" onclick="this.classList.toggle('on')"><i class="fas fa-couch"></i>مفروش</div>
+        <div class="chip" id="chipPool" onclick="this.classList.toggle('on')"><i class="fas fa-swimming-pool"></i>مسبح</div>
+        <div class="chip" id="chipElevator" onclick="this.classList.toggle('on')"><i class="fas fa-arrow-up"></i>أسانسير</div>
+        <div class="chip" id="chipGarage" onclick="this.classList.toggle('on')"><i class="fas fa-car"></i>موقف</div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- مواصفات: دار عربي -->
+  <div class="fc dyn" id="specsHouse">
+    <div class="fc-head"><div class="fc-icon" style="background:rgba(22,160,133,0.12)"><i class="fas fa-archway" style="color:#16a085"></i></div><div class="fc-title">خصائص الدار العربي</div></div>
+    <div class="fc-body">
+      <div class="row2" style="margin-bottom:12px">
+        <div><div class="il"><i class="fas fa-bed"></i>غرف النوم</div>
+          <div class="stpr"><button type="button" class="stpr-btn" onclick="stpr('propRooms',-1,1,20)">−</button><div class="stpr-val" id="propRoomsV2">4</div><button type="button" class="stpr-btn" onclick="stpr('propRooms',1,1,20,true)">+</button></div>
+        </div>
+        <div><div class="il"><i class="fas fa-bath"></i>الحمامات</div>
+          <div class="stpr"><button type="button" class="stpr-btn" onclick="stpr('propBathrooms',-1,0,10)">−</button><div class="stpr-val" id="propBathroomsV2">2</div><button type="button" class="stpr-btn" onclick="stpr('propBathrooms',1,0,10,true)">+</button></div>
+        </div>
+      </div>
+      <div class="row2" style="margin-bottom:12px">
+        <div><div class="il"><i class="fas fa-home"></i>عدد الطوابق</div>
+          <div class="stpr"><button type="button" class="stpr-btn" onclick="stpr('propFloors',-1,1,5)">−</button><div class="stpr-val" id="propFloorsV">2</div><button type="button" class="stpr-btn" onclick="stpr('propFloors',1,1,5)">+</button></div>
+          <input type="hidden" id="propFloors" value="2">
+        </div>
+        <div><div class="il"><i class="fas fa-square"></i>الفناء (م²)</div>
+          <input type="number" class="if" id="propCourtyard" placeholder="80">
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip" onclick="this.classList.toggle('on')"><i class="fas fa-circle"></i>بئر</div>
+        <div class="chip" onclick="this.classList.toggle('on')"><i class="fas fa-mosque"></i>إوان</div>
+        <div class="chip" onclick="this.classList.toggle('on')"><i class="fas fa-door-closed"></i>باب تراثي</div>
+        <div class="chip" onclick="this.classList.toggle('on')"><i class="fas fa-couch"></i>مفروش</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- مواصفات: أرض -->
+  <div class="fc dyn" id="specsLand">
+    <div class="fc-head"><div class="fc-icon" style="background:rgba(39,174,96,0.12)"><i class="fas fa-vector-square" style="color:#27ae60"></i></div><div class="fc-title">خصائص الأرض</div></div>
+    <div class="fc-body">
+      <div class="row2" style="margin-bottom:12px">
+        <div><div class="il"><i class="fas fa-road"></i>واجهة الشارع (م)</div><input type="number" class="if" id="propStreetFront" placeholder="20"></div>
+        <div><div class="il"><i class="fas fa-file-alt"></i>نوع الوثيقة</div>
+          <select class="if" id="propDocType"><option>سند تمليك</option><option>طابو</option><option>عقد بيع</option></select>
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip" onclick="this.classList.toggle('on')"><i class="fas fa-bolt"></i>كهرباء</div>
+        <div class="chip" onclick="this.classList.toggle('on')"><i class="fas fa-tint"></i>مياه</div>
+        <div class="chip" onclick="this.classList.toggle('on')"><i class="fas fa-road"></i>شارع رئيسي</div>
+        <div class="chip" onclick="this.classList.toggle('on')"><i class="fas fa-arrows-alt"></i>أرض زاوية</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- مواصفات: تجاري -->
+  <div class="fc dyn" id="specsCommercial">
+    <div class="fc-head"><div class="fc-icon" style="background:rgba(41,128,185,0.12)"><i class="fas fa-store" style="color:#2980b9"></i></div><div class="fc-title">مواصفات تجاري</div></div>
+    <div class="fc-body">
+      <div class="row2" style="margin-bottom:12px">
+        <div><div class="il"><i class="fas fa-bath"></i>الحمامات</div>
+          <div class="stpr"><button type="button" class="stpr-btn" onclick="stpr('propBathrooms',-1,0,5)">−</button><div class="stpr-val" id="propBathroomsV3">1</div><button type="button" class="stpr-btn" onclick="stpr('propBathrooms',1,0,5,false,3)">+</button></div>
+        </div>
+        <div><div class="il"><i class="fas fa-layer-group"></i>الدور</div>
+          <div class="stpr"><button type="button" class="stpr-btn" onclick="stpr('propFloor',-1,0,50)">−</button><div class="stpr-val" id="propFloorV3">1</div><button type="button" class="stpr-btn" onclick="stpr('propFloor',1,0,50,false,3)">+</button></div>
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip" onclick="this.classList.toggle('on')"><i class="fas fa-border-all"></i>واجهة زجاجية</div>
+        <div class="chip" onclick="this.classList.toggle('on')"><i class="fas fa-car"></i>موقف سيارات</div>
+        <div class="chip" onclick="this.classList.toggle('on')"><i class="fas fa-bolt"></i>كهرباء صناعية</div>
+        <div class="chip" onclick="this.classList.toggle('on')"><i class="fas fa-wifi"></i>انترنت</div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="btn-next" style="width:100%;margin-bottom:16px" onclick="goStep(2)">
+    التالي <i class="fas fa-arrow-left" style="margin-right:6px"></i>
+  </button>
+</div>
+
+<!-- ═══ STEP 2 ═══ -->
+<div id="step2" style="display:none">
+
+  <!-- الموقع -->
+  <div class="fc">
+    <div class="fc-head"><div class="fc-icon" style="background:rgba(231,76,60,0.12)"><i class="fas fa-map-marked-alt" style="color:#e74c3c"></i></div><div class="fc-title">الموقع الجغرافي</div></div>
+    <div class="fc-body">
+      <div class="row2" style="margin-bottom:11px">
+        <div>
+          <div class="il"><i class="fas fa-city"></i>المحافظة</div>
+          <select class="if" id="propCity" onchange="onCityChange(this.value)">
+            <option value="">اختر المحافظة</option>
+            <option>دمشق</option><option>حلب</option><option>حمص</option><option>حماة</option>
+            <option>اللاذقية</option><option>طرطوس</option><option>دير الزور</option>
+            <option>الرقة</option><option>الحسكة</option><option>درعا</option>
+            <option>السويداء</option><option>القنيطرة</option><option>إدلب</option>
+            <option>ريف دمشق</option><option>القامشلي</option><option>جبلة</option>
+            <option>بانياس</option><option>سلمية</option><option>تدمر</option>
+            <option>منبج</option><option>عفرين</option>
+          </select>
+        </div>
+        <div>
+          <div class="il"><i class="fas fa-map-pin"></i>الحي / المنطقة</div>
+          <input type="text" class="if" id="propNeighborhood" placeholder="المزة، الفرقان..." oninput="onNbhdInput()">
+        </div>
+      </div>
+      <div><div class="il"><i class="fas fa-road"></i>العنوان التفصيلي (اختياري)</div>
+        <input type="text" class="if" id="propLocation" placeholder="الشارع، رقم المبنى...">
+      </div>
+      <!-- Map -->
+      <div style="margin-top:12px">
+        <div style="font-size:0.76rem;font-weight:700;color:var(--text-secondary);margin-bottom:5px;display:flex;align-items:center;gap:5px">
+          <i class="fas fa-hand-pointer" style="color:var(--accent)"></i>
+          اضغط على الخريطة أو اسحب العلامة لتحديد الموقع الدقيق
+        </div>
+        <div id="mapPicker"></div>
+        <div class="map-coord-pill" id="coordPill"><i class="fas fa-check-circle"></i><span id="coordText">تم التحديد</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الوصف -->
+  <div class="fc">
+    <div class="fc-head"><div class="fc-icon" style="background:rgba(41,128,185,0.12)"><i class="fas fa-align-right" style="color:#2980b9"></i></div><div class="fc-title">وصف العقار</div></div>
+    <div class="fc-body">
+      <textarea class="if" id="propDescription" rows="4" placeholder="اكتب وصفاً تفصيلياً يساعد المشترين..." style="resize:vertical;min-height:90px" maxlength="600" oninput="document.getElementById('dCount').textContent=this.value.length+'/600'"></textarea>
+      <div style="font-size:0.7rem;color:var(--gray);text-align:left;margin-top:3px" id="dCount">0/600</div>
+    </div>
+  </div>
+
+  <!-- المميزات -->
+  <div class="fc">
+    <div class="fc-head"><div class="fc-icon" style="background:rgba(241,196,15,0.15)"><i class="fas fa-star" style="color:#f39c12"></i></div><div class="fc-title">المميزات الإضافية</div></div>
+    <div class="fc-body">
+      <div class="amn-grid">
+        <div class="amn-item" onclick="this.classList.toggle('selected')" data-name="مسبح"><i class="fas fa-swimming-pool"></i>مسبح</div>
+        <div class="amn-item" onclick="this.classList.toggle('selected')" data-name="حديقة"><i class="fas fa-tree"></i>حديقة</div>
+        <div class="amn-item" onclick="this.classList.toggle('selected')" data-name="مصلى"><i class="fas fa-mosque"></i>مصلى</div>
+        <div class="amn-item" onclick="this.classList.toggle('selected')" data-name="مستودع"><i class="fas fa-warehouse"></i>مستودع</div>
+        <div class="amn-item" onclick="this.classList.toggle('selected')" data-name="موقف سيارات"><i class="fas fa-car"></i>موقف</div>
+        <div class="amn-item" onclick="this.classList.toggle('selected')" data-name="سطح مفتوح"><i class="fas fa-building"></i>سطح</div>
+        <div class="amn-item" onclick="this.classList.toggle('selected')" data-name="مطبخ أمريكي"><i class="fas fa-utensils"></i>مطبخ أمريكي</div>
+        <div class="amn-item" onclick="this.classList.toggle('selected')" data-name="أمن 24 ساعة"><i class="fas fa-shield-alt"></i>أمن 24س</div>
+        <div class="amn-item" onclick="this.classList.toggle('selected')" data-name="تكييف مركزي"><i class="fas fa-snowflake"></i>تكييف</div>
+        <div class="amn-item" onclick="this.classList.toggle('selected')" data-name="غرفة خدم"><i class="fas fa-broom"></i>غرفة خدم</div>
+        <div class="amn-item" onclick="this.classList.toggle('selected')" data-name="إطلالة مميزة"><i class="fas fa-binoculars"></i>إطلالة</div>
+        <div class="amn-item" onclick="this.classList.toggle('selected')" data-name="حمام سباحة"><i class="fas fa-hot-tub"></i>جاكوزي</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-btns">
+    <button type="button" class="btn-prev" onclick="goStep(1)"><i class="fas fa-arrow-right" style="margin-left:5px"></i>السابق</button>
+    <button type="button" class="btn-next" onclick="goStep(3)">التالي <i class="fas fa-arrow-left" style="margin-right:6px"></i></button>
+  </div>
+</div>
+
+<!-- ═══ STEP 3 ═══ -->
+<div id="step3" style="display:none">
+
+  <!-- الصور -->
+  <div class="fc">
+    <div class="fc-head"><div class="fc-icon" style="background:rgba(155,89,182,0.12)"><i class="fas fa-camera" style="color:#9b59b6"></i></div><div class="fc-title">صور العقار</div></div>
+    <div class="fc-body">
+      <!-- منطقة الرفع -->
+      <div id="uploadZone">
+        <!-- الـ input مرئي بالكامل للموبايل مع تخصيص مظهره -->
+        <div style="border:2.5px dashed var(--accent);border-radius:16px;background:var(--accent-light);overflow:hidden;position:relative">
+          <div id="uploadZoneContent" style="padding:28px 16px;text-align:center;pointer-events:none">
+            <div style="width:64px;height:64px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 8px 24px rgba(230,126,34,0.35)">
+              <i class="fas fa-camera" style="font-size:1.5rem;color:white"></i>
+            </div>
+            <div style="font-weight:900;font-size:1rem;color:var(--accent);margin-bottom:6px">اضغط هنا لإضافة الصور</div>
+            <div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:10px">يمكنك اختيار أكثر من صورة</div>
+            <div style="display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:white;padding:9px 22px;border-radius:99px;font-size:0.82rem;font-weight:700">
+              <i class="fas fa-images"></i> اختر من المعرض
+            </div>
+            <div style="margin-top:10px;font-size:0.68rem;color:var(--gray)">حتى 6 صور • JPG, PNG, WEBP</div>
+          </div>
+          <!-- input يغطي كل المنطقة بشفافية تامة -->
+          <input type="file" id="imgFileInput" accept="image/*" multiple
+            style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:99;font-size:100px"
+            onchange="handleImagesUpload(this)">
+        </div>
+      </div>
+
+      <!-- معرض الصور المضافة -->
+      <div id="imgGallery" style="margin-top:14px;display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div id="imgCount" style="font-size:0.78rem;font-weight:800;color:var(--accent);display:flex;align-items:center;gap:5px">
+            <i class="fas fa-images"></i> <span id="imgCountNum">0</span> صورة مضافة
+          </div>
+          <button type="button" onclick="clearAllImgs()" style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.2);color:var(--danger);border-radius:8px;padding:5px 10px;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:var(--font)">
+            <i class="fas fa-trash"></i> مسح الكل
+          </button>
+        </div>
+        <div id="imgPreviewGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"></div>
+        <!-- زر إضافة المزيد -->
+        <div id="addMoreBtn" style="display:none;margin-top:8px">
+          <div style="border:2px dashed var(--border);border-radius:12px;padding:14px;text-align:center;cursor:pointer;color:var(--gray);font-size:0.78rem;font-weight:700;transition:all 0.2s" onclick="document.getElementById('imgFileInput').click()" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'">
+            <i class="fas fa-plus" style="margin-left:5px"></i> إضافة صور أخرى
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- التواصل -->
+  <div class="fc">
+    <div class="fc-head"><div class="fc-icon" style="background:rgba(39,174,96,0.12)"><i class="fas fa-phone" style="color:#27ae60"></i></div><div class="fc-title">بيانات التواصل</div></div>
+    <div class="fc-body">
+      <div style="margin-bottom:11px"><div class="il"><i class="fas fa-mobile-alt"></i>رقم الهاتف</div>
+        <input type="tel" class="if" id="propPhone" placeholder="+963 9XX XXX XXX" required>
+      </div>
+      <div style="margin-bottom:11px"><div class="il"><i class="fas fa-clock"></i>أوقات التواصل</div>
+        <select class="if" id="propContactTime">
+          <option>في أي وقت</option><option>صباحاً (8-12)</option><option>ظهراً (12-4م)</option><option>مساءً (4-10م)</option>
+        </select>
+      </div>
+      <div><div class="il"><i class="fas fa-pen"></i>عنوان الإعلان (اختياري)</div>
+        <input type="text" class="if" id="propTitle" placeholder="مثال: فيلا فاخرة مع مسبح في المزة">
+      </div>
+    </div>
+  </div>
+
+  <div style="background:var(--accent-light);padding:13px;border-radius:12px;border:1px dashed var(--accent);margin-bottom:16px;font-size:0.8rem;color:var(--accent);display:flex;align-items:flex-start;gap:7px">
+    <i class="fas fa-shield-alt" style="margin-top:2px;flex-shrink:0"></i>
+    <span>سيتم مراجعة إعلانك خلال 24 ساعة قبل النشر.</span>
+  </div>
+
+  <div class="nav-btns">
+    <button type="button" class="btn-prev" onclick="goStep(2)"><i class="fas fa-arrow-right" style="margin-left:5px"></i>السابق</button>
+    <button type="button" class="btn-next" onclick="openPayModal()">نشر — $5 USD <i class="fas fa-paper-plane" style="margin-right:6px"></i></button>
+  </div>
+</div>
+
+</div>
+
+<!-- Payment Modal -->
+<div id="paymentModal" class="modal-overlay">
+  <div class="modal-content" style="text-align:center">
+    <div class="modal-handle"></div>
+    <div style="width:66px;height:66px;background:linear-gradient(135deg,var(--accent),var(--accent-hover));border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:var(--shadow-accent)">
+      <i class="fas fa-lock" style="color:white;font-size:1.4rem"></i>
+    </div>
+    <h3 style="margin-bottom:5px;font-size:1.05rem">تأكيد نشر الإعلان</h3>
+    <p style="color:var(--gray);font-size:0.82rem;margin-bottom:14px">الدفع آمن ومحمي</p>
+    <div class="payment-summary">
+      <div class="summary-row"><span>رسوم النشر</span><span>$5.00 USD</span></div>
+      <div class="summary-row total-row"><span>الإجمالي</span><span>$5.00 USD</span></div>
+    </div>
+    <div style="display:flex;gap:7px;margin-bottom:14px">
+      <div onclick="selectPayment(this)" class="payment-method selected" data-m="visa">
+        <i class="fab fa-cc-visa" style="font-size:1.1rem;display:block;margin-bottom:3px"></i>Visa
+      </div>
+      <div onclick="selectPayment(this)" class="payment-method" data-m="mc">
+        <i class="fab fa-cc-mastercard" style="font-size:1.1rem;display:block;margin-bottom:3px"></i>Mastercard
+      </div>
+      <div onclick="selectPayment(this)" class="payment-method" data-m="pp">
+        <i class="fab fa-paypal" style="font-size:1.1rem;display:block;margin-bottom:3px"></i>PayPal
+      </div>
+    </div>
+    <button class="btn-next btn-publish" style="width:100%;margin-bottom:10px" onclick="publishProperty()">
+      <i class="fas fa-check-circle" style="margin-left:8px"></i>ادفع وانشر الإعلان
+    </button>
+    <button onclick="closeModal()" style="background:none;border:none;width:100%;padding:10px;color:var(--gray);cursor:pointer;font-family:var(--font);font-size:0.88rem">إلغاء</button>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a href="index.html" class="nav-item"><i class="fas fa-home"></i><span>الرئيسية</span></a>
+  <a href="favorites.html" class="nav-item"><i class="fas fa-heart"></i><span>المفضلة</span></a>
+  <a href="messages.html" class="nav-item"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
+  <a href="profile.html" class="nav-item"><i class="fas fa-user"></i><span>حسابي</span></a>
+</nav>
+
+<div id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="js/app.js"></script>
+<style>
+.payment-method{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-size:0.78rem;font-weight:700;text-align:center;color:var(--text-secondary);transition:all 0.2s;}
+.payment-method.selected{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+</style>
+<script>
+'use strict';
+const CMAP={'دمشق':{lat:33.5138,lng:36.2765},'حلب':{lat:36.2021,lng:37.1343},'حمص':{lat:34.7394,lng:36.7200},'حماة':{lat:35.1318,lng:36.758},'اللاذقية':{lat:35.5317,lng:35.7915},'طرطوس':{lat:34.8956,lng:35.8865},'دير الزور':{lat:35.336,lng:40.14},'الرقة':{lat:35.95,lng:38.999},'الحسكة':{lat:36.51,lng:40.75},'درعا':{lat:32.619,lng:36.102},'السويداء':{lat:32.709,lng:36.567},'القنيطرة':{lat:33.125,lng:35.824},'إدلب':{lat:35.931,lng:36.634},'ريف دمشق':{lat:33.45,lng:36.5},'القامشلي':{lat:37.05,lng:41.233},'جبلة':{lat:35.36,lng:35.92},'بانياس':{lat:35.18,lng:35.94},'سلمية':{lat:35.01,lng:37.05},'تدمر':{lat:34.55,lng:38.28},'منبج':{lat:36.516,lng:37.945},'عفرين':{lat:36.513,lng:36.868}};
+let pickerMap=null,pickerMarker=null,selLat=null,selLng=null;
+const markerIcon=()=>L.divIcon({className:'',html:`<div style="background:#e74c3c;color:white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);width:36px;height:36px;border:3px solid white;box-shadow:0 4px 16px rgba(231,76,60,0.5);display:flex;align-items:center;justify-content:center;cursor:grab"><i class='fas fa-home' style='transform:rotate(45deg);font-size:0.85rem'></i></div>`,iconSize:[36,36],iconAnchor:[18,36]});
+
+function stpr(id,d,mn,mx,altDisp,altIdx){
+  const h=document.getElementById(id);
+  let v=parseInt(h?.value||'0')+d;
+  if(v<mn)v=mn;if(v>mx)v=mx;
+  if(h)h.value=v;
+  const dispIds=[id+'V',id+'V2',id+'V3'];
+  if(altIdx!==undefined){document.getElementById(dispIds[altIdx]).textContent=v;}
+  else if(altDisp){document.getElementById(id+'V2').textContent=v;if(document.getElementById(id+'V'))document.getElementById(id+'V').textContent=v;}
+  else{const disp=document.getElementById(id+'V');if(disp)disp.textContent=v;if(document.getElementById(id+'V2'))document.getElementById(id+'V2').textContent=v;}
+}
+
+function setPropType(t){
+  document.getElementById('propType').value=t;
+  document.getElementById('btSale').className='tt-btn'+(t==='sale'?' active sale':'');
+  document.getElementById('btRent').className='tt-btn'+(t==='rent'?' active rent':'');
+  document.getElementById('rentLbl').style.display=t==='rent'?'inline':'none';
+}
+
+function setPropSubtype(s,el){
+  document.getElementById('propSubtype').value=s;
+  document.querySelectorAll('.subtype-opt').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('catRes').style.display=s==='residential'?'block':'none';
+  const catCom=document.getElementById('catCom');catCom.classList.toggle('show',s==='commercial');
+  if(s==='commercial'){setPropCat('commercial',document.querySelector('#catCom .cat-opt'));showSpecsFor('commercial');}
+  else{setPropCat('apartment',document.querySelector('#catRes .cat-opt'));showSpecsFor('apartment');}
+}
+
+function setPropCat(cat,el){
+  document.getElementById('propCategory').value=cat;
+  document.querySelectorAll('.cat-opt').forEach(o=>o.classList.remove('selected'));
+  if(el)el.classList.add('selected');
+  showSpecsFor(cat);
+}
+
+function showSpecsFor(cat){
+  document.getElementById('specsResidential').style.display=['apartment','villa','palace'].includes(cat)?'block':'none';
+  document.getElementById('specsHouse').classList.toggle('show',cat==='house');
+  document.getElementById('specsLand').classList.toggle('show',cat==='land'||cat==='land');
+  document.getElementById('specsCommercial').classList.toggle('show',['commercial','office','warehouse','building'].includes(cat));
+  if(cat==='house'){document.getElementById('propRooms').value=4;document.getElementById('propRoomsV').textContent=4;document.getElementById('propRoomsV2').textContent=4;}
+  if(cat==='land'||cat==='commercial'){document.getElementById('propRooms').value=0;document.getElementById('propBathrooms').value=0;}
+}
+
+function goStep(s){
+  if(s===3&&!document.getElementById('propPhone').value){
+    // phone will be validated in step 3 before modal
+  }
+  if(s===2){
+    const price=document.getElementById('propPrice').value;const area=document.getElementById('propArea').value;
+    if(!price||!area){showToast('يرجى إدخال السعر والمساحة');return;}
+    // Init map
+    setTimeout(()=>{
+      if(!pickerMap){const city=document.getElementById('propCity').value;const c=city&&CMAP[city]?CMAP[city]:{lat:33.5138,lng:36.2765};initPickerMap(c.lat,c.lng,!!city);}
+      else{pickerMap.invalidateSize();}
+    },200);
+  }
+  if(s===3&&!document.getElementById('propCity').value){showToast('يرجى اختيار المحافظة');return;}
+  // Update steps UI
+  for(let i=1;i<=3;i++){
+    const si=document.getElementById('si'+i);const sc=document.getElementById('sc'+i);
+    const st=document.getElementById('step'+i);
+    if(st)st.style.display=i===s?'block':'none';
+    if(si){si.classList.toggle('active',i===s);si.classList.toggle('done',i<s);}
+    if(sc){sc.innerHTML=i<s?'<i class="fas fa-check" style="font-size:0.72rem"></i>':i.toString();}
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function initPickerMap(lat,lng,placed){
+  if(pickerMap){pickerMap.remove();pickerMap=null;}
+  pickerMap=L.map('mapPicker',{center:[lat,lng],zoom:placed?14:7,attributionControl:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(pickerMap);
+  if(placed){placeMarker(lat,lng);}
+  pickerMap.on('click',e=>{placeMarker(e.latlng.lat,e.latlng.lng);showToast('تم تثبيت الموقع');});
+}
+
+function placeMarker(lat,lng){
+  selLat=+lat.toFixed(6);selLng=+lng.toFixed(6);
+  if(pickerMarker){pickerMap.removeLayer(pickerMarker);}
+  pickerMarker=L.marker([lat,lng],{icon:markerIcon(),draggable:true}).addTo(pickerMap);
+  pickerMarker.on('dragend',e=>{const p=e.target.getLatLng();selLat=+p.lat.toFixed(6);selLng=+p.lng.toFixed(6);showCoord();});
+  showCoord();
+}
+
+function showCoord(){
+  const p=document.getElementById('coordPill');const t=document.getElementById('coordText');
+  if(p&&t){p.classList.add('show');t.textContent=`${selLat?.toFixed(4)}, ${selLng?.toFixed(4)}`;}
+}
+
+function onCityChange(city){
+  const c=CMAP[city];if(!c)return;
+  if(pickerMap){pickerMap.flyTo([c.lat,c.lng],14,{duration:0.7});placeMarker(c.lat,c.lng);}
+  else if(document.getElementById('step2').style.display==='block'){initPickerMap(c.lat,c.lng,true);}
+  showToast('الخريطة: '+city);
+}
+
+function onNbhdInput(){
+  const city=document.getElementById('propCity').value;const nbhd=document.getElementById('propNeighborhood').value.trim();
+  if(!city||!nbhd||!pickerMap)return;
+  const c=CMAP[city];if(!c)return;
+  let h=0;for(let i=0;i<nbhd.length;i++)h=((h<<5)-h)+nbhd.charCodeAt(i);
+  const la=c.lat+((h%100)/5000),ln=c.lng+(((h>>8)%100)/5000);
+  pickerMap.flyTo([la,ln],16,{duration:0.5});placeMarker(la,ln);
+}
+
+function openPayModal(){
+  const phone=document.getElementById('propPhone').value;
+  if(!phone){showToast('يرجى إدخال رقم الهاتف');return;}
+  if(selLat) localStorage.setItem('pending_lat',selLat);
+  if(selLng) localStorage.setItem('pending_lng',selLng);
+  /* Images are already in window.UPLOAD_IMGS — publishProperty reads them directly */
+  showPaymentModal();
+}
+
+document.getElementById('paymentModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js')
+      .then(function(reg){console.log('[عقاري] SW مُفعّل');})
+      .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
+  });
+}
+</script>
+</body>
+</html>

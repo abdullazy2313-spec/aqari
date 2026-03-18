@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#e67e22">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="عقاري">
+  <link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>الرئيسية - عقاري</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+/* Hero */
+.hero-section{background:linear-gradient(150deg,#0d1b3e 0%,#1a3a6b 60%,#1e4d8c 100%);margin:-16px -16px 0;padding:28px 20px 40px;position:relative;overflow:hidden;}
+.hero-section::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='white' fill-opacity='0.04'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");}
+.hero-section::after{content:'';position:absolute;bottom:-20px;left:0;right:0;height:40px;background:var(--bg);border-radius:60% 60% 0 0/100% 100% 0 0;}
+.hero-greeting{color:rgba(255,255,255,0.6);font-size:0.8rem;font-weight:500;margin-bottom:4px;position:relative;}
+.hero-title{color:white;font-size:1.35rem;font-weight:900;margin-bottom:18px;line-height:1.3;position:relative;}
+.hero-title span{color:#f0a500;}
+.hero-search-wrap{background:white;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,0.28);display:flex;align-items:center;padding:4px 4px 4px 12px;gap:8px;position:relative;}
+.hero-search-wrap i{color:#94a3b8;font-size:1rem;flex-shrink:0;}
+.hero-search-wrap input{flex:1;border:none;background:transparent;padding:11px 0;font-family:var(--font);font-size:0.88rem;color:#1e293b;outline:none;}
+.hero-search-wrap input::placeholder{color:#94a3b8;}
+.hero-search-btn{background:linear-gradient(135deg,var(--accent),var(--accent-hover));border:none;border-radius:10px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:white;font-size:1rem;flex-shrink:0;}
+.search-suggestions{position:absolute;top:calc(100% + 6px);right:0;left:0;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);z-index:200;display:none;max-height:240px;overflow-y:auto;}
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:26px 0 20px;}
+.stat-pill{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;box-shadow:var(--shadow-sm);}
+.stat-pill-num{font-size:1.2rem;font-weight:900;color:var(--accent);}
+.stat-pill-lbl{font-size:0.66rem;color:var(--gray);font-weight:600;margin-top:3px;}
+/* Type tabs — فقط للبيع والإيجار */
+.type-tabs{display:flex;gap:8px;margin-bottom:14px;}
+.type-tab{flex:1;padding:11px 8px;border:2px solid var(--border);border-radius:12px;font-family:var(--font);font-size:0.86rem;font-weight:800;cursor:pointer;transition:all 0.25s;color:var(--text-secondary);background:var(--card);display:flex;align-items:center;justify-content:center;gap:6px;}
+.type-tab.active-sale{background:#eafaf1;border-color:#27ae60;color:#27ae60;}
+.type-tab.active-rent{background:#eaf4fb;border-color:#2980b9;color:#2980b9;}
+.type-tab.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+/* Filter button */
+.filter-strip{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.filter-btn-adv{display:flex;align-items:center;gap:7px;padding:9px 16px;background:var(--card);border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:0.8rem;font-weight:700;cursor:pointer;color:var(--text-secondary);transition:all 0.2s;}
+.filter-btn-adv:hover{border-color:var(--accent);color:var(--accent);}
+.active-filters-count{background:var(--accent);color:white;border-radius:50%;width:18px;height:18px;font-size:0.62rem;font-weight:800;display:none;align-items:center;justify-content:center;}
+/* Section headers */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
+.sec-title-txt{font-size:0.95rem;font-weight:900;color:var(--text);display:flex;align-items:center;gap:7px;}
+.sec-bar{width:4px;height:17px;background:var(--accent);border-radius:2px;}
+.sec-more-btn{font-size:0.76rem;color:var(--accent);font-weight:700;background:var(--accent-light);padding:4px 10px;border-radius:99px;border:none;cursor:pointer;font-family:var(--font);}
+/* Featured */
+.featured-scroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;margin-bottom:22px;}
+.featured-scroll::-webkit-scrollbar{display:none;}
+.featured-card{min-width:255px;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-md);cursor:pointer;flex-shrink:0;transition:transform 0.25s;background:var(--card);border:1px solid var(--border);}
+.featured-card:hover{transform:translateY(-3px);}
+.featured-img{height:155px;position:relative;overflow:hidden;}
+.featured-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.4s;}
+.featured-card:hover .featured-img img{transform:scale(1.04);}
+.featured-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 55%);}
+.featured-fav{position:absolute;top:9px;left:9px;width:31px;height:31px;border-radius:50%;background:rgba(255,255,255,0.88);border:none;cursor:pointer;font-size:0.88rem;color:var(--gray);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.featured-fav.active{color:var(--danger);}
+.featured-body{padding:12px;}
+.featured-price{font-size:1rem;font-weight:900;color:var(--accent);}
+.featured-title{font-size:0.83rem;font-weight:700;color:var(--text);margin:4px 0;line-height:1.3;}
+.featured-loc{font-size:0.7rem;color:var(--gray);display:flex;align-items:center;gap:3px;margin-bottom:8px;}
+.featured-specs{display:flex;gap:10px;padding-top:8px;border-top:1px solid var(--border);}
+.featured-spec{display:flex;align-items:center;gap:3px;font-size:0.7rem;color:var(--text-secondary);font-weight:600;}
+.featured-spec i{color:var(--accent);font-size:0.72rem;}
+/* Prop cards */
+.prop-card-pro{background:var(--card);border-radius:16px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow-sm);cursor:pointer;transition:all 0.25s;animation:fadeUp 0.4s both;}
+.prop-card-pro:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.pcp-img{position:relative;overflow:hidden;height:195px;}
+.pcp-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.4s;}
+.prop-card-pro:hover .pcp-img img{transform:scale(1.04);}
+.pcp-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.48) 0%,transparent 55%);}
+.pcp-badges{position:absolute;top:10px;right:10px;display:flex;gap:5px;flex-direction:column;align-items:flex-start;}
+.pcp-fav{position:absolute;top:10px;left:10px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.9);border:none;cursor:pointer;font-size:0.95rem;color:var(--gray);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+.pcp-fav.active{color:var(--danger);}
+.pcp-price-overlay{position:absolute;bottom:10px;right:12px;color:white;font-weight:900;font-size:1rem;text-shadow:0 2px 8px rgba(0,0,0,0.5);}
+.card-img-count{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,0.5);color:white;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:99px;backdrop-filter:blur(4px);display:flex;align-items:center;gap:3px;}
+.pcp-body{padding:13px;}
+.pcp-title{font-size:0.9rem;font-weight:800;color:var(--text);margin-bottom:5px;}
+.pcp-loc{font-size:0.74rem;color:var(--gray);display:flex;align-items:center;gap:3px;margin-bottom:9px;}
+.pcp-specs{display:flex;gap:12px;padding-top:9px;border-top:1px solid var(--border);}
+.pcp-spec{display:flex;align-items:center;gap:3px;font-size:0.73rem;color:var(--text-secondary);font-weight:600;}
+.pcp-spec i{color:var(--accent);font-size:0.75rem;}
+/* Grid 2 */
+.properties-grid.grid-2{grid-template-columns:repeat(2,1fr);gap:10px;}
+.grid-2 .pcp-img{height:130px;}
+.grid-2 .pcp-body{padding:9px;}
+.grid-2 .pcp-title{font-size:0.77rem;}
+.grid-2 .pcp-price-overlay{font-size:0.82rem;}
+.sort-bar{display:flex;align-items:center;justify-content:space-between;margin:12px 0 6px;}
+.results-count{font-size:0.8rem;color:var(--gray);font-weight:600;}
+.sort-select{padding:7px 12px;border:1.5px solid var(--border);border-radius:9px;background:var(--card);color:var(--text);font-family:var(--font);font-size:0.78rem;outline:none;}
+.view-toggle{display:flex;gap:4px;}
+.view-btn{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--gray);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.85rem;}
+.view-btn.active{background:var(--accent);border-color:var(--accent);color:white;}
+.empty-state{text-align:center;padding:50px 20px;color:var(--gray);}
+.empty-state i{font-size:3rem;display:block;margin-bottom:12px;opacity:0.35;}
+/* action grid */
+.action-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin:22px 0 18px;}
+.action-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:18px 10px 14px;background:var(--card);border:1px solid var(--border);border-radius:18px;cursor:pointer;text-decoration:none;box-shadow:var(--shadow-sm);transition:all 0.2s;-webkit-tap-highlight-color:transparent;}
+.action-btn:active{transform:scale(0.97);}
+.action-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+.action-lbl{font-size:0.74rem;font-weight:800;color:var(--text);text-align:center;line-height:1.2;}
+/* badge inline */
+.badge-pill{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:0.7rem;font-weight:700;white-space:nowrap;}
+.bp-sale{background:rgba(39,174,96,0.92);color:white;}
+.bp-rent{background:rgba(41,128,185,0.92);color:white;}
+.bp-feat{background:rgba(230,126,34,0.92);color:white;}
+/* Override old FAB & nav for this page */
+.fab{display:none!important}
+.bottom-nav{display:none!important}
+body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><i class="fas fa-building" style="color:var(--accent)"></i>عقـ<span style="color:var(--accent)">ـاري</span></div>
+  <div class="header-actions">
+    <a href="notifications.html" class="header-icon-btn" style="position:relative">
+      <i class="fas fa-bell"></i>
+      <span class="notif-badge" id="notifBadge" style="position:absolute;top:-3px;left:-3px;width:17px;height:17px;background:var(--danger);border-radius:50%;font-size:0.6rem;color:white;display:none;align-items:center;justify-content:center;font-weight:700;border:2px solid var(--card)"></span>
+    </a>
+  </div>
+</header>
+
+<div class="container">
+  <!-- Hero -->
+  <div class="hero-section">
+    <div class="hero-greeting">منصة العقارات الأولى في سوريا — <span id="totalCount" style="color:var(--accent);font-weight:900">—</span> إعلان نشط</div>
+    <div class="hero-title">ابحث عن <span>عقارك المثالي</span><br>في سوريا</div>
+    <div class="hero-search-wrap">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="ابحث بالمدينة، الحي، النوع..." autocomplete="off">
+      <button class="hero-search-btn"><i class="fas fa-arrow-left"></i></button>
+      <div class="search-suggestions" id="searchSuggestions"></div>
+    </div>
+  </div>
+
+  <!-- 3 أزرار الإجراءات الرئيسية -->
+  <div class="action-grid">
+    <a href="map.html" class="action-btn">
+      <div class="action-icon" style="background:rgba(52,152,219,0.12);color:#3498db"><i class="fas fa-map-marked-alt"></i></div>
+      <div class="action-lbl">الخريطة</div>
+    </a>
+    <a href="filter.html" class="action-btn">
+      <div class="action-icon" style="background:rgba(39,174,96,0.12);color:#27ae60;position:relative">
+        <i class="fas fa-search-location"></i>
+        <span style="position:absolute;top:-4px;left:-4px;width:16px;height:16px;background:#27ae60;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--card)"><i class="fas fa-plus" style="font-size:0.45rem;color:white"></i></span>
+      </div>
+      <div class="action-lbl">بحث متقدم</div>
+    </a>
+    <a href="#" class="action-btn" onclick="openPriceCalc();return false">
+      <div class="action-icon" style="background:rgba(155,89,182,0.12);color:#8e44ad"><i class="fas fa-calculator"></i></div>
+      <div class="action-lbl">حاسبة القسط</div>
+    </a>
+  </div>
+
+  <!-- فقط زرين: للبيع / للإيجار + زر الفلترة -->
+  <div class="type-tabs">
+    <button class="type-tab active" id="tabAll" onclick="setActiveType('all',this)">
+      <i class="fas fa-th-large"></i>الكل
+    </button>
+    <button class="type-tab" id="tabSale" onclick="setActiveType('sale',this)">
+      <i class="fas fa-tag"></i>للبيع
+    </button>
+    <button class="type-tab" id="tabRent" onclick="setActiveType('rent',this)">
+      <i class="fas fa-key"></i>للإيجار
+    </button>
+  </div>
+
+  <!-- شريط الفلترة المتقدمة -->
+  <div class="filter-strip">
+    <span class="results-count" id="resultsCount" style="margin:0">جاري التحميل...</span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <a href="filter.html" class="filter-btn-adv">
+        <i class="fas fa-sliders-h"></i>فلترة متقدمة
+        <span class="active-filters-count" id="activeFiltersCount"></span>
+      </a>
+      <div class="view-toggle">
+        <button class="view-btn active" data-view="list" onclick="setView('list')"><i class="fas fa-list"></i></button>
+        <button class="view-btn" data-view="grid" onclick="setView('grid')"><i class="fas fa-th"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Featured -->
+  <div class="sec-head featured-section">
+    <div class="sec-title-txt"><div class="sec-bar"></div>العقارات المميزة</div>
+    <button class="sec-more-btn" onclick="setActiveType('all',document.getElementById('tabAll'))"><i class="fas fa-arrow-left"></i> الكل</button>
+  </div>
+  <div class="featured-scroll" id="featuredList"></div>
+
+  <!-- Sort -->
+  <div class="sort-bar">
+    <span style="font-size:0.8rem;color:var(--gray);font-weight:600">ترتيب:</span>
+    <select class="sort-select" onchange="changeSort(this.value)">
+      <option value="newest">الأحدث</option>
+      <option value="featured">المميزة</option>
+      <option value="price-asc">الأرخص</option>
+      <option value="price-desc">الأغلى</option>
+      <option value="area">المساحة</option>
+    </select>
+  </div>
+
+  <div class="properties-grid" id="propertiesList"></div>
+</div>
+
+<!-- Bottom nav with centered FAB -->
+<div class="bottom-nav-wrap">
+  <nav class="bottom-nav-new">
+    <a href="index.html" class="nav-item-new active"><i class="fas fa-home"></i><span>الرئيسية</span></a>
+    <a href="favorites.html" class="nav-item-new"><i class="fas fa-heart"></i><span>المفضلة</span></a>
+    <div class="nav-fab-space"></div>
+    <a href="messages.html" class="nav-item-new"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
+    <a href="profile.html" class="nav-item-new"><i class="fas fa-user"></i><span>حسابي</span></a>
+  </nav>
+  <a href="add-property.html" class="nav-fab-center">
+    <i class="fas fa-plus"></i>
+  </a>
+</div>
+
+<!-- Price Calculator Modal -->
+<div id="calcModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)" onclick="if(event.target===this)closeCalc()">
+  <div style="position:absolute;bottom:0;left:0;right:0;background:var(--card);border-radius:24px 24px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom));max-height:85vh;overflow-y:auto">
+    <div style="width:40px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 16px"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:1.05rem;font-weight:900;color:var(--text);display:flex;align-items:center;gap:8px">
+        <div style="width:36px;height:36px;background:rgba(155,89,182,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center"><i class="fas fa-calculator" style="color:#8e44ad"></i></div>
+        حاسبة القسط الشهري
+      </div>
+      <button onclick="closeCalc()" style="background:var(--gray-light);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:0.85rem;color:var(--gray);display:flex;align-items:center;justify-content:center"><i class="fas fa-times"></i></button>
+    </div>
+    <!-- Inputs -->
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+      <div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px"><i class="fas fa-dollar-sign" style="color:var(--accent);margin-left:4px"></i>سعر العقار (USD)</div>
+        <div style="position:relative"><span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--accent);font-weight:800;font-size:0.85rem;pointer-events:none">$</span>
+        <input type="number" id="calcPrice" placeholder="مثال: 100000" style="width:100%;padding:12px 32px 12px 12px;border:2px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);font-family:var(--font);font-size:0.9rem;outline:none;box-sizing:border-box" oninput="calcLoan()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></div>
+      </div>
+      <div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px"><i class="fas fa-percentage" style="color:var(--accent);margin-left:4px"></i>الدفعة الأولى %</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px" id="dpButtons">
+          <button class="dp-btn on" onclick="setDP(10,this)">10%</button>
+          <button class="dp-btn" onclick="setDP(20,this)">20%</button>
+          <button class="dp-btn" onclick="setDP(30,this)">30%</button>
+          <button class="dp-btn" onclick="setDP(40,this)">40%</button>
+        </div>
+        <input type="range" id="calcDP" min="5" max="50" step="5" value="10" style="width:100%;accent-color:var(--accent)" oninput="syncDP(this.value)">
+        <div style="text-align:center;font-size:0.78rem;font-weight:700;color:var(--accent);margin-top:4px"><span id="dpVal">10</span>%</div>
+      </div>
+      <div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px"><i class="fas fa-calendar-alt" style="color:var(--accent);margin-left:4px"></i>مدة القرض (سنة)</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px" id="yrButtons">
+          <button class="dp-btn" onclick="setYr(10,this)">10</button>
+          <button class="dp-btn on" onclick="setYr(15,this)">15</button>
+          <button class="dp-btn" onclick="setYr(20,this)">20</button>
+          <button class="dp-btn" onclick="setYr(25,this)">25</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px"><i class="fas fa-percent" style="color:var(--accent);margin-left:4px"></i>معدل الفائدة السنوي %</div>
+        <input type="range" id="calcRate" min="1" max="15" step="0.5" value="6" style="width:100%;accent-color:var(--accent)" oninput="document.getElementById('rateVal').textContent=this.value;calcLoan()">
+        <div style="text-align:center;font-size:0.78rem;font-weight:700;color:var(--accent);margin-top:4px"><span id="rateVal">6</span>%</div>
+      </div>
+    </div>
+    <!-- Result -->
+    <div id="calcResult" style="background:linear-gradient(135deg,rgba(155,89,182,0.08),rgba(155,89,182,0.04));border:1.5px solid rgba(155,89,182,0.2);border-radius:16px;padding:16px;text-align:center">
+      <div style="font-size:0.75rem;color:var(--gray);margin-bottom:4px">القسط الشهري التقديري</div>
+      <div style="font-size:2rem;font-weight:900;color:#8e44ad" id="monthlyPmt">—</div>
+      <div style="font-size:0.72rem;color:var(--text-secondary);margin-top:2px" id="loanSummary">أدخل بيانات العقار أعلاه</div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Bottom nav centered FAB */
+.bottom-nav-wrap{position:fixed;bottom:0;left:0;right:0;z-index:100}
+.bottom-nav-new{
+  display:flex;align-items:stretch;
+  background:var(--card);border-top:1px solid var(--border);
+  height:calc(62px + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  box-shadow:0 -4px 20px rgba(0,0,0,0.08);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+.nav-fab-space{flex:1;min-width:70px}
+.nav-item-new{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;text-decoration:none;color:var(--gray);font-size:0.65rem;font-weight:500;
+  transition:all 0.25s;padding:8px 4px;position:relative;
+}
+.nav-item-new i{font-size:1.2rem;transition:transform 0.25s}
+.nav-item-new.active{color:var(--accent)}
+.nav-item-new.active i{transform:scale(1.15)}
+.nav-item-new.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:30px;height:3px;background:var(--accent);border-radius:0 0 4px 4px}
+.nav-item-new.active span{font-weight:700}
+/* The center FAB button */
+.nav-fab-center{
+  position:absolute;bottom:calc(24px + env(safe-area-inset-bottom));
+  left:50%;transform:translateX(-50%);
+  width:60px;height:60px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-hover));
+  border-radius:20px;
+  display:flex;align-items:center;justify-content:center;
+  color:white;font-size:1.5rem;text-decoration:none;
+  box-shadow:0 6px 24px rgba(230,126,34,0.5),0 2px 8px rgba(0,0,0,0.15);
+  z-index:101;transition:all 0.25s cubic-bezier(0.175,0.885,0.32,1.275);
+  border:3px solid var(--card);
+}
+.nav-fab-center:active{transform:translateX(-50%) scale(0.93)}
+/* calculator buttons */
+.dp-btn{flex:1;padding:7px;border:2px solid var(--border);border-radius:9px;background:var(--gray-light);font-family:var(--font);font-size:0.76rem;font-weight:700;cursor:pointer;color:var(--text-secondary);transition:all 0.15s}
+.dp-btn.on{border-color:#8e44ad;background:rgba(155,89,182,0.1);color:#8e44ad}
+</style>
+
+<div id="toast"></div>
+<script src="js/app.js"></script>
+<script>
+var _calcDP=10, _calcYr=15;
+function openPriceCalc(){document.getElementById('calcModal').style.display='block';calcLoan();}
+function closeCalc(){document.getElementById('calcModal').style.display='none';}
+function setDP(v,btn){_calcDP=v;document.getElementById('calcDP').value=v;document.getElementById('dpVal').textContent=v;document.querySelectorAll('#dpButtons .dp-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');calcLoan();}
+function setYr(v,btn){_calcYr=v;document.querySelectorAll('#yrButtons .dp-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');calcLoan();}
+function syncDP(v){document.getElementById('dpVal').textContent=v;_calcDP=parseInt(v);document.querySelectorAll('#dpButtons .dp-btn').forEach(b=>b.classList.remove('on'));calcLoan();}
+function calcLoan(){
+  var price=parseFloat(document.getElementById('calcPrice').value)||0;
+  var dp=_calcDP/100;var years=_calcYr;
+  var rate=parseFloat(document.getElementById('calcRate').value)||6;
+  if(!price){document.getElementById('monthlyPmt').textContent='—';document.getElementById('loanSummary').textContent='أدخل سعر العقار أعلاه';return;}
+  var loan=price*(1-dp);
+  var r=(rate/100)/12;var n=years*12;
+  var monthly=r===0?loan/n:loan*(r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1);
+  var total=monthly*n;
+  document.getElementById('monthlyPmt').textContent='$'+Math.round(monthly).toLocaleString('en-US')+'/شهر';
+  document.getElementById('loanSummary').textContent=
+    'مبلغ التمويل: $'+Math.round(loan).toLocaleString('en-US')+
+    ' | إجمالي الفوائد: $'+Math.round(total-loan).toLocaleString('en-US');
+}
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js')
+      .then(function(reg){console.log('[عقاري] SW مُفعّل');})
+      .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
+  });
+}
+</script>
+</body>
+</html>

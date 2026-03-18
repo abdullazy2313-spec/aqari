@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#e67e22">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="عقاري">
+  <link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>تفاصيل العقار - عقاري</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+.det-gallery{width:100%;height:300px;position:relative;overflow:hidden;background:#0d1b3e;user-select:none;}
+.det-gallery-track{display:flex;height:100%;transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);}
+.det-slide{min-width:100%;height:100%;flex-shrink:0;}
+.det-slide img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;}
+.det-back{position:absolute;top:14px;right:14px;z-index:10;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,0.42);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;backdrop-filter:blur(6px);}
+.det-top-right{position:absolute;top:14px;left:14px;z-index:10;display:flex;gap:8px;}
+.det-action-btn{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,0.42);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;backdrop-filter:blur(6px);transition:all 0.2s;}
+.det-action-btn.active{background:var(--danger);}
+.det-dots{position:absolute;bottom:54px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:10;}
+.det-dot{width:7px;height:7px;border-radius:99px;background:rgba(255,255,255,0.5);cursor:pointer;transition:all 0.25s;}
+.det-dot.active{background:white;width:18px;}
+.det-counter{position:absolute;bottom:56px;right:14px;background:rgba(0,0,0,0.5);color:white;font-size:0.7rem;font-weight:700;padding:3px 8px;border-radius:99px;z-index:10;backdrop-filter:blur(4px);}
+.det-nav{position:absolute;bottom:14px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.85);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.9rem;color:#1a1a2e;backdrop-filter:blur(8px);z-index:10;}
+.det-prev{right:14px;}
+.det-next{left:14px;}
+.det-body{padding:16px;}
+.det-price{font-size:1.5rem;font-weight:900;color:var(--accent);line-height:1.2;}
+.det-title{font-size:1rem;font-weight:800;color:var(--text);margin:5px 0 4px;}
+.det-loc{color:var(--gray);font-size:0.8rem;display:flex;align-items:center;gap:4px;margin-bottom:14px;}
+.det-loc i{color:var(--accent);}
+.specs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+.spec-card{background:var(--gray-light);border-radius:12px;padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.spec-card i{font-size:1.1rem;color:var(--accent);}
+.spec-val{font-size:0.95rem;font-weight:800;color:var(--text);}
+.spec-lbl{font-size:0.64rem;color:var(--gray);font-weight:600;}
+.section-title{font-size:0.88rem;font-weight:800;margin:18px 0 10px;color:var(--text);display:flex;align-items:center;gap:7px;}
+.section-title i{color:var(--accent);}
+.det-desc{font-size:0.84rem;line-height:1.7;color:var(--text-secondary);}
+.features-list{display:flex;flex-wrap:wrap;gap:7px;}
+.feature-tag{display:flex;align-items:center;gap:4px;background:var(--accent-light);border:1px solid rgba(230,126,34,0.2);color:var(--accent);padding:6px 11px;border-radius:99px;font-size:0.74rem;font-weight:700;}
+.agent-card{display:flex;align-items:center;gap:12px;background:var(--gray-light);border-radius:14px;padding:14px;}
+.agent-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;flex-shrink:0;}
+.agent-name{font-weight:800;font-size:0.9rem;}
+.agent-label{font-size:0.72rem;color:var(--gray);}
+.agent-badge{font-size:0.7rem;color:var(--success);font-weight:700;margin-top:2px;display:flex;align-items:center;gap:3px;}
+.contact-section{display:flex;gap:8px;}
+.btn-call,.btn-whatsapp,.btn-chat{flex:1;border:none;border-radius:12px;padding:12px 6px;font-family:var(--font);font-size:0.82rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;}
+.btn-call{background:linear-gradient(135deg,#27ae60,#2ecc71);color:white;box-shadow:0 4px 15px rgba(39,174,96,0.3);}
+.btn-whatsapp{background:linear-gradient(135deg,#25D366,#128C7E);color:white;}
+.btn-chat{background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:white;}
+.similar-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;margin-bottom:10px;}
+.similar-scroll::-webkit-scrollbar{display:none;}
+.similar-card{min-width:155px;border-radius:12px;background:var(--card);border:1px solid var(--border);overflow:hidden;cursor:pointer;flex-shrink:0;transition:all 0.2s;}
+.similar-card:hover{transform:translateY(-2px);}
+.similar-img{height:92px;overflow:hidden;background:var(--gray-light);}
+.similar-img img{width:100%;height:100%;object-fit:cover;}
+.similar-body{padding:9px;}
+.similar-price{font-size:0.84rem;font-weight:800;color:var(--accent);}
+.similar-title{font-size:0.74rem;color:var(--text-secondary);margin-top:2px;}
+.det-container{padding-bottom:calc(var(--bottom-nav-height) + 16px);}
+
+/* Fix: prevent map/iframe from overlapping other elements on scroll */
+#detMapWrap{position:relative;z-index:0;isolation:isolate;}
+#detMapWrap iframe{position:relative;z-index:0;}
+#detMapWrap > div{position:relative;z-index:0;}
+.leaflet-container{z-index:0!important;}
+</style>
+</head>
+<body>
+<div class="det-container details-container"></div>
+<nav class="bottom-nav">
+  <a href="index.html" class="nav-item" data-page="index"><i class="fas fa-home"></i><span>الرئيسية</span></a>
+  <a href="favorites.html" class="nav-item" data-page="favorites"><i class="fas fa-heart"></i><span>المفضلة</span></a>
+  <a href="messages.html" class="nav-item" data-page="messages"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
+  <a href="profile.html" class="nav-item" data-page="profile"><i class="fas fa-user"></i><span>حسابي</span></a>
+</nav>
+<div id="toast"></div>
+<script src="js/app.js"></script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js')
+      .then(function(reg){console.log('[عقاري] SW مُفعّل');})
+      .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
+  });
+}
+</script>
+</body>
+</html>

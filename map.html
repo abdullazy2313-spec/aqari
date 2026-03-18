@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#e67e22">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="عقاري">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>خريطة العقارات - عقاري</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{overflow:hidden;background:#0f172a;font-family:var(--font,'Cairo',sans-serif)}
+
+/* MAP */
+#map{position:fixed;inset:0;z-index:1}
+
+/* TOP BAR */
+.top-bar{
+  position:fixed;top:0;left:0;right:0;z-index:1200;
+  padding:10px 14px 8px;
+  background:linear-gradient(180deg,rgba(15,23,42,0.9) 0%,rgba(15,23,42,0) 100%);
+  display:flex;align-items:center;gap:10px;
+  pointer-events:none;
+}
+.top-bar>*{pointer-events:all}
+.tb-back{
+  width:40px;height:40px;border-radius:12px;
+  background:rgba(255,255,255,0.12);backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.18);
+  color:white;display:flex;align-items:center;justify-content:center;
+  font-size:0.95rem;cursor:pointer;flex-shrink:0;
+  transition:all 0.2s;text-decoration:none;
+}
+.tb-back:hover{background:rgba(255,255,255,0.22)}
+.tb-search-wrap{flex:1;position:relative}
+.tb-search{
+  width:100%;height:40px;border-radius:12px;
+  background:rgba(255,255,255,0.12);backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.18);
+  color:white;padding:0 16px 0 40px;
+  font-family:var(--font);font-size:0.84rem;outline:none;transition:all 0.2s;
+}
+.tb-search::placeholder{color:rgba(255,255,255,0.45)}
+.tb-search:focus{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.35)}
+.tb-search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.45);font-size:0.8rem;pointer-events:none}
+.tb-sat{
+  width:40px;height:40px;border-radius:12px;
+  background:rgba(255,255,255,0.12);backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.18);
+  color:white;display:flex;align-items:center;justify-content:center;
+  font-size:0.9rem;cursor:pointer;flex-shrink:0;transition:all 0.2s;
+}
+.tb-sat.on{background:rgba(249,115,22,0.75);border-color:rgba(249,115,22,0.9)}
+
+/* LEFT CONTROLS */
+.map-ctrl{
+  position:fixed;left:14px;top:50%;transform:translateY(-50%);
+  z-index:900;display:flex;flex-direction:column;gap:7px;
+}
+.mc{
+  width:44px;height:44px;border-radius:13px;
+  background:rgba(255,255,255,0.96);
+  border:1px solid rgba(0,0,0,0.07);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:#334155;font-size:1rem;
+  box-shadow:0 3px 14px rgba(0,0,0,0.16);transition:all 0.18s;
+}
+.mc:hover{transform:scale(1.07);box-shadow:0 6px 22px rgba(0,0,0,0.22)}
+.mc-sep{height:1px;background:rgba(0,0,0,0.07);margin:1px 7px}
+
+/* STATS */
+.stats-pill{
+  position:fixed;top:70px;right:14px;z-index:900;
+  background:rgba(15,23,42,0.88);backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.1);border-radius:16px;
+  padding:10px 13px;display:flex;flex-direction:column;gap:7px;
+  animation:fadeSlide 0.4s ease;
+}
+.sp-row{display:flex;align-items:center;gap:7px;font-size:0.71rem;font-weight:700;color:rgba(255,255,255,0.88)}
+.sp-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sp-num{font-size:0.87rem;font-weight:900;margin-right:2px}
+
+/* PRICE PIN */
+.ppin{
+  display:inline-flex;align-items:center;gap:4px;
+  background:white;border-radius:22px;padding:5px 10px 5px 6px;
+  font-size:0.75rem;font-weight:900;color:#0f172a;
+  box-shadow:0 4px 16px rgba(0,0,0,0.2),0 1px 4px rgba(0,0,0,0.1);
+  white-space:nowrap;cursor:pointer;position:relative;
+  border:2.5px solid white;transition:all 0.17s;
+}
+.ppin::after{
+  content:'';position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);
+  border:5.5px solid transparent;
+}
+.ppin.sale::after{border-top-color:white}
+.ppin.rent::after{border-top-color:white}
+.ppin-shadow-sale::after{border-top-color:rgba(0,0,0,0.08)}
+.pi-dot{
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.62rem;color:white;flex-shrink:0;
+}
+.ppin.sale .pi-dot{background:linear-gradient(135deg,#f97316,#dc2626)}
+.ppin.rent .pi-dot{background:linear-gradient(135deg,#3b82f6,#6366f1)}
+.ppin.sale{border-color:#fde8d8}
+.ppin.rent{border-color:#dbeafe}
+.ppin:hover{transform:translateY(-3px) scale(1.06);box-shadow:0 8px 26px rgba(0,0,0,0.25)}
+.ppin.active{transform:scale(1.1);z-index:800}
+
+/* CLUSTER */
+.cpin{
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:900;color:white;cursor:pointer;
+  border:3px solid rgba(255,255,255,0.92);
+  box-shadow:0 4px 20px rgba(0,0,0,0.22);transition:all 0.2s;
+}
+.cpin:hover{transform:scale(1.1)}
+.cpin.city{background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 5px 22px rgba(99,102,241,0.45)}
+.cpin.mini{background:linear-gradient(135deg,#f97316,#dc2626);box-shadow:0 4px 18px rgba(249,115,22,0.42)}
+
+/* FILTER BAR */
+.filter-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:1100;
+  padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(0deg,rgba(10,14,26,0.97) 60%,rgba(10,14,26,0) 100%);
+  display:flex;gap:8px;
+}
+.fb-tab{
+  flex:1;padding:10px 8px;border-radius:14px;border:none;
+  font-family:var(--font);font-size:0.79rem;font-weight:800;cursor:pointer;
+  transition:all 0.22s;display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.fb-tab{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.65)}
+.fb-tab.on{transform:translateY(-2px)}
+.fb-tab.t-all.on{background:white;color:#1e293b;box-shadow:0 4px 16px rgba(255,255,255,0.2)}
+.fb-tab.t-sale.on{background:linear-gradient(135deg,#f97316,#dc2626);color:white;box-shadow:0 4px 16px rgba(249,115,22,0.4)}
+.fb-tab.t-rent.on{background:linear-gradient(135deg,#3b82f6,#6366f1);color:white;box-shadow:0 4px 16px rgba(59,130,246,0.4)}
+
+/* SHEET */
+.prop-sheet{
+  position:fixed;left:12px;right:12px;
+  bottom:calc(76px + env(safe-area-inset-bottom));
+  z-index:1050;background:white;border-radius:22px;
+  box-shadow:0 -2px 40px rgba(0,0,0,0.22),0 4px 16px rgba(0,0,0,0.1);
+  padding:14px 14px 16px;
+  transform:translateY(calc(130% + 90px));
+  transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  will-change:transform;
+}
+.prop-sheet.show{transform:translateY(0)}
+.ps-handle{width:36px;height:4px;background:#e2e8f0;border-radius:99px;margin:0 auto 13px}
+.ps-close{
+  position:absolute;top:13px;left:13px;width:30px;height:30px;border-radius:50%;
+  background:#f1f5f9;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:#64748b;font-size:0.78rem;
+  transition:all 0.2s;
+}
+.ps-close:hover{background:#e2e8f0}
+.ps-row{display:flex;gap:12px;margin-bottom:11px;align-items:flex-start}
+.ps-img{
+  width:78px;height:78px;border-radius:14px;
+  background:linear-gradient(135deg,#f1f5f9,#e2e8f0);
+  flex-shrink:0;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;font-size:2rem;color:#94a3b8;
+}
+.ps-img img{width:100%;height:100%;object-fit:cover}
+.ps-info{flex:1;min-width:0}
+.ps-brow{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px}
+.ps-b{padding:2px 8px;border-radius:99px;font-size:0.63rem;font-weight:800}
+.ps-b.sale{background:#fff7ed;color:#ea580c;border:1px solid #fed7aa}
+.ps-b.rent{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+.ps-b.cat{background:#f8fafc;color:#64748b;border:1px solid #e2e8f0}
+.ps-price{font-size:1.18rem;font-weight:900;color:#0f172a;margin-bottom:2px}
+.ps-title{font-size:0.83rem;font-weight:700;color:#475569;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ps-loc{font-size:0.71rem;color:#94a3b8;display:flex;align-items:center;gap:3px}
+.ps-specs{
+  display:flex;gap:12px;padding:9px 0;
+  border-top:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;margin-bottom:11px;
+}
+.ps-spec{display:flex;align-items:center;gap:4px;font-size:0.72rem;color:#64748b;font-weight:600}
+.ps-spec i{color:#f97316;font-size:0.66rem}
+.ps-btns{display:flex;gap:8px}
+.ps-main{
+  flex:1;padding:11px;
+  background:linear-gradient(135deg,#f97316,#dc2626);
+  color:white;border:none;border-radius:12px;
+  font-size:0.83rem;font-weight:800;cursor:pointer;
+  font-family:var(--font);transition:all 0.2s;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.ps-main:hover{filter:brightness(1.08)}
+.ps-ico{
+  width:44px;height:44px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  text-decoration:none;font-size:1.05rem;
+  border:1.5px solid #e2e8f0;color:#475569;background:#f8fafc;
+  transition:all 0.2s;cursor:pointer;
+}
+.ps-ico:hover{background:#f1f5f9;transform:scale(1.05)}
+.ps-ico.wa{border-color:#bbf7d0;background:#f0fdf4;color:#16a34a}
+.ps-ico.ph{border-color:#bfdbfe;background:#eff6ff;color:#2563eb}
+
+/* LEGEND */
+.map-legend{
+  position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));
+  left:14px;z-index:900;
+  background:rgba(10,14,26,0.85);backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.1);border-radius:13px;
+  padding:8px 12px;display:flex;flex-direction:column;gap:6px;
+}
+.leg-r{display:flex;align-items:center;gap:7px;font-size:0.67rem;font-weight:700;color:rgba(255,255,255,0.82)}
+.leg-d{width:10px;height:10px;border-radius:50%}
+
+/* LOADER */
+.map-loader{
+  position:fixed;inset:0;background:#0f172a;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;
+  z-index:9999;transition:opacity 0.45s;
+}
+.ml-icon{
+  width:72px;height:72px;border-radius:22px;
+  background:linear-gradient(135deg,#f97316,#dc2626);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.9rem;color:white;
+  box-shadow:0 12px 40px rgba(249,115,22,0.5);
+  animation:pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 12px 40px rgba(249,115,22,0.4)}50%{transform:scale(1.07);box-shadow:0 18px 52px rgba(249,115,22,0.7)}}
+.ml-title{color:white;font-weight:900;font-size:1.05rem;letter-spacing:0.5px}
+.ml-sub{color:rgba(255,255,255,0.4);font-size:0.77rem}
+.ml-dots{display:flex;gap:6px;margin-top:2px}
+.ml-d{width:7px;height:7px;border-radius:50%;background:rgba(249,115,22,0.5);animation:dotBounce 1.2s infinite}
+.ml-d:nth-child(2){animation-delay:0.2s}
+.ml-d:nth-child(3){animation-delay:0.4s}
+@keyframes dotBounce{0%,80%,100%{opacity:0.3;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}
+
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.leaflet-container{outline:none!important}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div class="map-loader" id="mapLoader">
+  <div class="ml-icon"><i class="fas fa-map-marked-alt"></i></div>
+  <div class="ml-title">خريطة العقارات</div>
+  <div class="ml-dots"><div class="ml-d"></div><div class="ml-d"></div><div class="ml-d"></div></div>
+  <div class="ml-sub">جاري تحميل عقارات سوريا...</div>
+</div>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <a href="javascript:history.back()" class="tb-back"><i class="fas fa-arrow-right"></i></a>
+  <div class="tb-search-wrap">
+    <i class="fas fa-search tb-search-icon"></i>
+    <input type="search" class="tb-search" id="mapSearch" placeholder="ابحث: مدينة، حي، عنوان..." oninput="onMapSearch(this.value)">
+  </div>
+  <button class="tb-sat" id="satBtn" onclick="toggleSatellite()"><i class="fas fa-satellite"></i></button>
+</div>
+
+<!-- LEFT CONTROLS -->
+<div class="map-ctrl">
+  <div class="mc" onclick="map&&map.zoomIn()"><i class="fas fa-plus"></i></div>
+  <div class="mc-sep"></div>
+  <div class="mc" onclick="map&&map.zoomOut()"><i class="fas fa-minus"></i></div>
+  <div class="mc-sep" style="margin-top:3px"></div>
+  <div class="mc" onclick="resetView()" title="عرض سوريا"><i class="fas fa-globe-asia" style="color:#8b5cf6"></i></div>
+  <div class="mc" onclick="getMyLoc()" title="موقعي"><i class="fas fa-crosshairs" style="color:#f97316"></i></div>
+</div>
+
+<!-- STATS -->
+<div class="stats-pill">
+  <div class="sp-row"><div class="sp-dot" style="background:#a5b4fc"></div><span class="sp-num" id="statTotal">—</span> عقار</div>
+  <div class="sp-row"><div class="sp-dot" style="background:#fb923c"></div><span class="sp-num" id="statSale">—</span> للبيع</div>
+  <div class="sp-row"><div class="sp-dot" style="background:#60a5fa"></div><span class="sp-num" id="statRent">—</span> للإيجار</div>
+</div>
+
+<!-- LEGEND -->
+<div class="map-legend">
+  <div class="leg-r"><div class="leg-d" style="background:linear-gradient(135deg,#f97316,#dc2626)"></div>للبيع</div>
+  <div class="leg-r"><div class="leg-d" style="background:linear-gradient(135deg,#3b82f6,#6366f1)"></div>للإيجار</div>
+  <div class="leg-r"><div class="leg-d" style="background:linear-gradient(135deg,#8b5cf6,#6366f1)"></div>تجمع</div>
+</div>
+
+<!-- PROPERTY SHEET -->
+<div class="prop-sheet" id="propSheet">
+  <div class="ps-handle"></div>
+  <button class="ps-close" onclick="closeSheet()"><i class="fas fa-times"></i></button>
+  <div id="sheetInner"></div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <button class="fb-tab t-all on" id="ftAll" onclick="setFilter('all')"><i class="fas fa-th-large"></i>الكل</button>
+  <button class="fb-tab t-sale" id="ftSale" onclick="setFilter('sale')"><i class="fas fa-tag"></i>للبيع</button>
+  <button class="fb-tab t-rent" id="ftRent" onclick="setFilter('rent')"><i class="fas fa-key"></i>للإيجار</button>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="js/app.js"></script>
+<script>
+var map, tileLayer, mapFilter='all', curTile='osm';
+var allM=[], clusterM=[], myLocM=null;
+var SYR=[34.8,38.9], SYR_Z=6;
+var TILES={
+  osm:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  sat:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+};
+
+function initMap(){
+  map=L.map('map',{center:SYR,zoom:SYR_Z,zoomControl:false,attributionControl:false,tap:true,tapTolerance:20});
+  tileLayer=L.tileLayer(TILES.osm,{maxZoom:19}).addTo(map);
+  map.on('zoomend moveend',debounce(renderZoom,220));
+  map.on('click',function(e){
+    var t=e.originalEvent&&e.originalEvent.target;
+    if(!t||(!t.closest('.ppin')&&!t.closest('.cpin')))closeSheet();
+  });
+  loadAll();
+  setTimeout(function(){
+    var el=document.getElementById('mapLoader');
+    el.style.opacity='0';
+    setTimeout(function(){el.style.display='none'},420);
+  },950);
+}
+
+function getProps(){
+  var a=window.allProperties||[];
+  return mapFilter==='all'?a:a.filter(function(p){return p.type===mapFilter;});
+}
+
+function coords(p){
+  if(p._mlat&&p._mlng)return;
+  var cc=(window.CITY_COORDS&&window.CITY_COORDS[p.city])||{lat:34.8,lng:38.9};
+  p._mlat=p.lat||(cc.lat+(Math.random()-0.5)*0.07);
+  p._mlng=p.lng||(cc.lng+(Math.random()-0.5)*0.07);
+}
+
+function loadAll(){
+  clearM();
+  var props=getProps(),all=window.allProperties||[];
+  document.getElementById('statTotal').textContent=props.length;
+  document.getElementById('statSale').textContent=all.filter(function(p){return p.type==='sale'}).length;
+  document.getElementById('statRent').textContent=all.filter(function(p){return p.type==='rent'}).length;
+  props.forEach(coords);
+  renderZoom();
+}
+
+function clearM(){
+  allM.concat(clusterM).forEach(function(m){map.removeLayer(m);});
+  allM=[]; clusterM=[];
+}
+
+function renderZoom(){
+  clearM();
+  var zoom=map.getZoom(), props=getProps();
+
+  if(zoom<=7){
+    var cities={};
+    props.forEach(function(p){
+      var c=p.city||'أخرى';
+      if(!cities[c])cities[c]={props:[],cc:(window.CITY_COORDS&&window.CITY_COORDS[c])||{lat:p._mlat,lng:p._mlng}};
+      cities[c].props.push(p);
+    });
+    Object.keys(cities).forEach(function(city){
+      var g=cities[city],n=g.props.length;
+      var sz=n===1?42:n<=6?50:n<=20?58:66;
+      var m=L.marker([g.cc.lat,g.cc.lng],{
+        icon:L.divIcon({
+          className:'',
+          html:'<div class="cpin city" style="width:'+sz+'px;height:'+sz+'px;font-size:'+(sz<=42?'0.8rem':sz<=50?'0.9rem':'1rem')+'">'+(n===1?'<i class="fas fa-home"></i>':n)+'</div>',
+          iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]
+        })
+      }).addTo(map);
+      (function(grp){m.on('click',function(){grp.props.length===1?openSheet(grp.props[0]):map.flyTo([grp.cc.lat,grp.cc.lng],10,{duration:0.7});});})(g);
+      clusterM.push(m);
+    });
+
+  } else if(zoom<=11){
+    var grid={},gs=zoom<=8?0.4:zoom<=10?0.12:0.05;
+    props.forEach(function(p){
+      var k=Math.floor(p._mlat/gs)+'_'+Math.floor(p._mlng/gs);
+      if(!grid[k])grid[k]={props:[],lat:Math.floor(p._mlat/gs)*gs+gs/2,lng:Math.floor(p._mlng/gs)*gs+gs/2};
+      grid[k].props.push(p);
+    });
+    Object.keys(grid).forEach(function(k){
+      var g=grid[k];
+      if(g.props.length===1){addPin(g.props[0]);}
+      else{
+        var sz=Math.min(38+g.props.length*3,62);
+        var m=L.marker([g.lat,g.lng],{
+          icon:L.divIcon({
+            className:'',
+            html:'<div class="cpin mini" style="width:'+sz+'px;height:'+sz+'px">'+g.props.length+'</div>',
+            iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]
+          })
+        }).addTo(map);
+        (function(grp,z){m.on('click',function(){map.flyTo([grp.lat,grp.lng],z+2,{duration:0.5});});})(g,zoom);
+        clusterM.push(m);
+      }
+    });
+  } else {
+    props.forEach(addPin);
+  }
+}
+
+function addPin(p){
+  var pStr=p.price>=1000000?(p.price/1000000).toFixed(1)+'M$':p.price>=1000?Math.round(p.price/1000)+'K$':p.price+'$';
+  var cls=p.type==='rent'?'rent':'sale';
+  var ico=p.type==='rent'?'fa-key':'fa-home';
+  var m=L.marker([p._mlat,p._mlng],{
+    icon:L.divIcon({
+      className:'',
+      html:'<div class="ppin '+cls+'"><div class="pi-dot"><i class="fas '+ico+'" style="font-size:0.62rem"></i></div>'+pStr+'</div>',
+      iconSize:[1,1],iconAnchor:[38,38]
+    }),
+    zIndexOffset:100
+  }).addTo(map);
+  m.on('click',function(){openSheet(p);});
+  allM.push(m);
+}
+
+function debounce(fn,ms){var t;return function(){clearTimeout(t);t=setTimeout(fn,ms);};}
+
+/* SHEET */
+function openSheet(p){
+  var imgs=window.getPropImages?window.getPropImages(p):[];
+  var imgH=imgs.length?'<img src="'+imgs[0]+'" alt="" onerror="this.parentElement.innerHTML=\'<i class=\\\"fas fa-building\\\"></i>\'">'
+    :'<i class="fas fa-building"></i>';
+  var catMap={apartment:'شقة',villa:'فيلا',land:'أرض',commercial:'تجاري'};
+  var specs='';
+  if(p.category!=='land'){
+    specs='<div class="ps-specs">'
+      +(p.rooms?'<div class="ps-spec"><i class="fas fa-door-open"></i>'+p.rooms+' غرف</div>':'')
+      +(p.area?'<div class="ps-spec"><i class="fas fa-vector-square"></i>'+p.area+' م²</div>':'')
+      +(p.bathrooms?'<div class="ps-spec"><i class="fas fa-bath"></i>'+p.bathrooms+'</div>':'')
+      +'</div>';
+  }
+  document.getElementById('sheetInner').innerHTML=
+    '<div class="ps-row">'+
+      '<div class="ps-img">'+imgH+'</div>'+
+      '<div class="ps-info">'+
+        '<div class="ps-brow">'+
+          (p.type==='sale'?'<span class="ps-b sale">للبيع</span>':'<span class="ps-b rent">للإيجار</span>')+
+          '<span class="ps-b cat">'+(catMap[p.category]||'عقار')+'</span>'+
+        '</div>'+
+        '<div class="ps-price">'+p.price.toLocaleString('en-US')+' $</div>'+
+        '<div class="ps-title">'+p.title+'</div>'+
+        '<div class="ps-loc"><i class="fas fa-map-marker-alt" style="color:#f97316;font-size:0.62rem"></i>'+p.location+'</div>'+
+      '</div>'+
+    '</div>'+specs+
+    '<div class="ps-btns">'+
+      '<button class="ps-main" onclick="goDetail('+p.id+')"><i class="fas fa-eye"></i> التفاصيل والصور</button>'+
+      '<a href="tel:+'+p.phone+'" class="ps-ico ph"><i class="fas fa-phone"></i></a>'+
+      '<a href="https://wa.me/'+p.phone+'" class="ps-ico wa" target="_blank"><i class="fab fa-whatsapp"></i></a>'+
+    '</div>';
+  document.getElementById('propSheet').classList.add('show');
+}
+
+function closeSheet(){document.getElementById('propSheet').classList.remove('show');}
+function goDetail(id){localStorage.setItem('aqari_selected',id);location.href='details.html';}
+
+function setFilter(v){
+  mapFilter=v;
+  ['all','sale','rent'].forEach(function(x){
+    var el=document.getElementById('ft'+x.charAt(0).toUpperCase()+x.slice(1));
+    if(el)el.className='fb-tab t-'+x;
+  });
+  var a=document.getElementById('ft'+v.charAt(0).toUpperCase()+v.slice(1));
+  if(a)a.className='fb-tab t-'+v+' on';
+  loadAll(); closeSheet();
+}
+
+function resetView(){map&&map.flyTo(SYR,SYR_Z,{duration:0.8});}
+
+function toggleSatellite(){
+  curTile=curTile==='osm'?'sat':'osm';
+  tileLayer.setUrl(TILES[curTile]);
+  document.getElementById('satBtn').className='tb-sat'+(curTile==='sat'?' on':'');
+  showToast(curTile==='sat'?'🛰 وضع القمر الصناعي':'🗺 الخريطة العادية');
+}
+
+function getMyLoc(){
+  if(!navigator.geolocation){showToast('الجهاز لا يدعم GPS');return;}
+  showToast('⏳ جاري تحديد موقعك...');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=pos.coords.latitude,lng=pos.coords.longitude;
+    if(myLocM)map.removeLayer(myLocM);
+    myLocM=L.marker([lat,lng],{
+      icon:L.divIcon({
+        className:'',
+        html:'<div style="width:18px;height:18px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 0 5px rgba(59,130,246,0.25)"></div>',
+        iconSize:[18,18],iconAnchor:[9,9]
+      })
+    }).addTo(map);
+    map.flyTo([lat,lng],15,{duration:0.8});
+    showToast('📍 تم تحديد موقعك');
+  },function(){showToast('تعذر تحديد الموقع');});
+}
+
+function onMapSearch(q){
+  if(!q||q.trim().length<2)return;
+  q=q.trim();
+  var props=window.allProperties||[];
+  var found=props.find(function(p){return p.city===q||p.location.includes(q)||p.title.includes(q);});
+  if(found&&found._mlat){map.flyTo([found._mlat,found._mlng],14,{duration:0.7});openSheet(found);return;}
+  var cc=window.CITY_COORDS&&Object.keys(window.CITY_COORDS).find(function(c){return c.includes(q);});
+  if(cc){var c=window.CITY_COORDS[cc];map.flyTo([c.lat,c.lng],12,{duration:0.7});}
+}
+
+function checkDetailParam(){
+  var params=new URLSearchParams(window.location.search);
+  var lat=parseFloat(params.get('lat')||localStorage.getItem('aqari_map_lat'));
+  var lng=parseFloat(params.get('lng')||localStorage.getItem('aqari_map_lng'));
+  var propId=params.get('prop')||localStorage.getItem('aqari_map_prop');
+  var zoom=parseInt(params.get('zoom'))||15;
+  if(lat&&lng&&!isNaN(lat)){
+    setTimeout(function(){
+      map.flyTo([lat,lng],zoom,{duration:0.9});
+      if(propId){
+        setTimeout(function(){
+          var p=(window.allProperties||[]).find(function(x){return String(x.id)===String(propId);});
+          if(p){p._mlat=lat;p._mlng=lng;openSheet(p);}
+        },1000);
+      }
+      localStorage.removeItem('aqari_map_lat');
+      localStorage.removeItem('aqari_map_lng');
+      localStorage.removeItem('aqari_map_prop');
+    },700);
+  }
+}
+
+window.addEventListener('load',function(){
+  setTimeout(function(){initMap();setTimeout(checkDetailParam,500);},300);
+});
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js')
+      .then(function(reg){console.log('[عقاري] SW مُفعّل');})
+      .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
+  });
+}
+</script>
+</body>
+</html>

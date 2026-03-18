@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#e67e22">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="عقاري">
+  <link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>الإشعارات - عقاري</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+.notif-item{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;position:relative;}
+.notif-item:hover{background:var(--gray-light);}
+.notif-unread{background:rgba(230,126,34,0.05);}
+.notif-icon-wrap{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.notif-content{flex:1;overflow:hidden;}
+.notif-title{font-weight:800;font-size:0.88rem;color:var(--text);margin-bottom:3px;}
+.notif-body{font-size:0.78rem;color:var(--text-secondary);margin-bottom:4px;line-height:1.4;}
+.notif-time{font-size:0.68rem;color:var(--gray);}
+.notif-dot{width:10px;height:10px;background:var(--accent);border-radius:50%;flex-shrink:0;margin-top:4px;}
+</style>
+</head>
+<body>
+<header>
+  <a href="javascript:history.back()" class="header-icon-btn"><i class="fas fa-arrow-right"></i></a>
+  <div style="font-size:1rem;font-weight:800">الإشعارات</div>
+  <button onclick="markAllNotifRead()" style="background:none;border:none;color:var(--accent);font-family:var(--font);font-size:0.8rem;font-weight:700;cursor:pointer">قراءة الكل</button>
+</header>
+<div id="notifContainer" style="padding:0"></div>
+<nav class="bottom-nav">
+  <a href="index.html" class="nav-item" data-page="index"><i class="fas fa-home"></i><span>الرئيسية</span></a>
+  <a href="favorites.html" class="nav-item" data-page="favorites"><i class="fas fa-heart"></i><span>المفضلة</span></a>
+  <a href="messages.html" class="nav-item" data-page="messages"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
+  <a href="profile.html" class="nav-item" data-page="profile"><i class="fas fa-user"></i><span>حسابي</span></a>
+</nav>
+<div id="toast"></div>
+<script src="js/app.js"></script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js')
+      .then(function(reg){console.log('[عقاري] SW مُفعّل');})
+      .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
+  });
+}
+</script>
+</body>
+</html>

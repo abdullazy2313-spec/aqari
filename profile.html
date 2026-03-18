@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#e67e22">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="عقاري">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>حسابي - عقاري</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-user" style="color:var(--accent);margin-left:8px"></i>حسابي
+        </div>
+        <a href="settings.html" class="header-icon-btn" aria-label="الإعدادات">
+            <i class="fas fa-cog"></i>
+        </a>
+    </header>
+
+    <div class="container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-pic">
+                <i class="fas fa-user"></i>
+                <button class="profile-edit-btn" href="notifications.html"">
+                    <i class="fas fa-camera"></i>
+                </button>
+            </div>
+            <h3 id="profileName" style="margin-bottom:4px;font-size:1.2rem;font-weight:800">مستخدم تجريبي</h3>
+            <p style="color:var(--gray);font-size:0.88rem;" id="profileEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1f6a6c7a6d5f7a677e726f737a317c7072">[email&#160;protected]</a></p>
+            <div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(39,174,96,0.1);padding:4px 14px;border-radius:20px;font-size:0.78rem;color:var(--success);border:1px solid rgba(39,174,96,0.2)">
+                <i class="fas fa-shield-alt"></i> حساب موثق
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stat-box" style="margin-bottom:20px">
+            <div class="stat">
+                <span class="stat-num" id="myAdsCount">0</span>
+                <span class="stat-label">إعلاناتي</span>
+            </div>
+            <div class="stat">
+                <span class="stat-num" id="favsCount">0</span>
+                <span class="stat-label">مفضلة</span>
+            </div>
+            <div class="stat">
+                <span class="stat-num" id="viewsCount">0</span>
+                <span class="stat-label">مشاهدات</span>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+            <a href="add-property.html" style="text-decoration:none;background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:white;padding:14px;border-radius:12px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:0.88rem">
+                <i class="fas fa-plus-circle fa-lg"></i>
+                <span>إضافة إعلان</span>
+            </a>
+            <a href="favorites.html" style="text-decoration:none;background:var(--gray-light);color:var(--text);padding:14px;border-radius:12px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:0.88rem;border:1px solid var(--border)">
+                <i class="fas fa-heart" style="color:var(--danger)"></i>
+                <span>المفضلة</span>
+            </a>
+        </div>
+
+        <!-- My Ads Section -->
+        <div style="background:var(--card);border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow-sm)">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+                <span style="font-weight:800;font-size:0.9rem"><i class="fas fa-clipboard-list" style="color:var(--accent);margin-left:8px"></i>إعلاناتي</span>
+                <span id="myAdsCountBadge" style="background:var(--accent-light);color:var(--accent);padding:2px 10px;border-radius:99px;font-size:0.75rem;font-weight:700">0</span>
+            </div>
+            <div id="myAdsSection" style="padding:16px">
+                <div class="empty-state" style="padding:20px 0">
+                    <i class="fas fa-plus-square" style="font-size:2rem;margin-bottom:10px;opacity:0.4"></i>
+                    <p style="font-size:0.85rem;font-weight:600;margin-bottom:6px">لم تنشر أي إعلانات بعد</p>
+                    <a href="add-property.html" style="font-size:0.8rem;color:var(--accent);text-decoration:none;font-weight:700">انشر إعلانك الأول →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu -->
+        <ul class="menu-list">
+            <a href="settings.html" class="menu-item">
+                <span><i class="fas fa-cog" style="margin-left:10px;color:var(--gray)"></i> الإعدادات</span>
+                <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
+            </a>
+            <a href="#" class="menu-item" href="notifications.html">
+                <span><i class="fas fa-bell" style="margin-left:10px;color:var(--gray)"></i> الإشعارات</span>
+                <span style="background:var(--danger);color:white;padding:2px 8px;border-radius:99px;font-size:0.68rem;font-weight:700">3</span>
+            </a>
+            <a href="#" class="menu-item" href="notifications.html"">
+                <span><i class="fas fa-question-circle" style="margin-left:10px;color:var(--gray)"></i> المساعدة والدعم</span>
+                <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
+            </a>
+            <a href="#" class="menu-item" onclick="showToast('⭐ شكراً!')">
+                <span><i class="fas fa-star" style="margin-left:10px;color:var(--warning)"></i> قيّم التطبيق</span>
+                <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
+            </a>
+            <li class="menu-item danger" onclick="handleLogout()">
+                <span><i class="fas fa-sign-out-alt" style="margin-left:10px"></i> تسجيل الخروج</span>
+            </li>
+        </ul>
+
+        <p style="text-align:center;color:var(--gray);font-size:0.72rem;margin-top:24px;margin-bottom:8px">
+            عقاري v2.0.0 — جميع الحقوق محفوظة © 2024
+        </p>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item" data-page="index"><i class="fas fa-home"></i><span>الرئيسية</span></a>
+        <a href="favorites.html" class="nav-item" data-page="favorites"><i class="fas fa-heart"></i><span>المفضلة</span></a>
+        <a href="messages.html" class="nav-item" data-page="messages"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
+        <a href="profile.html" class="nav-item active" data-page="profile"><i class="fas fa-user"></i><span>حسابي</span></a>
+    </nav>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="js/app.js"></script>
+    <script>
+        // Load my ads in profile
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const myAds = window.myProperties || [];
+                const badge = document.getElementById('myAdsCountBadge');
+                const section = document.getElementById('myAdsSection');
+                if (badge) badge.textContent = myAds.length;
+                if (myAds.length > 0 && section) {
+                    section.innerHTML = myAds.slice(0, 3).map(p => `
+                        <div onclick="goToDetails(${p.id})" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">
+                            <div style="width:52px;height:52px;border-radius:10px;background:var(--gray-light);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--gray);flex-shrink:0">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div style="flex:1;overflow:hidden">
+                                <div style="font-weight:700;font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.title}</div>
+                                <div style="font-size:0.78rem;color:var(--accent);font-weight:700;margin-top:2px">${p.price.toLocaleString('en-US')} $</div>
+                            </div>
+                            <span style="font-size:0.7rem;background:var(--success);color:white;padding:3px 8px;border-radius:99px;font-weight:700;flex-shrink:0">نشط</span>
+                        </div>`).join('') +
+                        (myAds.length > 3 ? `<div style="text-align:center;paddin
