@@ -170,18 +170,7 @@ const CITY_COORDS = {
 /* ─────────────────────────────
    SAMPLE PROPERTIES
 ───────────────────────────────*/
-const SAMPLE_PROPERTIES = [
-  {id:1,type:'sale',subtype:'residential',category:'villa',title:'فيلا فاخرة في حي المزة',price:185000,area:600,rooms:5,bathrooms:4,age:3,location:'دمشق، المزة',city:'دمشق',phone:'963911234567',featured:true,furnished:false,description:'فيلا فاخرة من دورين مع ملحق خاص في حي المزة الراقي. تحتوي على صالونات واسعة وغرفة سينما وحمام سباحة خاص.',features:['مسبح','مصلى','غرفة سينما','حديقة','موقف سيارات'],views:248,postedAt:'2025-01-01',agentName:'أحمد الخطيب',agentVerified:true,lat:33.4897,lng:36.2568},
-  {id:2,type:'rent',subtype:'residential',category:'apartment',title:'شقة مفروشة فاخرة في أبو رمانة',price:1200,area:180,rooms:3,bathrooms:2,age:5,location:'دمشق، أبو رمانة',city:'دمشق',phone:'963917654321',featured:false,furnished:true,description:'شقة مفروشة بالكامل بأثاث عصري راقٍ في حي أبو رمانة الدبلوماسي.',features:['مفروشة بالكامل','تكييف مركزي','انترنت','أمن 24 ساعة'],views:185,postedAt:'2025-01-05',agentName:'سارة القاسم',agentVerified:true,lat:33.5103,lng:36.2834},
-  {id:3,type:'sale',subtype:'commercial',category:'commercial',title:'أرض تجارية على الشارع الرئيسي',price:320000,area:1200,rooms:0,bathrooms:0,age:0,location:'حلب، الفرقان',city:'حلب',phone:'963913456789',featured:true,furnished:false,description:'أرض تجارية مميزة بواجهة 40 متراً على أحد أهم الشوارع التجارية في حلب.',features:['وثائق شرعية','شارع رئيسي','خدمات جاهزة'],views:312,postedAt:'2024-12-28',agentName:'محمد البرازي',agentVerified:false,lat:36.2365,lng:37.1612},
-  {id:4,type:'rent',subtype:'residential',category:'apartment',title:'شقة اقتصادية في الزاهرة',price:450,area:120,rooms:2,bathrooms:1,age:8,location:'دمشق، الزاهرة',city:'دمشق',phone:'963919876543',featured:false,furnished:false,description:'شقة نظيفة ومرتبة في موقع مميز بحي الزاهرة.',features:['أسانسير','موقف سيارة','خزان مياه'],views:520,postedAt:'2025-01-03',agentName:'خالد المصري',agentVerified:true,lat:33.4978,lng:36.31},
-  {id:5,type:'sale',subtype:'residential',category:'palace',title:'قصر ملكي فاخر في الروضة',price:1200000,area:3000,rooms:10,bathrooms:8,age:2,location:'دمشق، الروضة',city:'دمشق',phone:'963911122334',featured:true,furnished:true,description:'قصر فاخر بمواصفات عالمية يشمل حمام سباحة وملاعب رياضية ومجالس ملكية.',features:['حمام سباحة','ملعب خاص','مجلس ملكي','حدائق'],views:890,postedAt:'2024-11-20',agentName:'عبدالله العباس',agentVerified:true,lat:33.5178,lng:36.2823},
-  {id:6,type:'sale',subtype:'residential',category:'villa',title:'فيلا حديثة قرب شاطئ اللاذقية',price:95000,area:400,rooms:4,bathrooms:3,age:1,location:'اللاذقية، الزراعة',city:'اللاذقية',phone:'963915544332',featured:false,furnished:false,description:'فيلا حديثة البناء بتصميم عصري على بعد 500 متر من شاطئ اللاذقية.',features:['قريبة من البحر','سطح مفتوح','مستودع'],views:156,postedAt:'2025-01-08',agentName:'ناصر حسن',agentVerified:true,lat:35.54,lng:35.79},
-  {id:7,type:'sale',subtype:'residential',category:'apartment',title:'شقة فاخرة في حلب الجديدة',price:75000,area:220,rooms:4,bathrooms:2,age:4,location:'حلب، الجديدة',city:'حلب',phone:'963913344556',featured:true,furnished:false,description:'شقة فاخرة في موقع متميز بحلب الجديدة. تشطيبات ممتازة.',features:['أسانسير','موقف سيارات','تكييف مركزي'],views:203,postedAt:'2025-01-10',agentName:'عمر الحلبي',agentVerified:true,lat:36.2145,lng:37.1568},
-  {id:8,type:'rent',subtype:'residential',category:'villa',title:'فيلا صيفية مفروشة في طرطوس',price:800,area:280,rooms:3,bathrooms:2,age:6,location:'طرطوس، الشاطئ',city:'طرطوس',phone:'963919988776',featured:false,furnished:true,description:'فيلا صيفية مميزة على شاطئ طرطوس مفروشة بالكامل.',features:['مطل على البحر','مفروشة','موقف خاص','حديقة'],views:445,postedAt:'2025-01-12',agentName:'رنا سعيد',agentVerified:false,lat:34.89,lng:35.885},
-  {id:9,type:'sale',subtype:'residential',category:'house',title:'دار عربي أصيل في القيمرية',price:145000,area:350,rooms:5,bathrooms:3,age:80,location:'دمشق، القيمرية',city:'دمشق',phone:'963912233445',featured:true,furnished:false,description:'دار عربي أصيل في حي القيمرية العريق بتصميم معماري إسلامي رائع.',features:['فناء داخلي','بئر قديمة','أعمدة حجرية','إوان تراثي'],views:678,postedAt:'2025-01-14',agentName:'سامر العمري',agentVerified:true,lat:33.5092,lng:36.3065},
-  {id:10,type:'rent',subtype:'commercial',category:'commercial',title:'محل تجاري مركزي في حمص',price:600,area:80,rooms:0,bathrooms:1,age:5,location:'حمص، الحميدية',city:'حمص',phone:'963945566778',featured:false,furnished:false,description:'محل تجاري في موقع استراتيجي بقلب حمص.',features:['واجهة زجاجية','شارع رئيسي','موقف قريب'],views:312,postedAt:'2025-01-15',agentName:'حسن الحمصي',agentVerified:false,lat:34.72,lng:36.69}
-];
+const SAMPLE_PROPERTIES = [];
 
 /* ─────────────────────────────
    STATE
@@ -272,13 +261,12 @@ function saveData() {
 }
 
 function syncAll() {
-  /* إذا كانت هناك بيانات Firebase، لا نمسحها */
+  /* استخدم Firebase فقط — لا عقارات وهمية */
   var fbProps = (window.allProperties || []).filter(function(p){ return p.isFirebase; });
   if (fbProps.length > 0) {
-    /* دمج Firebase مع المحلي */
-    allProperties = fbProps.concat(myProperties.filter(function(p){ return !p.isFirebase; }));
+    allProperties = fbProps;
   } else {
-    allProperties = [...SAMPLE_PROPERTIES, ...myProperties];
+    allProperties = [...myProperties];
   }
   filteredProperties = [...allProperties];
   window.allProperties = allProperties;
@@ -775,6 +763,10 @@ function renderDetails() {
       <a href="https://wa.me/${p.phone || ''}?text=${encodeURIComponent('مرحباً، رأيت إعلانك: ' + p.title)}" class="btn-whatsapp" target="_blank"><i class="fab fa-whatsapp"></i> واتساب</a>
       <button class="btn-chat" onclick="startChatWith('${(p.agentName || 'المعلن').replace(/'/g, "\\'")}','${p.id}','${p.title.replace(/'/g, "\\'")}')"><i class="fas fa-comment-dots"></i></button>
     </div>
+    ${(typeof getCurrentUser !== 'undefined' && getCurrentUser() && (getCurrentUser().uid === p.ownerUID)) ? `
+    <button onclick="deleteMyProperty('${p.firestoreId || p.id}')" style="width:100%;margin-top:12px;padding:12px;background:rgba(231,76,60,0.1);border:1.5px solid rgba(231,76,60,0.4);color:var(--danger);border-radius:12px;font-size:0.88rem;font-weight:800;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px">
+      <i class="fas fa-trash-alt"></i> حذف إعلاني
+    </button>` : ''}
     ${nearby.length ? `
     <div class="section-title" style="margin-top:20px"><i class="fas fa-th-large"></i>قريبة في ${p.city}</div>
     <div class="similar-scroll">
@@ -835,6 +827,25 @@ function buildMap(p) {
     </div>
   </div>`;
 }
+
+function deleteMyProperty(propId) {
+  if (!confirm('⚠️ هل أنت متأكد من حذف هذا الإعلان؟ لا يمكن التراجع.')) return;
+  if (typeof fbDeleteProperty === 'undefined') {
+    showToast('❌ خطأ في الاتصال');
+    return;
+  }
+  showToast('⏳ جاري الحذف...');
+  fbDeleteProperty(propId).then(function(res) {
+    if (res.success) {
+      showToast('✅ تم حذف الإعلان بنجاح');
+      setTimeout(function() { window.location.href = 'index.html'; }, 1200);
+    } else {
+      showToast('❌ فشل الحذف: ' + (res.error || ''));
+    }
+  });
+}
+window.deleteMyProperty = deleteMyProperty;
+
 function shareProp() {
   if (navigator.share) navigator.share({ title: document.title, url: location.href });
   else { navigator.clipboard?.writeText(location.href); showToast('تم نسخ الرابط'); }
