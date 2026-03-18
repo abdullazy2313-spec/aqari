@@ -8,25 +8,25 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="عقاري">
+  <meta name="apple-mobile-web-app-title" content="Ø¹ÙØ§Ø±Ù">
   <link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>المفضلة - عقاري</title>
+<title>Ø§ÙÙÙØ¶ÙØ© - Ø¹ÙØ§Ø±Ù</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <header>
-  <div class="logo"><i class="fas fa-heart" style="color:var(--accent);margin-left:6px"></i>المفضلة</div>
-  <button onclick="clearAllFavorites()" class="header-icon-btn" title="مسح الكل"><i class="fas fa-trash-alt"></i></button>
+  <div class="logo"><i class="fas fa-heart" style="color:var(--accent);margin-left:6px"></i>Ø§ÙÙÙØ¶ÙØ©</div>
+  <button onclick="clearAllFavorites()" class="header-icon-btn" title="ÙØ³Ø­ Ø§ÙÙÙ"><i class="fas fa-trash-alt"></i></button>
 </header>
 <div class="container">
   <div class="properties-grid" id="favoritesList" style="margin-top:8px"></div>
 </div>
 <nav class="bottom-nav">
-  <a href="index.html" class="nav-item" data-page="index"><i class="fas fa-home"></i><span>الرئيسية</span></a>
-  <a href="favorites.html" class="nav-item active" data-page="favorites"><i class="fas fa-heart"></i><span>المفضلة</span></a>
-  <a href="messages.html" class="nav-item" data-page="messages"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
-  <a href="profile.html" class="nav-item" data-page="profile"><i class="fas fa-user"></i><span>حسابي</span></a>
+  <a href="index.html" class="nav-item" data-page="index"><i class="fas fa-home"></i><span>Ø§ÙØ±Ø¦ÙØ³ÙØ©</span></a>
+  <a href="favorites.html" class="nav-item active" data-page="favorites"><i class="fas fa-heart"></i><span>Ø§ÙÙÙØ¶ÙØ©</span></a>
+  <a href="messages.html" class="nav-item" data-page="messages"><i class="fas fa-comment-dots"></i><span>Ø§ÙØ±Ø³Ø§Ø¦Ù</span></a>
+  <a href="profile.html" class="nav-item" data-page="profile"><i class="fas fa-user"></i><span>Ø­Ø³Ø§Ø¨Ù</span></a>
 </nav>
 <div id="toast"></div>
 <script src="js/app.js"></script>
@@ -36,10 +36,14 @@
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
     navigator.serviceWorker.register('sw.js')
-      .then(function(reg){console.log('[عقاري] SW مُفعّل');})
-      .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
+      .then(function(reg){console.log('[Ø¹ÙØ§Ø±Ù] SW ÙÙÙØ¹ÙÙ');})
+      .catch(function(e){console.warn('[Ø¹ÙØ§Ø±Ù] SW Ø®Ø·Ø£:',e);});
   });
 }
 </script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </body>
 </html>
