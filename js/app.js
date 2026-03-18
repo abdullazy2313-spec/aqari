@@ -272,7 +272,14 @@ function saveData() {
 }
 
 function syncAll() {
-  allProperties = [...SAMPLE_PROPERTIES, ...myProperties];
+  /* إذا كانت هناك بيانات Firebase، لا نمسحها */
+  var fbProps = (window.allProperties || []).filter(function(p){ return p.isFirebase; });
+  if (fbProps.length > 0) {
+    /* دمج Firebase مع المحلي */
+    allProperties = fbProps.concat(myProperties.filter(function(p){ return !p.isFirebase; }));
+  } else {
+    allProperties = [...SAMPLE_PROPERTIES, ...myProperties];
+  }
   filteredProperties = [...allProperties];
   window.allProperties = allProperties;
   window.myProperties = myProperties;
