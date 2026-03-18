@@ -8,10 +8,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="عقاري">
+  <meta name="apple-mobile-web-app-title" content="Ø¹ÙØ§Ø±Ù">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>خريطة العقارات - عقاري</title>
+<title>Ø®Ø±ÙØ·Ø© Ø§ÙØ¹ÙØ§Ø±Ø§Øª - Ø¹ÙØ§Ø±Ù</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -252,9 +252,9 @@ body{overflow:hidden;background:#0f172a;font-family:var(--font,'Cairo',sans-seri
 <!-- LOADER -->
 <div class="map-loader" id="mapLoader">
   <div class="ml-icon"><i class="fas fa-map-marked-alt"></i></div>
-  <div class="ml-title">خريطة العقارات</div>
+  <div class="ml-title">Ø®Ø±ÙØ·Ø© Ø§ÙØ¹ÙØ§Ø±Ø§Øª</div>
   <div class="ml-dots"><div class="ml-d"></div><div class="ml-d"></div><div class="ml-d"></div></div>
-  <div class="ml-sub">جاري تحميل عقارات سوريا...</div>
+  <div class="ml-sub">Ø¬Ø§Ø±Ù ØªØ­ÙÙÙ Ø¹ÙØ§Ø±Ø§Øª Ø³ÙØ±ÙØ§...</div>
 </div>
 
 <!-- MAP -->
@@ -265,7 +265,7 @@ body{overflow:hidden;background:#0f172a;font-family:var(--font,'Cairo',sans-seri
   <a href="javascript:history.back()" class="tb-back"><i class="fas fa-arrow-right"></i></a>
   <div class="tb-search-wrap">
     <i class="fas fa-search tb-search-icon"></i>
-    <input type="search" class="tb-search" id="mapSearch" placeholder="ابحث: مدينة، حي، عنوان..." oninput="onMapSearch(this.value)">
+    <input type="search" class="tb-search" id="mapSearch" placeholder="Ø§Ø¨Ø­Ø«: ÙØ¯ÙÙØ©Ø Ø­ÙØ Ø¹ÙÙØ§Ù..." oninput="onMapSearch(this.value)">
   </div>
   <button class="tb-sat" id="satBtn" onclick="toggleSatellite()"><i class="fas fa-satellite"></i></button>
 </div>
@@ -276,22 +276,22 @@ body{overflow:hidden;background:#0f172a;font-family:var(--font,'Cairo',sans-seri
   <div class="mc-sep"></div>
   <div class="mc" onclick="map&&map.zoomOut()"><i class="fas fa-minus"></i></div>
   <div class="mc-sep" style="margin-top:3px"></div>
-  <div class="mc" onclick="resetView()" title="عرض سوريا"><i class="fas fa-globe-asia" style="color:#8b5cf6"></i></div>
-  <div class="mc" onclick="getMyLoc()" title="موقعي"><i class="fas fa-crosshairs" style="color:#f97316"></i></div>
+  <div class="mc" onclick="resetView()" title="Ø¹Ø±Ø¶ Ø³ÙØ±ÙØ§"><i class="fas fa-globe-asia" style="color:#8b5cf6"></i></div>
+  <div class="mc" onclick="getMyLoc()" title="ÙÙÙØ¹Ù"><i class="fas fa-crosshairs" style="color:#f97316"></i></div>
 </div>
 
 <!-- STATS -->
 <div class="stats-pill">
-  <div class="sp-row"><div class="sp-dot" style="background:#a5b4fc"></div><span class="sp-num" id="statTotal">—</span> عقار</div>
-  <div class="sp-row"><div class="sp-dot" style="background:#fb923c"></div><span class="sp-num" id="statSale">—</span> للبيع</div>
-  <div class="sp-row"><div class="sp-dot" style="background:#60a5fa"></div><span class="sp-num" id="statRent">—</span> للإيجار</div>
+  <div class="sp-row"><div class="sp-dot" style="background:#a5b4fc"></div><span class="sp-num" id="statTotal">â</span> Ø¹ÙØ§Ø±</div>
+  <div class="sp-row"><div class="sp-dot" style="background:#fb923c"></div><span class="sp-num" id="statSale">â</span> ÙÙØ¨ÙØ¹</div>
+  <div class="sp-row"><div class="sp-dot" style="background:#60a5fa"></div><span class="sp-num" id="statRent">â</span> ÙÙØ¥ÙØ¬Ø§Ø±</div>
 </div>
 
 <!-- LEGEND -->
 <div class="map-legend">
-  <div class="leg-r"><div class="leg-d" style="background:linear-gradient(135deg,#f97316,#dc2626)"></div>للبيع</div>
-  <div class="leg-r"><div class="leg-d" style="background:linear-gradient(135deg,#3b82f6,#6366f1)"></div>للإيجار</div>
-  <div class="leg-r"><div class="leg-d" style="background:linear-gradient(135deg,#8b5cf6,#6366f1)"></div>تجمع</div>
+  <div class="leg-r"><div class="leg-d" style="background:linear-gradient(135deg,#f97316,#dc2626)"></div>ÙÙØ¨ÙØ¹</div>
+  <div class="leg-r"><div class="leg-d" style="background:linear-gradient(135deg,#3b82f6,#6366f1)"></div>ÙÙØ¥ÙØ¬Ø§Ø±</div>
+  <div class="leg-r"><div class="leg-d" style="background:linear-gradient(135deg,#8b5cf6,#6366f1)"></div>ØªØ¬ÙØ¹</div>
 </div>
 
 <!-- PROPERTY SHEET -->
@@ -303,9 +303,9 @@ body{overflow:hidden;background:#0f172a;font-family:var(--font,'Cairo',sans-seri
 
 <!-- FILTER BAR -->
 <div class="filter-bar">
-  <button class="fb-tab t-all on" id="ftAll" onclick="setFilter('all')"><i class="fas fa-th-large"></i>الكل</button>
-  <button class="fb-tab t-sale" id="ftSale" onclick="setFilter('sale')"><i class="fas fa-tag"></i>للبيع</button>
-  <button class="fb-tab t-rent" id="ftRent" onclick="setFilter('rent')"><i class="fas fa-key"></i>للإيجار</button>
+  <button class="fb-tab t-all on" id="ftAll" onclick="setFilter('all')"><i class="fas fa-th-large"></i>Ø§ÙÙÙ</button>
+  <button class="fb-tab t-sale" id="ftSale" onclick="setFilter('sale')"><i class="fas fa-tag"></i>ÙÙØ¨ÙØ¹</button>
+  <button class="fb-tab t-rent" id="ftRent" onclick="setFilter('rent')"><i class="fas fa-key"></i>ÙÙØ¥ÙØ¬Ø§Ø±</button>
 </div>
 
 <div id="toast"></div>
@@ -372,7 +372,7 @@ function renderZoom(){
   if(zoom<=7){
     var cities={};
     props.forEach(function(p){
-      var c=p.city||'أخرى';
+      var c=p.city||'Ø£Ø®Ø±Ù';
       if(!cities[c])cities[c]={props:[],cc:(window.CITY_COORDS&&window.CITY_COORDS[c])||{lat:p._mlat,lng:p._mlng}};
       cities[c].props.push(p);
     });
@@ -441,12 +441,12 @@ function openSheet(p){
   var imgs=window.getPropImages?window.getPropImages(p):[];
   var imgH=imgs.length?'<img src="'+imgs[0]+'" alt="" onerror="this.parentElement.innerHTML=\'<i class=\\\"fas fa-building\\\"></i>\'">'
     :'<i class="fas fa-building"></i>';
-  var catMap={apartment:'شقة',villa:'فيلا',land:'أرض',commercial:'تجاري'};
+  var catMap={apartment:'Ø´ÙØ©',villa:'ÙÙÙØ§',land:'Ø£Ø±Ø¶',commercial:'ØªØ¬Ø§Ø±Ù'};
   var specs='';
   if(p.category!=='land'){
     specs='<div class="ps-specs">'
-      +(p.rooms?'<div class="ps-spec"><i class="fas fa-door-open"></i>'+p.rooms+' غرف</div>':'')
-      +(p.area?'<div class="ps-spec"><i class="fas fa-vector-square"></i>'+p.area+' م²</div>':'')
+      +(p.rooms?'<div class="ps-spec"><i class="fas fa-door-open"></i>'+p.rooms+' ØºØ±Ù</div>':'')
+      +(p.area?'<div class="ps-spec"><i class="fas fa-vector-square"></i>'+p.area+' ÙÂ²</div>':'')
       +(p.bathrooms?'<div class="ps-spec"><i class="fas fa-bath"></i>'+p.bathrooms+'</div>':'')
       +'</div>';
   }
@@ -455,8 +455,8 @@ function openSheet(p){
       '<div class="ps-img">'+imgH+'</div>'+
       '<div class="ps-info">'+
         '<div class="ps-brow">'+
-          (p.type==='sale'?'<span class="ps-b sale">للبيع</span>':'<span class="ps-b rent">للإيجار</span>')+
-          '<span class="ps-b cat">'+(catMap[p.category]||'عقار')+'</span>'+
+          (p.type==='sale'?'<span class="ps-b sale">ÙÙØ¨ÙØ¹</span>':'<span class="ps-b rent">ÙÙØ¥ÙØ¬Ø§Ø±</span>')+
+          '<span class="ps-b cat">'+(catMap[p.category]||'Ø¹ÙØ§Ø±')+'</span>'+
         '</div>'+
         '<div class="ps-price">'+p.price.toLocaleString('en-US')+' $</div>'+
         '<div class="ps-title">'+p.title+'</div>'+
@@ -464,7 +464,7 @@ function openSheet(p){
       '</div>'+
     '</div>'+specs+
     '<div class="ps-btns">'+
-      '<button class="ps-main" onclick="goDetail('+p.id+')"><i class="fas fa-eye"></i> التفاصيل والصور</button>'+
+      '<button class="ps-main" onclick="goDetail('+p.id+')"><i class="fas fa-eye"></i> Ø§ÙØªÙØ§ØµÙÙ ÙØ§ÙØµÙØ±</button>'+
       '<a href="tel:+'+p.phone+'" class="ps-ico ph"><i class="fas fa-phone"></i></a>'+
       '<a href="https://wa.me/'+p.phone+'" class="ps-ico wa" target="_blank"><i class="fab fa-whatsapp"></i></a>'+
     '</div>';
@@ -491,12 +491,12 @@ function toggleSatellite(){
   curTile=curTile==='osm'?'sat':'osm';
   tileLayer.setUrl(TILES[curTile]);
   document.getElementById('satBtn').className='tb-sat'+(curTile==='sat'?' on':'');
-  showToast(curTile==='sat'?'🛰 وضع القمر الصناعي':'🗺 الخريطة العادية');
+  showToast(curTile==='sat'?'ð° ÙØ¶Ø¹ Ø§ÙÙÙØ± Ø§ÙØµÙØ§Ø¹Ù':'ðº Ø§ÙØ®Ø±ÙØ·Ø© Ø§ÙØ¹Ø§Ø¯ÙØ©');
 }
 
 function getMyLoc(){
-  if(!navigator.geolocation){showToast('الجهاز لا يدعم GPS');return;}
-  showToast('⏳ جاري تحديد موقعك...');
+  if(!navigator.geolocation){showToast('Ø§ÙØ¬ÙØ§Ø² ÙØ§ ÙØ¯Ø¹Ù GPS');return;}
+  showToast('â³ Ø¬Ø§Ø±Ù ØªØ­Ø¯ÙØ¯ ÙÙÙØ¹Ù...');
   navigator.geolocation.getCurrentPosition(function(pos){
     var lat=pos.coords.latitude,lng=pos.coords.longitude;
     if(myLocM)map.removeLayer(myLocM);
@@ -508,8 +508,8 @@ function getMyLoc(){
       })
     }).addTo(map);
     map.flyTo([lat,lng],15,{duration:0.8});
-    showToast('📍 تم تحديد موقعك');
-  },function(){showToast('تعذر تحديد الموقع');});
+    showToast('ð ØªÙ ØªØ­Ø¯ÙØ¯ ÙÙÙØ¹Ù');
+  },function(){showToast('ØªØ¹Ø°Ø± ØªØ­Ø¯ÙØ¯ Ø§ÙÙÙÙØ¹');});
 }
 
 function onMapSearch(q){
@@ -553,10 +553,14 @@ window.addEventListener('load',function(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
     navigator.serviceWorker.register('sw.js')
-      .then(function(reg){console.log('[عقاري] SW مُفعّل');})
-      .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
+      .then(function(reg){console.log('[Ø¹ÙØ§Ø±Ù] SW ÙÙÙØ¹ÙÙ');})
+      .catch(function(e){console.warn('[Ø¹ÙØ§Ø±Ù] SW Ø®Ø·Ø£:',e);});
   });
 }
 </script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </body>
 </html>
