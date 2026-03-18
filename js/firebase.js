@@ -339,22 +339,67 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (['index','map','details','favorites'].includes(page)) {
     loadFirebase().then(function() {
-      fbLoadProperties(function(props) {
-        /* استبدال العقارات بنسخة Firebase */
-        window.allProperties = props;
-        window.myProperties  = props;
 
-        /* إعادة رسم الصفحة فوراً */
-        if (page === 'index' && typeof initIndex === 'function') {
-          initIndex();
-        } else if (page === 'map' && typeof loadAll === 'function') {
-          loadAll();
-        } else if (page === 'favorites' && typeof renderFavorites === 'function') {
-          renderFavorites();
-        } else if (page === 'details' && typeof renderDetails === 'function') {
-          renderDetails();
-        }
-      });
+      /* onSnapshot = يستمع للتغييرات في realtime */
+      firebase.firestore()
+        .collection('properties')
+        .where('active', '==', true)
+        .orderBy('createdAt', 'desc')
+        .limit(200)
+        .onSnapshot(function(snapshot) {
+
+          var fbProps = [];
+          snapshot.forEach(function(doc) {
+            var d = doc.data();
+            fbProps.push({
+              id:          doc.id,
+              firestoreId: doc.id,
+              title:       d.title       || 'عقار',
+              price:       d.price       || 0,
+              type:        d.type        || 'sale',
+              category:    d.category    || 'apartment',
+              city:        d.city        || 'دمشق',
+              location:    d.location    || d.city || 'دمشق',
+              area:        d.area        || 0,
+              rooms:       d.rooms       || 0,
+              bathrooms:   d.bathrooms   || 0,
+              floor:       d.floor       || 0,
+              description: d.description || '',
+              features:    d.features    || [],
+              phone:       d.ownerPhone  || d.phone || '',
+              ownerName:   d.ownerName   || 'مستخدم',
+              ownerUID:    d.ownerUID    || '',
+              lat:         d.lat         || null,
+              lng:         d.lng         || null,
+              images:      d.images      || [],
+              featured:    d.featured    || (d.images && d.images.length > 0),
+              views:       d.views       || 0,
+              isFirebase:  true
+            });
+          });
+
+          /* دمج مع العقارات التجريبية */
+          var sample = (window.SAMPLE_PROPERTIES || []);
+          window.allProperties = fbProps.concat(sample);
+          window.myProperties  = window.allProperties;
+          window.filteredProperties = window.allProperties;
+
+          /* إعادة رسم الصفحة فوراً عند كل تحديث */
+          if (page === 'index' && typeof initIndex === 'function') {
+            initIndex();
+          } else if (page === 'map' && (typeof loadAll === 'function' || typeof loadMarkers === 'function')) {
+            if (typeof loadAll === 'function') loadAll();
+            else loadMarkers();
+          } else if (page === 'favorites' && typeof renderFavorites === 'function') {
+            renderFavorites();
+          } else if (page === 'details' && typeof renderDetails === 'function') {
+            renderDetails();
+          }
+
+        }, function(err) {
+          console.error('[عقاري] Firestore listen error:', err.code, err.message);
+        });
+
     });
   }
 });
