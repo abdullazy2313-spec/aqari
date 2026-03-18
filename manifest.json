@@ -1,7 +1,7 @@
 {
-  "name": "عقاري - منصة العقارات السورية",
+  "name": "عقاري - العقارات السورية",
   "short_name": "عقاري",
-  "description": "منصة العقارات الأولى في سوريا - ابحث عن عقار أحلامك",
+  "description": "منصة العقارات الأولى في سوريا",
   "start_url": "/aqari/index.html",
   "scope": "/aqari/",
   "display": "standalone",
