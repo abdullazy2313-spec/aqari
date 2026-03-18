@@ -1,11 +1,7 @@
 /* ═══════════════════════════════════════════════════════
-   عقاري — Firebase Integration (firebase.js)
-   - Authentication (Email + Google)
-   - Firestore Database (Properties, Users, Messages)
-   - Real-time sync across devices
+   عقاري — Firebase v2 (إصلاح كامل للمزامنة)
 ═══════════════════════════════════════════════════════ */
 
-// Firebase Config
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCvVYtCsC7UR52bGLYvHebQqOumtat7poU",
   authDomain: "aqari-app-7c43f.firebaseapp.com",
@@ -15,339 +11,368 @@ const FIREBASE_CONFIG = {
   appId: "1:61607617094:web:6939a1e6ef47c7885b2047"
 };
 
-// Firebase SDK URLs (CDN)
-const FB_SDK = 'https://www.gstatic.com/firebasejs/10.7.1/';
+var _fbReady = false;
+var _fbReadyCallbacks = [];
+var _propsUnsubscribe = null;
 
-// Load Firebase dynamically
-async function loadFirebase() {
-  if (window._fbLoaded) return;
-  window._fbLoaded = true;
+/* تحميل Firebase SDK */
+function loadFirebase() {
+  return new Promise(function(resolve) {
+    if (_fbReady) { resolve(); return; }
+    _fbReadyCallbacks.push(resolve);
+    if (_fbReadyCallbacks.length > 1) return; // already loading
 
-  // Load scripts
-  await Promise.all([
-    loadScript(FB_SDK + 'firebase-app-compat.js'),
-    loadScript(FB_SDK + 'firebase-auth-compat.js'),
-    loadScript(FB_SDK + 'firebase-firestore-compat.js'),
-  ]);
+    function loadScript(src, cb) {
+      var s = document.createElement('script');
+      s.src = src;
+      s.onload = cb;
+      s.onerror = cb;
+      document.head.appendChild(s);
+    }
 
-  // Initialize
-  if (!firebase.apps.length) {
-    firebase.initializeApp(FIREBASE_CONFIG);
-  }
-
-  window.db   = firebase.firestore();
-  window.auth = firebase.auth();
-
-  console.log('[عقاري] Firebase initialized ✅');
-}
-
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
-    const s = document.createElement('script');
-    s.src = src; s.onload = resolve; s.onerror = reject;
-    document.head.appendChild(s);
+    var base = 'https://www.gstatic.com/firebasejs/9.23.0/';
+    loadScript('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js', function() {
+      loadScript('https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js', function() {
+        loadScript('https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js', function() {
+          try {
+            if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+            window.db   = firebase.firestore();
+            window.auth = firebase.auth();
+            _fbReady = true;
+            console.log('[عقاري] ✅ Firebase ready');
+          } catch(e) {
+            console.error('[عقاري] Firebase init error:', e);
+          }
+          _fbReadyCallbacks.forEach(function(cb){ cb(); });
+          _fbReadyCallbacks = [];
+        });
+      });
+    });
   });
 }
 
-/* ═══════════════════════════════════════════════════════
-   AUTH FUNCTIONS
-═══════════════════════════════════════════════════════ */
+/* ── AUTH ────────────────────────────────────────────── */
 
-// Register with email/password
-async function fbRegister(name, email, phone, password) {
-  await loadFirebase();
-  try {
-    const cred = await auth.createUserWithEmailAndPassword(email, password);
-    const uid = cred.user.uid;
-
-    // Update display name
-    await cred.user.updateProfile({ displayName: name });
-
-    // Save user profile to Firestore
-    await db.collection('users').doc(uid).set({
-      uid, name, email, phone,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      verified: false,
-      avatar: null
+function fbRegister(name, email, phone, password) {
+  return loadFirebase().then(function() {
+    return firebase.auth().createUserWithEmailAndPassword(email, password);
+  }).then(function(cred) {
+    var uid = cred.user.uid;
+    return cred.user.updateProfile({ displayName: name }).then(function() {
+      return firebase.firestore().collection('users').doc(uid).set({
+        uid: uid, name: name, email: email, phone: phone,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        verified: false
+      });
+    }).then(function() {
+      saveUserLocal({ uid: uid, name: name, email: email, phone: phone });
+      return { success: true };
     });
-
-    // Save to localStorage
-    saveUserLocal({ uid, name, email, phone });
-    return { success: true, uid };
-  } catch (e) {
+  }).catch(function(e) {
     return { success: false, error: getAuthError(e.code) };
-  }
+  });
 }
 
-// Login with email/password
-async function fbLogin(email, password) {
-  await loadFirebase();
-  try {
-    const cred = await auth.signInWithEmailAndPassword(email, password);
-    const uid = cred.user.uid;
-
-    // Load user profile from Firestore
-    const doc = await db.collection('users').doc(uid).get();
-    const userData = doc.exists ? doc.data() : { uid, email, name: cred.user.displayName || 'مستخدم' };
-    saveUserLocal(userData);
-    return { success: true, user: userData };
-  } catch (e) {
+function fbLogin(email, password) {
+  return loadFirebase().then(function() {
+    return firebase.auth().signInWithEmailAndPassword(email, password);
+  }).then(function(cred) {
+    var uid = cred.user.uid;
+    return firebase.firestore().collection('users').doc(uid).get().then(function(doc) {
+      var data = doc.exists ? doc.data() : { uid: uid, email: email, name: cred.user.displayName || 'مستخدم' };
+      saveUserLocal(data);
+      return { success: true };
+    });
+  }).catch(function(e) {
     return { success: false, error: getAuthError(e.code) };
-  }
+  });
 }
 
-// Login with Google
-async function fbLoginGoogle() {
-  await loadFirebase();
-  try {
-    const provider = new firebase.auth.GoogleAuthProvider();
+function fbLoginGoogle() {
+  return loadFirebase().then(function() {
+    var provider = new firebase.auth.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    const cred = await auth.signInWithPopup(provider);
-    const uid = cred.user.uid;
-    const name = cred.user.displayName || 'مستخدم';
-    const email = cred.user.email;
-
-    // Create/update user in Firestore
-    await db.collection('users').doc(uid).set({
-      uid, name, email,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      verified: true
-    }, { merge: true });
-
-    saveUserLocal({ uid, name, email });
-    return { success: true };
-  } catch (e) {
+    return firebase.auth().signInWithPopup(provider);
+  }).then(function(cred) {
+    var uid = cred.user.uid;
+    var name = cred.user.displayName || 'مستخدم';
+    var email = cred.user.email;
+    return firebase.firestore().collection('users').doc(uid).set(
+      { uid: uid, name: name, email: email, verified: true,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp() },
+      { merge: true }
+    ).then(function() {
+      saveUserLocal({ uid: uid, name: name, email: email });
+      return { success: true };
+    });
+  }).catch(function(e) {
     return { success: false, error: getAuthError(e.code) };
-  }
+  });
 }
 
-// Logout
-async function fbLogout() {
-  await loadFirebase();
-  await auth.signOut();
-  localStorage.removeItem('fb_user');
-  localStorage.removeItem('isLoggedIn');
-  localStorage.removeItem('userEmail');
-  localStorage.removeItem('userName');
+function fbLogout() {
+  return loadFirebase().then(function() {
+    return firebase.auth().signOut();
+  }).then(function() {
+    localStorage.removeItem('fb_user');
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userUID');
+  });
 }
 
-// Save user to localStorage
 function saveUserLocal(user) {
   localStorage.setItem('fb_user', JSON.stringify(user));
   localStorage.setItem('isLoggedIn', 'true');
   localStorage.setItem('userEmail', user.email || '');
-  localStorage.setItem('userName', user.name || user.displayName || '');
-  localStorage.setItem('userUID', user.uid || '');
+  localStorage.setItem('userName',  user.name  || '');
+  localStorage.setItem('userUID',   user.uid   || '');
 }
 
-// Get current user
 function getCurrentUser() {
-  const raw = localStorage.getItem('fb_user');
-  if (!raw) return null;
-  try { return JSON.parse(raw); } catch { return null; }
+  try { return JSON.parse(localStorage.getItem('fb_user') || 'null'); }
+  catch(e) { return null; }
 }
 
-// Auth error messages in Arabic
 function getAuthError(code) {
-  const map = {
+  var map = {
     'auth/email-already-in-use': 'البريد الإلكتروني مستخدم مسبقاً',
-    'auth/weak-password': 'كلمة المرور ضعيفة — 6 أحرف على الأقل',
-    'auth/invalid-email': 'البريد الإلكتروني غير صحيح',
-    'auth/user-not-found': 'لا يوجد حساب بهذا البريد',
-    'auth/wrong-password': 'كلمة المرور غير صحيحة',
-    'auth/invalid-credential': 'البريد أو كلمة المرور غير صحيحة',
-    'auth/too-many-requests': 'محاولات كثيرة — حاول لاحقاً',
-    'auth/network-request-failed': 'خطأ في الاتصال بالإنترنت',
+    'auth/weak-password':        'كلمة المرور ضعيفة — 6 أحرف على الأقل',
+    'auth/invalid-email':        'البريد الإلكتروني غير صحيح',
+    'auth/user-not-found':       'لا يوجد حساب بهذا البريد',
+    'auth/wrong-password':       'كلمة المرور غير صحيحة',
+    'auth/invalid-credential':   'البريد أو كلمة المرور غير صحيحة',
+    'auth/too-many-requests':    'محاولات كثيرة — حاول لاحقاً',
+    'auth/network-request-failed':'خطأ في الاتصال بالإنترنت',
     'auth/popup-closed-by-user': 'تم إغلاق نافذة تسجيل الدخول',
   };
   return map[code] || 'حدث خطأ، حاول مجدداً';
 }
 
-/* ═══════════════════════════════════════════════════════
-   PROPERTIES FUNCTIONS
-═══════════════════════════════════════════════════════ */
+/* ── PROPERTIES ──────────────────────────────────────── */
 
-// Add new property to Firestore
-async function fbAddProperty(propData, images) {
-  await loadFirebase();
-  const user = getCurrentUser();
-  if (!user) return { success: false, error: 'يجب تسجيل الدخول أولاً' };
-
-  try {
-    const docRef = await db.collection('properties').add({
-      ...propData,
-      images: images || [],
-      ownerUID: user.uid,
-      ownerName: user.name || 'مجهول',
-      ownerPhone: user.phone || propData.phone,
+function fbAddProperty(propData, images) {
+  return loadFirebase().then(function() {
+    var user = getCurrentUser();
+    var data = Object.assign({}, propData, {
+      images:    images || [],
+      ownerUID:  user ? user.uid  : '',
+      ownerName: user ? (user.name || 'مستخدم') : 'مستخدم',
+      ownerPhone:propData.phone || '',
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      views: 0,
-      active: true,
+      views: 0, active: true,
       featured: (images && images.length > 0)
     });
-    return { success: true, id: docRef.id };
-  } catch (e) {
-    console.error('[FB] Add property error:', e);
-    return { success: false, error: 'فشل نشر الإعلان' };
-  }
+    return firebase.firestore().collection('properties').add(data);
+  }).then(function(ref) {
+    console.log('[عقاري] ✅ Property saved:', ref.id);
+    return { success: true, id: ref.id };
+  }).catch(function(e) {
+    console.error('[عقاري] ❌ Save error:', e);
+    return { success: false, error: e.message };
+  });
 }
 
-// Load all properties from Firestore (realtime)
-async function fbLoadProperties(callback) {
-  await loadFirebase();
-  return db.collection('properties')
-    .where('active', '==', true)
-    .orderBy('createdAt', 'desc')
-    .limit(100)
-    .onSnapshot(snapshot => {
-      const props = [];
-      snapshot.forEach(doc => {
-        props.push({ firestoreId: doc.id, ...doc.data() });
+/* تحميل العقارات realtime — يُطلق callback عند أي تغيير */
+function fbLoadProperties(callback) {
+  return loadFirebase().then(function() {
+    if (_propsUnsubscribe) _propsUnsubscribe();
+    _propsUnsubscribe = firebase.firestore()
+      .collection('properties')
+      .where('active', '==', true)
+      .orderBy('createdAt', 'desc')
+      .limit(200)
+      .onSnapshot(function(snapshot) {
+        var props = [];
+        snapshot.forEach(function(doc) {
+          var d = doc.data();
+          props.push({
+            id:          doc.id,
+            firestoreId: doc.id,
+            title:       d.title       || 'عقار',
+            price:       d.price       || 0,
+            type:        d.type        || 'sale',
+            category:    d.category    || 'apartment',
+            city:        d.city        || 'دمشق',
+            location:    d.location    || d.city || 'دمشق',
+            area:        d.area        || 0,
+            rooms:       d.rooms       || 0,
+            bathrooms:   d.bathrooms   || 0,
+            floor:       d.floor       || 0,
+            description: d.description || '',
+            features:    d.features    || [],
+            phone:       d.ownerPhone  || d.phone || '',
+            ownerName:   d.ownerName   || 'مستخدم',
+            ownerUID:    d.ownerUID    || '',
+            lat:         d.lat         || null,
+            lng:         d.lng         || null,
+            images:      d.images      || [],
+            featured:    d.featured    || false,
+            views:       d.views       || 0,
+            isFirebase:  true
+          });
+        });
+        callback(props);
+      }, function(err) {
+        console.error('[عقاري] Firestore error:', err.code, err.message);
       });
-      callback(props);
-    }, err => {
-      console.error('[FB] Load properties error:', err);
-    });
+    return _propsUnsubscribe;
+  });
 }
 
-// Load my properties
-async function fbLoadMyProperties(callback) {
-  await loadFirebase();
-  const user = getCurrentUser();
-  if (!user) return;
-  return db.collection('properties')
-    .where('ownerUID', '==', user.uid)
-    .orderBy('createdAt', 'desc')
-    .onSnapshot(snapshot => {
-      const props = [];
-      snapshot.forEach(doc => props.push({ firestoreId: doc.id, ...doc.data() }));
-      callback(props);
-    });
+function fbLoadMyProperties(callback) {
+  var user = getCurrentUser();
+  if (!user) { callback([]); return Promise.resolve(); }
+  return loadFirebase().then(function() {
+    return firebase.firestore().collection('properties')
+      .where('ownerUID', '==', user.uid)
+      .orderBy('createdAt', 'desc')
+      .onSnapshot(function(snapshot) {
+        var props = [];
+        snapshot.forEach(function(doc) {
+          var d = doc.data();
+          props.push(Object.assign({ id: doc.id, firestoreId: doc.id, isFirebase: true }, d));
+        });
+        callback(props);
+      });
+  });
 }
 
-// Increment view count
-async function fbIncrementView(firestoreId) {
+function fbIncrementView(firestoreId) {
   if (!firestoreId) return;
-  await loadFirebase();
-  try {
-    await db.collection('properties').doc(firestoreId).update({
+  loadFirebase().then(function() {
+    firebase.firestore().collection('properties').doc(firestoreId).update({
       views: firebase.firestore.FieldValue.increment(1)
-    });
-  } catch(e) {}
+    }).catch(function(){});
+  });
 }
 
-// Toggle favorite in Firestore
-async function fbToggleFavorite(firestoreId, isFav) {
-  await loadFirebase();
-  const user = getCurrentUser();
+function fbToggleFavorite(firestoreId, isFav) {
+  var user = getCurrentUser();
   if (!user) return;
-  const ref = db.collection('users').doc(user.uid);
-  if (isFav) {
-    await ref.update({ favorites: firebase.firestore.FieldValue.arrayUnion(firestoreId) });
-  } else {
-    await ref.update({ favorites: firebase.firestore.FieldValue.arrayRemove(firestoreId) });
-  }
+  loadFirebase().then(function() {
+    var ref = firebase.firestore().collection('users').doc(user.uid);
+    var op = isFav
+      ? firebase.firestore.FieldValue.arrayUnion(firestoreId)
+      : firebase.firestore.FieldValue.arrayRemove(firestoreId);
+    ref.update({ favorites: op }).catch(function() {
+      ref.set({ favorites: isFav ? [firestoreId] : [] }, { merge: true });
+    });
+  });
 }
 
-// Load favorites
-async function fbLoadFavorites(callback) {
-  await loadFirebase();
-  const user = getCurrentUser();
+function fbLoadFavorites(callback) {
+  var user = getCurrentUser();
   if (!user) { callback([]); return; }
-  const doc = await db.collection('users').doc(user.uid).get();
-  const favIds = doc.exists ? (doc.data().favorites || []) : [];
-  if (!favIds.length) { callback([]); return; }
-  // Load actual properties
-  const props = [];
-  for (const id of favIds) {
-    const p = await db.collection('properties').doc(id).get();
-    if (p.exists) props.push({ firestoreId: p.id, ...p.data() });
-  }
-  callback(props);
-}
-
-/* ═══════════════════════════════════════════════════════
-   MESSAGES FUNCTIONS
-═══════════════════════════════════════════════════════ */
-
-// Send message
-async function fbSendMessage(toUID, propId, propTitle, text) {
-  await loadFirebase();
-  const user = getCurrentUser();
-  if (!user) return { success: false };
-
-  const chatId = [user.uid, toUID].sort().join('_') + '_' + propId;
-
-  try {
-    // Add message
-    await db.collection('chats').doc(chatId).collection('messages').add({
-      text,
-      fromUID: user.uid,
-      fromName: user.name,
-      toUID,
-      propId,
-      propTitle,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      read: false
+  loadFirebase().then(function() {
+    firebase.firestore().collection('users').doc(user.uid).get().then(function(doc) {
+      var favIds = doc.exists ? (doc.data().favorites || []) : [];
+      if (!favIds.length) { callback([]); return; }
+      var promises = favIds.map(function(id) {
+        return firebase.firestore().collection('properties').doc(id).get();
+      });
+      Promise.all(promises).then(function(docs) {
+        var props = docs.filter(function(d){ return d.exists; }).map(function(d) {
+          return Object.assign({ id: d.id, firestoreId: d.id, isFirebase: true }, d.data());
+        });
+        callback(props);
+      });
     });
-
-    // Update chat metadata
-    await db.collection('chats').doc(chatId).set({
-      participants: [user.uid, toUID],
-      propId, propTitle,
-      lastMsg: text,
-      lastTime: firebase.firestore.FieldValue.serverTimestamp(),
-      [`unread_${toUID}`]: firebase.firestore.FieldValue.increment(1)
-    }, { merge: true });
-
-    return { success: true, chatId };
-  } catch(e) {
-    return { success: false };
-  }
+  });
 }
 
-// Load messages for a chat
-async function fbLoadMessages(chatId, callback) {
-  await loadFirebase();
-  return db.collection('chats').doc(chatId)
-    .collection('messages')
-    .orderBy('createdAt', 'asc')
-    .onSnapshot(snapshot => {
-      const msgs = [];
-      snapshot.forEach(doc => msgs.push({ id: doc.id, ...doc.data() }));
-      callback(msgs);
+/* ── MESSAGES ────────────────────────────────────────── */
+
+function fbSendMessage(toUID, propId, propTitle, text) {
+  var user = getCurrentUser();
+  if (!user) return Promise.resolve({ success: false });
+  return loadFirebase().then(function() {
+    var chatId = [user.uid, toUID].sort().join('_') + '_' + propId;
+    var db = firebase.firestore();
+    return db.collection('chats').doc(chatId).collection('messages').add({
+      text: text, fromUID: user.uid, fromName: user.name,
+      toUID: toUID, propId: propId, propTitle: propTitle,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(), read: false
+    }).then(function() {
+      var upd = { participants: [user.uid, toUID], propId: propId,
+        propTitle: propTitle, lastMsg: text,
+        lastTime: firebase.firestore.FieldValue.serverTimestamp() };
+      upd['unread_' + toUID] = firebase.firestore.FieldValue.increment(1);
+      return db.collection('chats').doc(chatId).set(upd, { merge: true });
+    }).then(function() {
+      return { success: true, chatId: chatId };
     });
+  }).catch(function() { return { success: false }; });
 }
 
-// Load all chats for current user
-async function fbLoadChats(callback) {
-  await loadFirebase();
-  const user = getCurrentUser();
+function fbLoadMessages(chatId, callback) {
+  return loadFirebase().then(function() {
+    return firebase.firestore().collection('chats').doc(chatId)
+      .collection('messages').orderBy('createdAt', 'asc')
+      .onSnapshot(function(snap) {
+        var msgs = [];
+        snap.forEach(function(doc) { msgs.push(Object.assign({ id: doc.id }, doc.data())); });
+        callback(msgs);
+      });
+  });
+}
+
+function fbLoadChats(callback) {
+  var user = getCurrentUser();
   if (!user) return;
-  return db.collection('chats')
-    .where('participants', 'array-contains', user.uid)
-    .orderBy('lastTime', 'desc')
-    .onSnapshot(snapshot => {
-      const chats = [];
-      snapshot.forEach(doc => chats.push({ chatId: doc.id, ...doc.data() }));
-      callback(chats);
-    });
+  return loadFirebase().then(function() {
+    return firebase.firestore().collection('chats')
+      .where('participants', 'array-contains', user.uid)
+      .orderBy('lastTime', 'desc')
+      .onSnapshot(function(snap) {
+        var chats = [];
+        snap.forEach(function(doc) { chats.push(Object.assign({ chatId: doc.id }, doc.data())); });
+        callback(chats);
+      });
+  });
 }
 
-// Export all functions globally
-window.fbRegister      = fbRegister;
-window.fbLogin         = fbLogin;
-window.fbLoginGoogle   = fbLoginGoogle;
-window.fbLogout        = fbLogout;
-window.getCurrentUser  = getCurrentUser;
-window.fbAddProperty   = fbAddProperty;
-window.fbLoadProperties= fbLoadProperties;
-window.fbLoadMyProperties = fbLoadMyProperties;
-window.fbIncrementView = fbIncrementView;
-window.fbToggleFavorite= fbToggleFavorite;
-window.fbLoadFavorites = fbLoadFavorites;
-window.fbSendMessage   = fbSendMessage;
-window.fbLoadMessages  = fbLoadMessages;
-window.fbLoadChats     = fbLoadChats;
-window.loadFirebase    = loadFirebase;
+/* ── INIT ON PAGE LOAD ───────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function() {
+  var page = (location.pathname.split('/').pop() || 'index').replace('.html','');
+
+  if (['index','map','details','favorites'].includes(page)) {
+    loadFirebase().then(function() {
+      fbLoadProperties(function(props) {
+        /* استبدال العقارات بنسخة Firebase */
+        window.allProperties = props;
+        window.myProperties  = props;
+
+        /* إعادة رسم الصفحة فوراً */
+        if (page === 'index' && typeof initIndex === 'function') {
+          initIndex();
+        } else if (page === 'map' && typeof loadAll === 'function') {
+          loadAll();
+        } else if (page === 'favorites' && typeof renderFavorites === 'function') {
+          renderFavorites();
+        } else if (page === 'details' && typeof renderDetails === 'function') {
+          renderDetails();
+        }
+      });
+    });
+  }
+});
+
+/* ── EXPORTS ─────────────────────────────────────────── */
+window.loadFirebase         = loadFirebase;
+window.fbRegister           = fbRegister;
+window.fbLogin              = fbLogin;
+window.fbLoginGoogle        = fbLoginGoogle;
+window.fbLogout             = fbLogout;
+window.getCurrentUser       = getCurrentUser;
+window.saveUserLocal        = saveUserLocal;
+window.fbAddProperty        = fbAddProperty;
+window.fbLoadProperties     = fbLoadProperties;
+window.fbLoadMyProperties   = fbLoadMyProperties;
+window.fbIncrementView      = fbIncrementView;
+window.fbToggleFavorite     = fbToggleFavorite;
+window.fbLoadFavorites      = fbLoadFavorites;
+window.fbSendMessage        = fbSendMessage;
+window.fbLoadMessages       = fbLoadMessages;
+window.fbLoadChats          = fbLoadChats;
