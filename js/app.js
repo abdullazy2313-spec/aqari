@@ -1526,3 +1526,117 @@ window.initCardSwipes   = initCardSwipes;
 
 window.conversations    = conversations_data;
 window.notifications    = notifications_data;
+
+/* ═══════════════════════════════════════════════════════
+   FIREBASE BRIDGE — ربط Firebase بالتطبيق
+   يعمل بالتوازي مع localStorage للتوافق
+═══════════════════════════════════════════════════════ */
+
+// عند تحميل الصفحة: حمّل العقارات من Firebase
+window.addEventListener('load', async function() {
+  if (typeof loadFirebase === 'undefined') return;
+
+  const page = (location.pathname.split('/').pop() || 'index').replace('.html','');
+
+  // صفحات تحتاج بيانات Firebase
+  if (['index','favorites','map','details'].includes(page)) {
+    try {
+      await loadFirebase();
+      // تحميل العقارات من Firestore بشكل realtime
+      fbLoadProperties(function(props) {
+        if (!props || !props.length) return;
+        // دمج مع العقارات التجريبية
+        var fbProps = props.map(function(p, i) {
+          return {
+            id: p.firestoreId || ('fb_' + i),
+            firestoreId: p.firestoreId,
+            title: p.title || 'عقار',
+            price: p.price || 0,
+            type: p.type || 'sale',
+            category: p.category || 'apartment',
+            city: p.city || 'دمشق',
+            location: p.location || p.city || 'دمشق',
+            area: p.area || 0,
+            rooms: p.rooms || 0,
+            bathrooms: p.bathrooms || 0,
+            floor: p.floor || 0,
+            description: p.description || '',
+            features: p.features || [],
+            phone: p.ownerPhone || p.phone || '0911000000',
+            ownerName: p.ownerName || 'مجهول',
+            ownerUID: p.ownerUID || '',
+            lat: p.lat || null,
+            lng: p.lng || null,
+            images: p.images || [],
+            featured: p.featured || false,
+            views: p.views || 0,
+            isFirebase: true
+          };
+        });
+
+        // دمج مع allProperties
+        var existing = (window.allProperties || []).filter(function(p){ return !p.isFirebase; });
+        window.allProperties = fbProps.concat(existing);
+        window.myProperties = window.allProperties;
+
+        // إعادة رسم الصفحة
+        if (page === 'index' && typeof renderIndex === 'function') renderIndex();
+        if (page === 'map' && typeof loadMarkers === 'function') loadMarkers();
+      });
+    } catch(e) {
+      console.warn('[FB Bridge] Error:', e);
+    }
+  }
+
+  // تحميل مفضلتي من Firebase
+  if (page === 'favorites') {
+    try {
+      await loadFirebase();
+      fbLoadFavorites(function(props) {
+        if (!props.length) return;
+        window.allProperties = (window.allProperties || []);
+        props.forEach(function(p) {
+          if (!window.allProperties.find(function(x){ return x.firestoreId === p.firestoreId; })) {
+            window.allProperties.push(p);
+          }
+        });
+        var favIds = props.map(function(p){ return p.firestoreId; });
+        window.favorites = favIds;
+        if (typeof renderFavorites === 'function') renderFavorites();
+      });
+    } catch(e) {}
+  }
+});
+
+// عند نشر عقار: حفظ في Firebase أيضاً
+var _origPublish = window.publishProperty;
+window.publishProperty = async function() {
+  // تنفيذ الدالة الأصلية أولاً (localStorage)
+  if (_origPublish) _origPublish();
+
+  // ثم حفظ في Firebase
+  if (typeof fbAddProperty === 'undefined') return;
+  try {
+    var p = window._lastPublishedProp;
+    if (!p) return;
+    var imgs = window.UPLOAD_IMGS || [];
+    await fbAddProperty(p, imgs);
+    console.log('[FB] Property saved to Firestore ✅');
+  } catch(e) {
+    console.warn('[FB] Save error:', e);
+  }
+};
+
+// تسجيل الخروج عبر Firebase
+var _origLogout = window.handleLogout;
+window.handleLogout = async function() {
+  if (typeof fbLogout !== 'undefined') {
+    try { await fbLogout(); } catch(e) {}
+  }
+  if (_origLogout) _origLogout();
+  else {
+    localStorage.clear();
+    window.location.href = 'login.html';
+  }
+};
+
