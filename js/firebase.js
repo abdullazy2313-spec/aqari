@@ -340,6 +340,18 @@ function fbLoadChats(cb) {
   }
 })();
 
+
+/* ── حذف العقار ── */
+function fbDeleteProperty(firestoreId) {
+  return loadFirebase().then(function() {
+    return firebase.firestore().collection('properties').doc(firestoreId).update({ active: false });
+  }).then(function() {
+    return { success: true };
+  }).catch(function(e) {
+    return { success: false, error: e.message };
+  });
+}
+
 /* ── EXPORTS ── */
 window.loadFirebase        = loadFirebase;
 window.fbRegister          = fbRegister;
@@ -357,3 +369,4 @@ window.fbLoadFavorites     = fbLoadFavorites;
 window.fbSendMessage       = fbSendMessage;
 window.fbLoadMessages      = fbLoadMessages;
 window.fbLoadChats         = fbLoadChats;
+window.fbDeleteProperty     = fbDeleteProperty;
