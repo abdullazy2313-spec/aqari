@@ -1009,7 +1009,7 @@ function publishProperty() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-left:8px"></i> جاري النشر...';
   }
 
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
       const val = (id, def = '') => {
         const el = document.getElementById(id);
@@ -1094,6 +1094,42 @@ function publishProperty() {
       myProperties.push(newProp);
       syncAll();
       saveData();
+
+      // ═══ حفظ في Firebase Firestore مباشرةً ═══
+      if (typeof fbAddProperty !== 'undefined') {
+        try {
+          const user = typeof getCurrentUser !== 'undefined' ? getCurrentUser() : null;
+          const fbProp = {
+            title:       newProp.title,
+            price:       newProp.price,
+            type:        newProp.type,
+            category:    newProp.category,
+            city:        newProp.city,
+            location:    newProp.location,
+            area:        newProp.area,
+            rooms:       newProp.rooms,
+            bathrooms:   newProp.bathrooms,
+            floor:       newProp.floor || 0,
+            description: newProp.description,
+            features:    newProp.features,
+            phone:       newProp.phone,
+            lat:         newProp.lat,
+            lng:         newProp.lng,
+            featured:    newProp.featured,
+            ownerUID:    user ? user.uid : '',
+            ownerName:   user ? (user.name || 'مستخدم') : 'مستخدم',
+            ownerPhone:  newProp.phone,
+            images:      uploadedImgs,
+            active:      true,
+            views:       0,
+          };
+          await fbAddProperty(fbProp, uploadedImgs);
+          console.log('[عقاري] ✅ Saved to Firestore');
+        } catch(fbErr) {
+          console.warn('[عقاري] Firebase save warning:', fbErr);
+        }
+      }
+      // ══════════════════════════════════════════
 
       addNotif({
         type: 'new',
@@ -1608,24 +1644,7 @@ window.addEventListener('load', async function() {
   }
 });
 
-// عند نشر عقار: حفظ في Firebase أيضاً
-var _origPublish = window.publishProperty;
-window.publishProperty = async function() {
-  // تنفيذ الدالة الأصلية أولاً (localStorage)
-  if (_origPublish) _origPublish();
-
-  // ثم حفظ في Firebase
-  if (typeof fbAddProperty === 'undefined') return;
-  try {
-    var p = window._lastPublishedProp;
-    if (!p) return;
-    var imgs = window.UPLOAD_IMGS || [];
-    await fbAddProperty(p, imgs);
-    console.log('[FB] Property saved to Firestore ✅');
-  } catch(e) {
-    console.warn('[FB] Save error:', e);
-  }
-};
+// Firebase نشر العقار — مدمج مباشرة في publishProperty (تم الإصلاح)
 
 // تسجيل الخروج عبر Firebase
 var _origLogout = window.handleLogout;
