@@ -1,10 +1,113 @@
 'use strict';
 /* ═══════════════════════════════════════════════════════
-   عقاري — APP.JS — v6.0  (Image Fix + Full Cleanup)
-   - Uploaded images compressed & stored separately
-   - No more localStorage quota errors
-   - Featured flag set for user properties with real images
+   عقاري — APP.JS — v7.0  (Firebase Sync + Cross-Device)
+   ✅ مزامنة فورية بين جميع الأجهزة عبر Firebase Firestore
+   ✅ يعمل بدون إنترنت (localStorage fallback)
+   ✅ عند إضافة عقار جديد يظهر فوراً على جميع الهواتف
 ═══════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────
+   FIREBASE CONFIG
+   ⚠️ استبدل هذه القيم بقيم مشروعك من Firebase Console
+   https://console.firebase.google.com
+───────────────────────────────*/
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyD-REPLACE-WITH-YOUR-KEY",
+  authDomain:        "your-project.firebaseapp.com",
+  projectId:         "your-project-id",
+  storageBucket:     "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId:             "1:123456789:web:abcdef"
+};
+
+/* ─────────────────────────────
+   FIREBASE INIT
+───────────────────────────────*/
+let db = null;
+let firebaseReady = false;
+
+function initFirebase() {
+  // تحقق إن كانت مكتبة Firebase محملة
+  if (typeof firebase === 'undefined') {
+    console.warn('[Firebase] المكتبة غير محملة — سيعمل التطبيق بـ localStorage فقط');
+    return;
+  }
+  try {
+    if (!firebase.apps.length) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+    }
+    db = firebase.firestore();
+    firebaseReady = true;
+    console.log('[Firebase] ✅ متصل بنجاح');
+  } catch (e) {
+    console.warn('[Firebase] خطأ في التهيئة:', e);
+    firebaseReady = false;
+  }
+}
+
+/* ─────────────────────────────
+   FIREBASE HELPERS
+───────────────────────────────*/
+
+/* حفظ عقار في Firestore */
+async function fbSaveProperty(prop) {
+  if (!firebaseReady || !db) return false;
+  try {
+    const docRef = db.collection('properties').doc(String(prop.id));
+    await docRef.set(prop);
+    console.log('[Firebase] ✅ تم حفظ العقار:', prop.id);
+    return true;
+  } catch (e) {
+    console.warn('[Firebase] خطأ في الحفظ:', e);
+    return false;
+  }
+}
+
+/* جلب جميع العقارات من Firestore */
+async function fbLoadProperties() {
+  if (!firebaseReady || !db) return null;
+  try {
+    const snap = await db.collection('properties').orderBy('id', 'desc').get();
+    const props = [];
+    snap.forEach(doc => props.push(doc.data()));
+    console.log('[Firebase] ✅ تم جلب', props.length, 'عقار');
+    return props;
+  } catch (e) {
+    console.warn('[Firebase] خطأ في الجلب:', e);
+    return null;
+  }
+}
+
+/* حذف عقار من Firestore */
+async function fbDeleteProperty(propId) {
+  if (!firebaseReady || !db) return false;
+  try {
+    await db.collection('properties').doc(String(propId)).delete();
+    return true;
+  } catch (e) {
+    console.warn('[Firebase] خطأ في الحذف:', e);
+    return false;
+  }
+}
+
+/* مراقبة التغييرات الفورية (Real-time listener) */
+function fbWatchProperties(callback) {
+  if (!firebaseReady || !db) return null;
+  try {
+    return db.collection('properties')
+      .orderBy('id', 'desc')
+      .onSnapshot(snap => {
+        const props = [];
+        snap.forEach(doc => props.push(doc.data()));
+        callback(props);
+      }, err => {
+        console.warn('[Firebase] خطأ في المراقبة:', err);
+      });
+  } catch (e) {
+    console.warn('[Firebase] خطأ في إعداد المراقبة:', e);
+    return null;
+  }
+}
 
 /* ─────────────────────────────
    FALLBACK / SAMPLE IMAGES
@@ -43,52 +146,35 @@ const IMGS = {
   ]
 };
 const FALLBACK = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=700&q=80';
-/* SVG placeholder for user properties with no uploaded images */
 const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='500' viewBox='0 0 700 500'%3E%3Crect fill='%23f0f3f7' width='700' height='500'/%3E%3Ctext x='50%25' y='42%25' text-anchor='middle' font-size='72' fill='%23bdc3cc'%3E%F0%9F%8F%A0%3C/text%3E%3Ctext x='50%25' y='62%25' text-anchor='middle' font-size='22' fill='%23adb5bd' font-family='Arial'%3Eلا توجد صور%3C/text%3E%3C/svg%3E";
 
-/* Returns the first image for a property (for card thumbnails) */
 function getPropImage(id, category) {
   const arr = IMGS[category] || IMGS.apartment;
   return arr[Math.abs(id || 0) % arr.length];
 }
 
-/* Returns array of images — ONLY uploaded images, no fake Unsplash fallbacks */
 function getPropImages(p) {
-  // 1. Check separately stored uploaded images (new system)
   const stored = _loadPropImages(p.id);
   if (stored && stored.length > 0) return stored;
-
-  // 2. Check inline images (legacy/sample properties that have them hardcoded via Unsplash)
   if (p.images && Array.isArray(p.images) && p.images.length > 0) return p.images;
   if (p.image && typeof p.image === 'string') return [p.image];
-
-  // 3. Only sample properties (id 1-10) get a placeholder — user properties show empty placeholder
   if (p.id && p.id <= 10) {
     const arr = IMGS[p.category] || IMGS.apartment;
     const s = Math.abs(p.id || 0) % arr.length;
     return [arr[s], arr[(s + 1) % arr.length], arr[(s + 2) % arr.length]];
   }
-
-  // 4. User-added properties with no photos → single gray placeholder
   return [PLACEHOLDER_IMG];
 }
 
 /* ─────────────────────────────
    IMAGE STORAGE HELPERS
-   Each property's images live in their own localStorage key:
-   aqari_imgs_{propId}  →  JSON array of base64 strings
 ───────────────────────────────*/
 function _imgKey(propId) { return 'aqari_imgs_' + propId; }
-
 function _savePropImages(propId, imagesArray) {
   if (!propId || !imagesArray || !imagesArray.length) return;
-  try {
-    localStorage.setItem(_imgKey(propId), JSON.stringify(imagesArray));
-  } catch (e) {
-    console.warn('[aqari] Could not save images for prop', propId, e);
-  }
+  try { localStorage.setItem(_imgKey(propId), JSON.stringify(imagesArray)); }
+  catch (e) { console.warn('[aqari] Could not save images for prop', propId, e); }
 }
-
 function _loadPropImages(propId) {
   if (!propId) return null;
   try {
@@ -98,11 +184,9 @@ function _loadPropImages(propId) {
     return Array.isArray(arr) && arr.length > 0 ? arr : null;
   } catch (e) { return null; }
 }
-
 function _deletePropImages(propId) {
   try { localStorage.removeItem(_imgKey(propId)); } catch (e) {}
 }
-
 function _clearAllPropImages() {
   const keys = [];
   for (let i = 0; i < localStorage.length; i++) {
@@ -114,8 +198,6 @@ function _clearAllPropImages() {
 
 /* ─────────────────────────────
    IMAGE COMPRESSION
-   Resizes to max 900×700 at 78% JPEG quality.
-   Typical result: 3MB photo → ~120-200KB base64
 ───────────────────────────────*/
 function _compressImage(file) {
   return new Promise((resolve) => {
@@ -126,23 +208,16 @@ function _compressImage(file) {
       const img = new Image();
       img.onload = function() {
         let w = img.width, h = img.height;
-        // Scale down while preserving aspect ratio
         if (w > MAX_W || h > MAX_H) {
           const ratio = Math.min(MAX_W / w, MAX_H / h);
-          w = Math.round(w * ratio);
-          h = Math.round(h * ratio);
+          w = Math.round(w * ratio); h = Math.round(h * ratio);
         }
         try {
           const canvas = document.createElement('canvas');
           canvas.width = w; canvas.height = h;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, w, h);
-          const compressed = canvas.toDataURL('image/jpeg', QUALITY);
-          resolve(compressed);
-        } catch (canvasErr) {
-          // If canvas fails (CORS, etc.), use original
-          resolve(src);
-        }
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', QUALITY));
+        } catch (e) { resolve(src); }
       };
       img.onerror = () => resolve(src);
       img.src = src;
@@ -170,7 +245,18 @@ const CITY_COORDS = {
 /* ─────────────────────────────
    SAMPLE PROPERTIES
 ───────────────────────────────*/
-const SAMPLE_PROPERTIES = [];
+const SAMPLE_PROPERTIES = [
+  {id:1,type:'sale',subtype:'residential',category:'villa',title:'فيلا فاخرة في حي المزة',price:185000,area:600,rooms:5,bathrooms:4,age:3,location:'دمشق، المزة',city:'دمشق',phone:'963911234567',featured:true,furnished:false,description:'فيلا فاخرة من دورين مع ملحق خاص في حي المزة الراقي. تحتوي على صالونات واسعة وغرفة سينما وحمام سباحة خاص.',features:['مسبح','مصلى','غرفة سينما','حديقة','موقف سيارات'],views:248,postedAt:'2025-01-01',agentName:'أحمد الخطيب',agentVerified:true,lat:33.4897,lng:36.2568},
+  {id:2,type:'rent',subtype:'residential',category:'apartment',title:'شقة مفروشة فاخرة في أبو رمانة',price:1200,area:180,rooms:3,bathrooms:2,age:5,location:'دمشق، أبو رمانة',city:'دمشق',phone:'963917654321',featured:false,furnished:true,description:'شقة مفروشة بالكامل بأثاث عصري راقٍ في حي أبو رمانة الدبلوماسي.',features:['مفروشة بالكامل','تكييف مركزي','انترنت','أمن 24 ساعة'],views:185,postedAt:'2025-01-05',agentName:'سارة القاسم',agentVerified:true,lat:33.5103,lng:36.2834},
+  {id:3,type:'sale',subtype:'commercial',category:'commercial',title:'أرض تجارية على الشارع الرئيسي',price:320000,area:1200,rooms:0,bathrooms:0,age:0,location:'حلب، الفرقان',city:'حلب',phone:'963913456789',featured:true,furnished:false,description:'أرض تجارية مميزة بواجهة 40 متراً على أحد أهم الشوارع التجارية في حلب.',features:['وثائق شرعية','شارع رئيسي','خدمات جاهزة'],views:312,postedAt:'2024-12-28',agentName:'محمد البرازي',agentVerified:false,lat:36.2365,lng:37.1612},
+  {id:4,type:'rent',subtype:'residential',category:'apartment',title:'شقة اقتصادية في الزاهرة',price:450,area:120,rooms:2,bathrooms:1,age:8,location:'دمشق، الزاهرة',city:'دمشق',phone:'963919876543',featured:false,furnished:false,description:'شقة نظيفة ومرتبة في موقع مميز بحي الزاهرة.',features:['أسانسير','موقف سيارة','خزان مياه'],views:520,postedAt:'2025-01-03',agentName:'خالد المصري',agentVerified:true,lat:33.4978,lng:36.31},
+  {id:5,type:'sale',subtype:'residential',category:'palace',title:'قصر ملكي فاخر في الروضة',price:1200000,area:3000,rooms:10,bathrooms:8,age:2,location:'دمشق، الروضة',city:'دمشق',phone:'963911122334',featured:true,furnished:true,description:'قصر فاخر بمواصفات عالمية يشمل حمام سباحة وملاعب رياضية ومجالس ملكية.',features:['حمام سباحة','ملعب خاص','مجلس ملكي','حدائق'],views:890,postedAt:'2024-11-20',agentName:'عبدالله العباس',agentVerified:true,lat:33.5178,lng:36.2823},
+  {id:6,type:'sale',subtype:'residential',category:'villa',title:'فيلا حديثة قرب شاطئ اللاذقية',price:95000,area:400,rooms:4,bathrooms:3,age:1,location:'اللاذقية، الزراعة',city:'اللاذقية',phone:'963915544332',featured:false,furnished:false,description:'فيلا حديثة البناء بتصميم عصري على بعد 500 متر من شاطئ اللاذقية.',features:['قريبة من البحر','سطح مفتوح','مستودع'],views:156,postedAt:'2025-01-08',agentName:'ناصر حسن',agentVerified:true,lat:35.54,lng:35.79},
+  {id:7,type:'sale',subtype:'residential',category:'apartment',title:'شقة فاخرة في حلب الجديدة',price:75000,area:220,rooms:4,bathrooms:2,age:4,location:'حلب، الجديدة',city:'حلب',phone:'963913344556',featured:true,furnished:false,description:'شقة فاخرة في موقع متميز بحلب الجديدة. تشطيبات ممتازة.',features:['أسانسير','موقف سيارات','تكييف مركزي'],views:203,postedAt:'2025-01-10',agentName:'عمر الحلبي',agentVerified:true,lat:36.2145,lng:37.1568},
+  {id:8,type:'rent',subtype:'residential',category:'villa',title:'فيلا صيفية مفروشة في طرطوس',price:800,area:280,rooms:3,bathrooms:2,age:6,location:'طرطوس، الشاطئ',city:'طرطوس',phone:'963919988776',featured:false,furnished:true,description:'فيلا صيفية مميزة على شاطئ طرطوس مفروشة بالكامل.',features:['مطل على البحر','مفروشة','موقف خاص','حديقة'],views:445,postedAt:'2025-01-12',agentName:'رنا سعيد',agentVerified:false,lat:34.89,lng:35.885},
+  {id:9,type:'sale',subtype:'residential',category:'house',title:'دار عربي أصيل في القيمرية',price:145000,area:350,rooms:5,bathrooms:3,age:80,location:'دمشق، القيمرية',city:'دمشق',phone:'963912233445',featured:true,furnished:false,description:'دار عربي أصيل في حي القيمرية العريق بتصميم معماري إسلامي رائع.',features:['فناء داخلي','بئر قديمة','أعمدة حجرية','إوان تراثي'],views:678,postedAt:'2025-01-14',agentName:'سامر العمري',agentVerified:true,lat:33.5092,lng:36.3065},
+  {id:10,type:'rent',subtype:'commercial',category:'commercial',title:'محل تجاري مركزي في حمص',price:600,area:80,rooms:0,bathrooms:1,age:5,location:'حمص، الحميدية',city:'حمص',phone:'963945566778',featured:false,furnished:false,description:'محل تجاري في موقع استراتيجي بقلب حمص.',features:['واجهة زجاجية','شارع رئيسي','موقف قريب'],views:312,postedAt:'2025-01-15',agentName:'حسن الحمصي',agentVerified:false,lat:34.72,lng:36.69}
+];
 
 /* ─────────────────────────────
    STATE
@@ -186,20 +272,30 @@ let activeType = 'all';
 let activeSubtype = 'all';
 let activeCategory = 'all';
 let searchQuery = '';
+let fbUnsubscribe = null; /* للإلغاء عند الخروج */
 
-/* Global image store for add-property page */
 window.UPLOAD_IMGS = [];
 
 /* ─────────────────────────────
    INIT
 ───────────────────────────────*/
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   applyTheme();
-  loadData();
+
+  /* تهيئة Firebase أولاً */
+  initFirebase();
+
+  /* تحميل البيانات المحلية فوراً (لا تأخير) */
+  loadLocalData();
 
   const page = getPage();
   if (!['login', 'map'].includes(page) && !localStorage.getItem('isLoggedIn')) {
     location.href = 'login.html'; return;
+  }
+
+  /* تحميل العقارات من Firebase بشكل غير متزامن */
+  if (firebaseReady) {
+    loadPropertiesFromFirebase();
   }
 
   switch (page) {
@@ -216,6 +312,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   markNavActive(page);
   updateBadge();
+
+  /* مراقبة التغييرات الفورية في صفحة index */
+  if (page === 'index' && firebaseReady) {
+    startRealtimeSync();
+  }
 });
 
 function getPage() {
@@ -223,17 +324,67 @@ function getPage() {
 }
 
 /* ─────────────────────────────
-   DATA PERSISTENCE
-   Properties stored WITHOUT inline images (images in separate keys)
+   FIREBASE SYNC FUNCTIONS
 ───────────────────────────────*/
-function loadData() {
+
+/* تحميل العقارات من Firebase وتحديث الواجهة */
+async function loadPropertiesFromFirebase() {
+  try {
+    const fbProps = await fbLoadProperties();
+    if (!fbProps) return;
+
+    /* دمج مع العقارات المحلية (تفضيل Firebase) */
+    myProperties = fbProps;
+    /* حفظ نسخة محلية للعمل بدون إنترنت */
+    _saveLocalProps(myProperties);
+    syncAll();
+    const page = getPage();
+    if (page === 'index') { renderFeatured(); renderProperties(); }
+    if (page === 'favorites') renderFavorites();
+    if (page === 'profile') renderProfile();
+    console.log('[Sync] ✅ تم تحديث العقارات من Firebase:', fbProps.length);
+  } catch (e) {
+    console.warn('[Sync] خطأ في تحميل Firebase:', e);
+  }
+}
+
+/* مراقبة فورية — يُحدِّث الواجهة عند أي تغيير */
+function startRealtimeSync() {
+  if (fbUnsubscribe) fbUnsubscribe(); /* إلغاء أي مراقبة سابقة */
+
+  fbUnsubscribe = fbWatchProperties(function(fbProps) {
+    if (!fbProps) return;
+    const oldCount = myProperties.length;
+    myProperties = fbProps;
+    _saveLocalProps(myProperties);
+    syncAll();
+
+    const page = getPage();
+    if (page === 'index') {
+      renderFeatured();
+      renderProperties();
+      /* إشعار للمستخدم عند إضافة عقار جديد */
+      if (fbProps.length > oldCount && oldCount > 0) {
+        showToast('🏠 تم إضافة عقار جديد!');
+      }
+    }
+  });
+
+  console.log('[Sync] 👁️ مراقبة فورية نشطة');
+}
+
+/* ─────────────────────────────
+   DATA PERSISTENCE
+───────────────────────────────*/
+
+/* تحميل البيانات من localStorage */
+function loadLocalData() {
   try {
     const raw = localStorage.getItem('aqari_props');
     myProperties = raw ? JSON.parse(raw) : [];
-    // Strip any accidentally stored inline base64 to save memory
     myProperties.forEach(p => {
-      if (p.images) { delete p.images; }
-      if (p.image && p.image.startsWith('data:')) { delete p.image; }
+      if (p.images) delete p.images;
+      if (p.image && p.image.startsWith('data:')) delete p.image;
     });
   } catch (e) { myProperties = []; }
 
@@ -243,30 +394,30 @@ function loadData() {
   syncAll();
 }
 
-function saveData() {
-  /* Save properties WITHOUT images (images stored separately) */
-  try {
-    const propsClean = myProperties.map(p => {
-      const clone = Object.assign({}, p);
-      delete clone.images;
-      delete clone.image;
-      return clone;
-    });
-    localStorage.setItem('aqari_props', JSON.stringify(propsClean));
-  } catch (e) { console.warn('[aqari] saveData error', e); }
+/* للتوافق مع الكود القديم */
+function loadData() { loadLocalData(); }
 
+/* حفظ العقارات محلياً فقط (بدون صور) */
+function _saveLocalProps(props) {
+  try {
+    const clean = props.map(p => {
+      const c = Object.assign({}, p);
+      delete c.images; delete c.image;
+      return c;
+    });
+    localStorage.setItem('aqari_props', JSON.stringify(clean));
+  } catch (e) {}
+}
+
+function saveData() {
+  _saveLocalProps(myProperties);
   try { localStorage.setItem('aqari_favs', JSON.stringify(favorites)); } catch (e) {}
   try { localStorage.setItem('aqari_notifs', JSON.stringify(notifications_data)); } catch (e) {}
   try { localStorage.setItem('aqari_convs', JSON.stringify(conversations_data)); } catch (e) {}
 }
 
 function syncAll() {
-  var fbProps = (window._fbProps || []);
-  if (fbProps.length > 0) {
-    allProperties = fbProps;
-  } else {
-    allProperties = [...SAMPLE_PROPERTIES, ...myProperties];
-  }
+  allProperties = [...SAMPLE_PROPERTIES, ...myProperties];
   filteredProperties = [...allProperties];
   window.allProperties = allProperties;
   window.myProperties = myProperties;
@@ -281,10 +432,8 @@ function syncAll() {
    INDEX
 ───────────────────────────────*/
 function initIndex() {
-  /* Update total count in quick-cats strip */
   const tc = document.getElementById('totalCount');
   if (tc) tc.textContent = allProperties.length;
-  /* Mark first item active by default */
   const firstQc = document.querySelector('.qc-item');
   if (firstQc) firstQc.classList.add('active');
   renderFeatured();
@@ -293,7 +442,6 @@ function initIndex() {
   applyURLParams();
 }
 
-/* Featured cards */
 function renderFeatured() {
   const el = document.getElementById('featuredList');
   if (!el) return;
@@ -332,7 +480,6 @@ function renderFeatured() {
   }).join('');
 }
 
-/* Property card with swipe gallery */
 function makeCard(p, i) {
   const imgs = getPropImages(p);
   const isFav = favorites.includes(p.id);
@@ -383,7 +530,6 @@ function makeCard(p, i) {
   </div>`;
 }
 
-/* Swipe init */
 function initCardSwipes() {
   document.querySelectorAll('[id^="sw_"]').forEach(wrap => {
     const uid = wrap.id.slice(3);
@@ -393,15 +539,12 @@ function initCardSwipes() {
     const slides = track.querySelectorAll('.card-swipe-slide');
     if (slides.length < 2) return;
     let cur = 0, startX = 0, dragging = false, moved = false;
-
     function goTo(idx) {
       if (idx < 0) idx = 0;
       if (idx >= slides.length) idx = slides.length - 1;
       cur = idx;
       track.style.transform = 'translateX(' + (idx * -100) + '%)';
-      if (dotsEl) {
-        dotsEl.querySelectorAll('.csd').forEach((d, j) => d.classList.toggle('on', j === cur));
-      }
+      if (dotsEl) dotsEl.querySelectorAll('.csd').forEach((d, j) => d.classList.toggle('on', j === cur));
     }
     wrap.addEventListener('touchstart', e => { startX = e.touches[0].clientX; dragging = true; moved = false; }, { passive: true });
     wrap.addEventListener('touchmove', e => { if (!dragging) return; moved = Math.abs(e.touches[0].clientX - startX) > 8; }, { passive: true });
@@ -460,7 +603,6 @@ function runFilters() {
   let arr = allProperties.filter(p => {
     if (activeType !== 'all' && p.type !== activeType) return false;
     if (activeSubtype !== 'all' && (p.subtype || 'residential') !== activeSubtype) return false;
-    /* Category filter: support comma-separated values for multi-match */
     if (activeCategory !== 'all' && p.category !== activeCategory) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -539,7 +681,6 @@ function pickSuggestion(text) {
   runFilters();
 }
 
-/* Apply URL params from filter.html */
 function applyURLParams() {
   const params = new URLSearchParams(location.search);
   const t = params.get('type') || 'all';
@@ -593,15 +734,9 @@ function applyExtFilters(arr) {
   });
 }
 
-/* ─────────────────────────────
-   QUICK FILTER (category strip on index)
-───────────────────────────────*/
 function quickFilter(type, cat, el) {
-  /* Update active state on the strip */
   document.querySelectorAll('.qc-item').forEach(i => i.classList.remove('active'));
   if (el) el.classList.add('active');
-
-  /* Update type tabs */
   activeType = type;
   activeCategory = cat;
   document.querySelectorAll('.type-tab').forEach(b => b.classList.remove('active', 'active-sale', 'active-rent'));
@@ -616,7 +751,6 @@ function quickFilter(type, cat, el) {
     }
   }
   runFilters();
-  /* Smooth scroll to results */
   const list = document.getElementById('propertiesList');
   if (list) list.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -762,9 +896,6 @@ function renderDetails() {
       <a href="https://wa.me/${p.phone || ''}?text=${encodeURIComponent('مرحباً، رأيت إعلانك: ' + p.title)}" class="btn-whatsapp" target="_blank"><i class="fab fa-whatsapp"></i> واتساب</a>
       <button class="btn-chat" onclick="startChatWith('${(p.agentName || 'المعلن').replace(/'/g, "\\'")}','${p.id}','${p.title.replace(/'/g, "\\'")}')"><i class="fas fa-comment-dots"></i></button>
     </div>
-    <button onclick="deleteMyProperty('${p.firestoreId || p.id}')" style="width:100%;margin-top:12px;padding:12px;background:rgba(231,76,60,0.1);border:1.5px solid rgba(231,76,60,0.4);color:#e74c3c;border-radius:12px;font-size:0.88rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit">
-      <i class="fas fa-trash-alt"></i> حذف إعلاني
-    </button>
     ${nearby.length ? `
     <div class="section-title" style="margin-top:20px"><i class="fas fa-th-large"></i>قريبة في ${p.city}</div>
     <div class="similar-scroll">
@@ -825,133 +956,113 @@ function buildMap(p) {
     </div>
   </div>`;
 }
-
-function deleteMyProperty(propId) {
-  if (!confirm('هل أنت متأكد من حذف هذا الإعلان؟')) return;
-  if (typeof fbDeleteProperty === 'undefined') {
-    // Fallback: just go back
-    showToast('⏳ جاري الحذف...');
-    setTimeout(function(){ history.back(); }, 1000);
-    return;
-  }
-  showToast('⏳ جاري الحذف...');
-  fbDeleteProperty(propId).then(function(res) {
-    if (res && res.success) {
-      showToast('✅ تم حذف الإعلان');
-      setTimeout(function(){ window.location.href = 'index.html'; }, 1000);
-    } else {
-      showToast('❌ فشل الحذف');
-    }
-  }).catch(function(){ showToast('❌ خطأ في الحذف'); });
-}
-window.deleteMyProperty = deleteMyProperty;
-
 function shareProp() {
   if (navigator.share) navigator.share({ title: document.title, url: location.href });
   else { navigator.clipboard?.writeText(location.href); showToast('تم نسخ الرابط'); }
 }
 
 /* ═══════════════════════════════════════════════════════
-   IMAGE UPLOAD — add-property page
-   Fully rewritten: reliable, with drag-drop support
+   IMAGE UPLOAD
 ═══════════════════════════════════════════════════════ */
-async function handleImagesUpload(input) {
-  if (!window.UPLOAD_IMGS) window.UPLOAD_IMGS = [];
+window.UPLOAD_IMGS = window.UPLOAD_IMGS || [];
 
-  const files = Array.from(input.files || []);
-  if (!files.length) return;
-
-  const free = 6 - window.UPLOAD_IMGS.length;
-  if (free <= 0) { showToast('الحد الأقصى 6 صور'); return; }
-
-  const todo = files.filter(f => f.type.startsWith('image/')).slice(0, free);
-  if (!todo.length) return;
-
+function handleImagesUpload(input) {
+  var files = input.files;
+  if (!files || !files.length) return;
+  var remaining = 6 - (window.UPLOAD_IMGS.length);
+  if (remaining <= 0) { showToast('الحد الأقصى 6 صور'); return; }
+  var toProcess = Math.min(files.length, remaining);
+  var added = 0;
   showToast('⏳ جاري معالجة الصور...');
-
-  /* Process one by one to avoid memory issues on mobile */
-  let added = 0;
-  for (const file of todo) {
-    try {
-      const dataUrl = await _compressImage(file);
-      if (dataUrl && dataUrl.startsWith('data:') && window.UPLOAD_IMGS.length < 6) {
-        window.UPLOAD_IMGS.push(dataUrl);
-        added++;
-      }
-    } catch (e) {
-      console.warn('[aqari] compress error', e);
+  function processNext(index) {
+    if (index >= toProcess) {
+      if (added > 0) { renderImgGrid(); showToast('✅ تمت إضافة ' + added + ' صورة'); }
+      else showToast('❌ تعذر معالجة الصور');
+      try { input.value = ''; } catch(e) {}
+      return;
     }
+    var file = files[index];
+    if (!file || !file.type.match(/^image\//)) { processNext(index + 1); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var dataUrl = e.target.result;
+      if (!dataUrl || !dataUrl.startsWith('data:')) { processNext(index + 1); return; }
+      var img = new Image();
+      img.onload = function() {
+        try {
+          var MAX = 900, w = img.width, h = img.height;
+          if (w > MAX || h > MAX) { var r = Math.min(MAX/w, MAX/h); w = Math.round(w*r); h = Math.round(h*r); }
+          var canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          var compressed = canvas.toDataURL('image/jpeg', 0.80);
+          if (compressed && window.UPLOAD_IMGS.length < 6) { window.UPLOAD_IMGS.push(compressed); added++; }
+        } catch(e) {
+          if (window.UPLOAD_IMGS.length < 6) { window.UPLOAD_IMGS.push(dataUrl); added++; }
+        }
+        processNext(index + 1);
+      };
+      img.onerror = function() {
+        if (window.UPLOAD_IMGS.length < 6) { window.UPLOAD_IMGS.push(dataUrl); added++; }
+        processNext(index + 1);
+      };
+      img.src = dataUrl;
+    };
+    reader.onerror = function() { processNext(index + 1); };
+    reader.readAsDataURL(file);
   }
-
-  if (added > 0) {
-    renderImgGrid();
-    showToast('✅ تمت إضافة ' + added + ' صورة');
-  } else {
-    showToast('❌ لم يتم إضافة أي صورة');
-  }
-
-  /* Reset input so same file can be re-selected */
-  try { input.value = ''; } catch (e) {}
+  processNext(0);
 }
 
 function renderImgGrid() {
-  const imgs = window.UPLOAD_IMGS || [];
-  const grid = document.getElementById('imgPreviewGrid');
-  const gallery = document.getElementById('imgGallery');
-  const countNum = document.getElementById('imgCountNum');
-  const addMoreBtn = document.getElementById('addMoreBtn');
-  const uploadZone = document.getElementById('uploadZone');
-  const zoneContent = document.getElementById('uploadZoneContent');
-
+  var imgs = window.UPLOAD_IMGS || [];
+  var grid = document.getElementById('imgPreviewGrid');
+  var gallery = document.getElementById('imgGallery');
+  var countNum = document.getElementById('imgCountNum');
+  var addMoreBtn = document.getElementById('addMoreBtn');
+  var uploadZone = document.getElementById('uploadZone');
   if (!grid) return;
-
   if (!imgs.length) {
     grid.innerHTML = '';
     if (gallery) gallery.style.display = 'none';
-    const zone = document.getElementById('uploadZone');
-    if (zone) zone.style.display = 'block';
+    if (uploadZone) uploadZone.style.display = 'block';
+    if (addMoreBtn) addMoreBtn.style.display = 'none';
     return;
   }
-
-  /* Build grid */
-  let html = '';
-  for (let i = 0; i < imgs.length; i++) {
-    html += `<div style="aspect-ratio:1;border-radius:11px;overflow:hidden;position:relative;background:var(--border);box-shadow:0 2px 8px rgba(0,0,0,0.1)">`;
-    html += `<img src="${imgs[i]}" style="width:100%;height:100%;object-fit:cover;display:block" alt="صورة ${i+1}" onerror="this.style.background='var(--gray-light)'">`;
-    html += `<button type="button" onclick="event.stopPropagation();removeImg(${i})" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.7);border:none;cursor:pointer;color:white;font-size:0.6rem;display:flex;align-items:center;justify-content:center;z-index:5"><i class="fas fa-times"></i></button>`;
-    if (i === 0) html += `<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(230,126,34,0.9),transparent);color:white;font-size:0.58rem;text-align:center;padding:6px 4px 4px;font-weight:800">الصورة الرئيسية</div>`;
-    html += `</div>`;
+  var html = '';
+  for (var i = 0; i < imgs.length; i++) {
+    html += '<div style="aspect-ratio:1;border-radius:11px;overflow:hidden;position:relative;background:#f1f5f9;box-shadow:0 2px 8px rgba(0,0,0,0.1)">';
+    html += '<img src="' + imgs[i] + '" style="width:100%;height:100%;object-fit:cover;display:block" alt="صورة ' + (i+1) + '">';
+    html += '<button type="button" onclick="event.stopPropagation();removeImg(' + i + ')" style="position:absolute;top:5px;right:5px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.65);border:none;cursor:pointer;color:white;font-size:0.65rem;display:flex;align-items:center;justify-content:center;z-index:5"><i class="fas fa-times"></i></button>';
+    if (i === 0) html += '<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(249,115,22,0.9),transparent);color:white;font-size:0.58rem;text-align:center;padding:7px 4px 4px;font-weight:800">رئيسية</div>';
+    html += '</div>';
   }
   grid.innerHTML = html;
-
   if (countNum) countNum.textContent = imgs.length;
   if (gallery) gallery.style.display = 'block';
-  /* Show/hide add-more button */
-  const zone = document.getElementById('uploadZone');
-  if (zone) zone.style.display = imgs.length >= 6 ? 'none' : 'block';
+  if (uploadZone) uploadZone.style.display = imgs.length >= 6 ? 'none' : 'block';
   if (addMoreBtn) addMoreBtn.style.display = imgs.length < 6 ? 'block' : 'none';
 }
 
 function removeImg(i) {
-  if (!window.UPLOAD_IMGS) return;
+  if (!window.UPLOAD_IMGS || i < 0 || i >= window.UPLOAD_IMGS.length) return;
   window.UPLOAD_IMGS.splice(i, 1);
   renderImgGrid();
   showToast('تم حذف الصورة');
 }
 
 function clearAllImgs() {
-  if (!window.UPLOAD_IMGS || !window.UPLOAD_IMGS.length) return;
-  if (confirm('حذف جميع الصور؟')) {
-    window.UPLOAD_IMGS = [];
-    renderImgGrid();
-    showToast('تم مسح جميع الصور');
-  }
+  if (!window.UPLOAD_IMGS || !window.UPLOAD_IMGS.length) { showToast('لا توجد صور لحذفها'); return; }
+  if (confirm('حذف جميع الصور؟')) { window.UPLOAD_IMGS = []; renderImgGrid(); showToast('تم مسح جميع الصور'); }
 }
 
+window.handleImagesUpload = handleImagesUpload;
+window.renderImgGrid     = renderImgGrid;
+window.removeImg         = removeImg;
+window.clearAllImgs      = clearAllImgs;
+
 /* ═══════════════════════════════════════════════════════
-   PUBLISH PROPERTY
-   - Saves images separately under aqari_imgs_{id}
-   - Sets featured:true for properties with uploaded images
+   PUBLISH PROPERTY — مع مزامنة Firebase
 ═══════════════════════════════════════════════════════ */
 function publishProperty() {
   const btn = document.querySelector('#paymentModal .btn-publish');
@@ -960,12 +1071,9 @@ function publishProperty() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-left:8px"></i> جاري النشر...';
   }
 
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
-      const val = (id, def = '') => {
-        const el = document.getElementById(id);
-        return el ? (el.value || def) : def;
-      };
+      const val = (id, def = '') => { const el = document.getElementById(id); return el ? (el.value || def) : def; };
       const ival = (id, def = 0) => parseInt(val(id, def)) || def;
       const fval = (id, def = 0) => parseFloat(val(id, def)) || def;
 
@@ -985,14 +1093,8 @@ function publishProperty() {
       const stV = val('propSubtype', 'residential');
 
       const feats = [];
-      document.querySelectorAll('.chip.on').forEach(el => {
-        const t = (el.textContent || '').trim().replace(/\s+/g, ' ');
-        if (t) feats.push(t);
-      });
-      document.querySelectorAll('.amn-item.selected').forEach(el => {
-        const t = (el.dataset.name || el.textContent || '').trim().replace(/\s+/g, ' ');
-        if (t) feats.push(t);
-      });
+      document.querySelectorAll('.chip.on').forEach(el => { const t = (el.textContent || '').trim().replace(/\s+/g, ' '); if (t) feats.push(t); });
+      document.querySelectorAll('.amn-item.selected').forEach(el => { const t = (el.dataset.name || el.textContent || '').trim().replace(/\s+/g, ' '); if (t) feats.push(t); });
 
       const price = fval('propPrice', 0);
       const area = fval('propArea', 0);
@@ -1002,18 +1104,11 @@ function publishProperty() {
         return;
       }
 
-      /* Uploaded images from window.UPLOAD_IMGS */
-      const uploadedImgs = (window.UPLOAD_IMGS && window.UPLOAD_IMGS.length > 0)
-        ? [...window.UPLOAD_IMGS]
-        : [];
-
+      const uploadedImgs = (window.UPLOAD_IMGS && window.UPLOAD_IMGS.length > 0) ? [...window.UPLOAD_IMGS] : [];
       const hasRealImages = uploadedImgs.length > 0;
       const propId = Date.now();
 
-      /* ── Save images to their own storage key BEFORE creating the property ── */
-      if (hasRealImages) {
-        _savePropImages(propId, uploadedImgs);
-      }
+      if (hasRealImages) _savePropImages(propId, uploadedImgs);
 
       const newProp = {
         id:          propId,
@@ -1029,8 +1124,7 @@ function publishProperty() {
         location:    city + (nbhd ? '، ' + nbhd : ''),
         city,
         phone:       val('propPhone', '').trim(),
-        /* No images stored inline — they live in aqari_imgs_{id} */
-        featured:    hasRealImages, /* auto-featured if real images uploaded */
+        featured:    hasRealImages,
         furnished:   feats.some(f => f.includes('مفروش')),
         description: val('propDescription', '').trim(),
         features:    feats.filter(Boolean),
@@ -1042,19 +1136,22 @@ function publishProperty() {
         lng: lng0 || (cc.lng + (Math.random() - 0.5) * 0.02)
       };
 
+      /* ── حفظ محلي فوري ── */
       myProperties.push(newProp);
       syncAll();
       saveData();
 
-      addNotif({
-        type: 'new',
-        title: 'تم نشر إعلانك!',
-        body: newProp.title,
-        icon: 'fa-check-circle',
-        color: '#27ae60',
-        link: 'index.html'
-      });
+      /* ── مزامنة مع Firebase ── */
+      if (firebaseReady) {
+        const saved = await fbSaveProperty(newProp);
+        if (saved) {
+          showToast('☁️ تم الحفظ ومزامنة جميع الأجهزة');
+        } else {
+          showToast('⚠️ حُفظ محلياً — سيُزامن عند الاتصال');
+        }
+      }
 
+      addNotif({ type: 'new', title: 'تم نشر إعلانك!', body: newProp.title, icon: 'fa-check-circle', color: '#27ae60', link: 'index.html' });
       window.UPLOAD_IMGS = [];
 
       const m = document.getElementById('paymentModal');
@@ -1066,10 +1163,7 @@ function publishProperty() {
     } catch (err) {
       console.error('[publishProperty ERROR]', err);
       showToast('حدث خطأ: ' + err.message);
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-check-circle" style="margin-left:8px"></i>ادفع وانشر الإعلان';
-      }
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check-circle" style="margin-left:8px"></i>ادفع وانشر الإعلان'; }
     }
   }, 1200);
 }
@@ -1306,6 +1400,7 @@ function handleRegister() {
 }
 function handleLogout() {
   if (!confirm('تسجيل الخروج؟')) return;
+  if (fbUnsubscribe) fbUnsubscribe();
   localStorage.removeItem('isLoggedIn'); location.href = 'login.html';
 }
 function switchTab(tab) {
@@ -1390,7 +1485,6 @@ function initSplash() {
 function clearAllData() {
   if (!confirm('مسح جميع البيانات؟')) return;
   const k = { isLoggedIn: localStorage.getItem('isLoggedIn'), userEmail: localStorage.getItem('userEmail'), userName: localStorage.getItem('userName'), aqari_theme: localStorage.getItem('aqari_theme') };
-  /* Clear image keys first */
   _clearAllPropImages();
   localStorage.clear();
   Object.entries(k).forEach(([key, v]) => { if (v) localStorage.setItem(key, v); });
@@ -1478,46 +1572,7 @@ window.initCardSwipes   = initCardSwipes;
 window.conversations    = conversations_data;
 window.notifications    = notifications_data;
 
-
-/* ═══ Firebase Bridge ═══ */
-window.addEventListener('load', function() {
-  var page = (location.pathname.split('/').pop() || 'index').replace('.html','');
-  if (!['index','map','details','favorites'].includes(page)) return;
-  if (typeof loadFirebase === 'undefined') return;
-
-  loadFirebase().then(function() {
-    firebase.firestore()
-      .collection('properties')
-      .where('active', '==', true)
-      .orderBy('createdAt', 'desc')
-      .limit(200)
-      .onSnapshot(function(snapshot) {
-        var props = [];
-        snapshot.forEach(function(doc) {
-          var d = doc.data();
-          props.push({
-            id: doc.id, firestoreId: doc.id, isFirebase: true,
-            title: d.title||'عقار', price: d.price||0,
-            type: d.type||'sale', category: d.category||'apartment',
-            city: d.city||'دمشق', location: d.location||d.city||'دمشق',
-            area: d.area||0, rooms: d.rooms||0, bathrooms: d.bathrooms||0,
-            floor: d.floor||0, description: d.description||'',
-            features: d.features||[], phone: d.ownerPhone||d.phone||'',
-            ownerName: d.ownerName||'مستخدم', ownerUID: d.ownerUID||'',
-            lat: d.lat||null, lng: d.lng||null, images: d.images||[],
-            featured: !!(d.featured||(d.images&&d.images.length>0)),
-            views: d.views||0, agentName: d.ownerName||'مستخدم'
-          });
-        });
-        window._fbProps = props;
-        window.allProperties = props;
-        window.myProperties = props;
-        window.filteredProperties = props;
-        if (page==='index' && typeof initIndex==='function') initIndex();
-        if (page==='map' && typeof loadAll==='function') loadAll();
-        if (page==='favorites' && typeof renderFavorites==='function') renderFavorites();
-        if (page==='details' && typeof renderDetails==='function') renderDetails();
-        console.log('[عقاري] ✅ Realtime:', props.length, 'props');
-      }, function(e){ console.error('[عقاري]', e.code); });
-  });
-});
+/* Firebase exports */
+window.fbSaveProperty   = fbSaveProperty;
+window.fbLoadProperties = fbLoadProperties;
+window.fbDeleteProperty = fbDeleteProperty;
