@@ -14,120 +14,62 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="css/style.css">
 <style>
-/* ── صورة البروفايل ── */
-.pic-outer {
-  position: relative; width: 96px; height: 96px; margin: 0 auto 14px;
-}
-.pic-ring {
-  width: 96px; height: 96px; border-radius: 50%;
-  border: 3.5px solid var(--accent);
-  overflow: hidden; background: var(--gray-light);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(230,126,34,0.25);
-  transition: box-shadow 0.2s, transform 0.2s;
-}
-.pic-ring:active { transform: scale(0.97); }
-.pic-ring i { font-size: 2.4rem; color: var(--accent); }
-.pic-cam {
-  position: absolute; bottom: 2px; left: 2px;
-  width: 30px; height: 30px; border-radius: 50%;
-  background: var(--accent); color: white;
-  border: 2.5px solid var(--card);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 0.72rem;
-  box-shadow: 0 2px 10px rgba(230,126,34,0.5);
-  transition: transform 0.2s;
-}
-.pic-cam:active { transform: scale(0.92); }
-#_picFile { display: none; }
+.pic-outer{position:relative;width:96px;height:96px;margin:0 auto 14px}
+.pic-ring{width:96px;height:96px;border-radius:50%;border:3.5px solid var(--accent);
+  overflow:hidden;background:var(--gray-light);display:flex;align-items:center;
+  justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(230,126,34,0.25)}
+.pic-ring i{font-size:2.4rem;color:var(--accent)}
+.pic-cam{position:absolute;bottom:2px;left:2px;width:30px;height:30px;border-radius:50%;
+  background:var(--accent);color:white;border:2.5px solid var(--card);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.72rem;
+  box-shadow:0 2px 10px rgba(230,126,34,0.5)}
 
-/* ── Modal القص ── */
-#_cropModal {
-  display: none;
-  position: fixed; inset: 0; z-index: 99999;
-  background: rgba(0,0,0,0.96);
-  flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: 16px;
+/* Modal */
+#cropOverlay{
+  position:fixed;inset:0;z-index:99999;
+  background:rgba(0,0,0,0.96);
+  display:none;
+  flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:20px;
 }
-#_cropModal.open { display: flex; }
-._cm-title {
-  color: white; font-size: 1rem; font-weight: 900;
-  margin-bottom: 14px; text-align: center;
+#cropOverlay.active{display:flex}
+.crop-title{color:white;font-size:1rem;font-weight:800;margin-bottom:16px;text-align:center}
+#cropCircle{
+  position:relative;
+  border-radius:50%;
+  overflow:hidden;
+  border:3px solid var(--accent);
+  background:#111;
+  cursor:grab;
+  box-shadow:0 0 0 5px rgba(230,126,34,0.2),0 8px 40px rgba(0,0,0,0.6);
+  touch-action:none;
+  flex-shrink:0;
 }
-#_cWrap {
-  position: relative;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 3px solid var(--accent);
-  background: #111;
-  cursor: grab;
-  touch-action: none;
-  box-shadow: 0 0 0 5px rgba(230,126,34,0.2),
-              0 8px 40px rgba(0,0,0,0.6);
+#cropCircle.grabbing{cursor:grabbing}
+#cropImage{
+  position:absolute;
+  pointer-events:none;
+  user-select:none;
+  touch-action:none;
 }
-#_cWrap:active { cursor: grabbing; }
-#_cImg {
-  position: absolute;
-  user-select: none;
-  pointer-events: none;
-  touch-action: none;
-  will-change: transform;
-}
-._cm-hint {
-  color: rgba(255,255,255,0.4);
-  font-size: 0.72rem;
-  margin-top: 10px;
-  text-align: center;
-  line-height: 1.6;
-}
-/* شريط الزووم */
-._cm-zoom-row {
-  display: flex; align-items: center; gap: 10px;
-  margin-top: 14px;
-  width: min(280px, calc(100vw - 60px));
-}
-._cm-zoom-btn {
-  width: 36px; height: 36px; border-radius: 50%;
-  background: rgba(255,255,255,0.12);
-  border: 1.5px solid rgba(255,255,255,0.2);
-  color: white; font-size: 1.1rem;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; flex-shrink: 0;
-  transition: background 0.15s;
-}
-._cm-zoom-btn:active { background: rgba(255,255,255,0.25); }
-#_cZoom {
-  flex: 1; accent-color: var(--accent);
-  height: 4px; cursor: pointer;
-}
-/* أزرار الحفظ */
-._cm-actions {
-  display: flex; gap: 10px; margin-top: 16px;
-  width: min(280px, calc(100vw - 60px));
-}
-._cm-cancel {
-  flex: 1; padding: 13px; border-radius: 13px;
-  background: rgba(255,255,255,0.08);
-  border: 1.5px solid rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.7);
-  font-family: var(--font); font-size: 0.88rem;
-  font-weight: 700; cursor: pointer;
-  transition: background 0.15s;
-}
-._cm-cancel:active { background: rgba(255,255,255,0.15); }
-._cm-save {
-  flex: 1.5; padding: 13px; border-radius: 13px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  border: none; color: white;
-  font-family: var(--font); font-size: 0.88rem;
-  font-weight: 800; cursor: pointer;
-  box-shadow: 0 4px 16px rgba(230,126,34,0.4);
-  transition: filter 0.15s;
-}
-._cm-save:hover { filter: brightness(1.08); }
-._cm-save:disabled { opacity: 0.6; cursor: not-allowed; }
+.crop-hint{color:rgba(255,255,255,0.45);font-size:0.72rem;margin-top:10px;text-align:center;line-height:1.7}
+.zoom-row{display:flex;align-items:center;gap:12px;margin-top:14px;width:100%;max-width:280px}
+.zoom-btn{width:40px;height:40px;border-radius:50%;
+  background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);
+  color:white;font-size:1.1rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.zoom-btn:active{background:rgba(255,255,255,0.25)}
+#zoomRange{flex:1;accent-color:var(--accent);cursor:pointer}
+.crop-actions{display:flex;gap:10px;margin-top:16px;width:100%;max-width:280px}
+.btn-cancel-crop{flex:1;padding:13px;border-radius:13px;
+  background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);
+  color:rgba(255,255,255,0.8);font-family:var(--font);font-size:0.88rem;font-weight:700;cursor:pointer}
+.btn-save-crop{flex:1.5;padding:13px;border-radius:13px;border:none;
+  background:linear-gradient(135deg,var(--accent),var(--accent-hover));
+  color:white;font-family:var(--font);font-size:0.88rem;font-weight:800;cursor:pointer;
+  box-shadow:0 4px 16px rgba(230,126,34,0.4)}
+.btn-save-crop:disabled{opacity:0.5;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -138,38 +80,32 @@
 </header>
 
 <div class="container">
-
-  <!-- صورة البروفايل -->
   <div class="profile-header">
+    <!-- الصورة -->
     <div class="pic-outer">
-      <div class="pic-ring" id="_picRing"
-        onclick="document.getElementById('_picFile').click()"
-        title="اضغط لتغيير الصورة">
-        <i class="fas fa-user"></i>
+      <div class="pic-ring" id="picRing">
+        <i class="fas fa-user" id="picIcon"></i>
       </div>
-      <div class="pic-cam" onclick="document.getElementById('_picFile').click()">
+      <div class="pic-cam" id="picCamBtn">
         <i class="fas fa-camera"></i>
       </div>
     </div>
-    <input type="file" id="_picFile" accept="image/*" onchange="_onPicFile(this)">
+    <!-- input مخفي -->
+    <input type="file" id="picFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none">
 
     <h3 id="profileName" style="margin-bottom:4px;font-size:1.2rem;font-weight:800">مستخدم عقاري</h3>
     <p id="profileEmail" style="color:var(--gray);font-size:0.88rem"></p>
-    <div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;
-      background:rgba(39,174,96,0.1);padding:4px 14px;border-radius:20px;
-      font-size:0.78rem;color:var(--success);border:1px solid rgba(39,174,96,0.2)">
+    <div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(39,174,96,0.1);padding:4px 14px;border-radius:20px;font-size:0.78rem;color:var(--success);border:1px solid rgba(39,174,96,0.2)">
       <i class="fas fa-shield-alt"></i> حساب موثق
     </div>
   </div>
 
-  <!-- إحصاءات -->
   <div class="stat-box" style="margin-bottom:20px">
     <div class="stat"><span class="stat-num" id="myAdsCount">0</span><span class="stat-label">إعلاناتي</span></div>
     <div class="stat"><span class="stat-num" id="favsCount">0</span><span class="stat-label">مفضلة</span></div>
     <div class="stat"><span class="stat-num" id="viewsCount">0</span><span class="stat-label">مشاهدات</span></div>
   </div>
 
-  <!-- أزرار سريعة -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
     <a href="add-property.html" style="text-decoration:none;background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:white;padding:14px;border-radius:12px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:0.88rem">
       <i class="fas fa-plus-circle fa-lg"></i><span>إضافة إعلان</span>
@@ -179,12 +115,9 @@
     </a>
   </div>
 
-  <!-- إعلاناتي -->
   <div style="background:var(--card);border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow-sm)">
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <span style="font-weight:800;font-size:0.9rem">
-        <i class="fas fa-clipboard-list" style="color:var(--accent);margin-left:8px"></i>إعلاناتي
-      </span>
+      <span style="font-weight:800;font-size:0.9rem"><i class="fas fa-clipboard-list" style="color:var(--accent);margin-left:8px"></i>إعلاناتي</span>
       <span id="myAdsCountBadge" style="background:var(--accent-light);color:var(--accent);padding:2px 10px;border-radius:99px;font-size:0.75rem;font-weight:700">0</span>
     </div>
     <div id="myAdsSection" style="padding:16px">
@@ -196,7 +129,6 @@
     </div>
   </div>
 
-  <!-- القائمة -->
   <ul class="menu-list">
     <a href="settings.html" class="menu-item">
       <span><i class="fas fa-cog" style="margin-left:10px;color:var(--gray)"></i>الإعدادات</span>
@@ -205,384 +137,320 @@
     <a href="notifications.html" class="menu-item">
       <span><i class="fas fa-bell" style="margin-left:10px;color:var(--gray)"></i>الإشعارات</span>
     </a>
-    <a href="#" class="menu-item" onclick="showToast('⭐ شكراً!')">
+    <a href="#" class="menu-item" onclick="showToast&&showToast('⭐ شكراً!')">
       <span><i class="fas fa-star" style="margin-left:10px;color:var(--warning)"></i>قيّم التطبيق</span>
       <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
     </a>
-    <li class="menu-item danger" onclick="handleLogout()">
+    <li class="menu-item danger" onclick="handleLogout&&handleLogout()">
       <span><i class="fas fa-sign-out-alt" style="margin-left:10px"></i>تسجيل الخروج</span>
     </li>
   </ul>
-
-  <p style="text-align:center;color:var(--gray);font-size:0.72rem;margin-top:24px;margin-bottom:8px">
-    عقاري v3.0 © 2025
-  </p>
+  <p style="text-align:center;color:var(--gray);font-size:0.72rem;margin-top:24px;margin-bottom:8px">عقاري v3.0 © 2025</p>
 </div>
 
-<!-- Bottom Nav -->
 <nav class="bottom-nav">
-  <a href="index.html"    class="nav-item" data-page="index"><i class="fas fa-home"></i><span>الرئيسية</span></a>
+  <a href="index.html" class="nav-item" data-page="index"><i class="fas fa-home"></i><span>الرئيسية</span></a>
   <a href="favorites.html" class="nav-item" data-page="favorites"><i class="fas fa-heart"></i><span>المفضلة</span></a>
   <a href="messages.html" class="nav-item" data-page="messages"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
-  <a href="profile.html"  class="nav-item active" data-page="profile"><i class="fas fa-user"></i><span>حسابي</span></a>
+  <a href="profile.html" class="nav-item active" data-page="profile"><i class="fas fa-user"></i><span>حسابي</span></a>
 </nav>
 
 <div id="toast"></div>
 
-<!-- ═══════════════════════════════════════════════
-     Modal القص — خارج كل container
-════════════════════════════════════════════════ -->
-<div id="_cropModal">
-  <div class="_cm-title">✂️ اضبط صورتك</div>
-
-  <!-- دائرة القص -->
-  <div id="_cWrap">
-    <img id="_cImg" alt="">
+<!-- ══ Modal القص ══ -->
+<div id="cropOverlay">
+  <div class="crop-title">✂️ اضبط الصورة كما تريد</div>
+  <div id="cropCircle">
+    <img id="cropImage" alt="">
   </div>
-
-  <div class="_cm-hint">
-    👆 اسحب لتحريك · 🤏 إصبعان للتكبير<br>
-    أو استخدم أزرار الزووم أدناه
+  <div class="crop-hint">اسحب لتحريك · إصبعان للتكبير</div>
+  <div class="zoom-row">
+    <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-search-minus"></i></button>
+    <input type="range" id="zoomRange" min="0" max="100" value="0">
+    <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-search-plus"></i></button>
   </div>
-
-  <!-- شريط الزووم -->
-  <div class="_cm-zoom-row">
-    <button class="_cm-zoom-btn" onclick="_zoomOut()" title="تصغير">
-      <i class="fas fa-search-minus"></i>
-    </button>
-    <input type="range" id="_cZoom" min="1" max="5" step="0.001" value="1"
-      oninput="_onZoomSlider(this.value)">
-    <button class="_cm-zoom-btn" onclick="_zoomIn()" title="تكبير">
-      <i class="fas fa-search-plus"></i>
-    </button>
-  </div>
-
-  <!-- أزرار -->
-  <div class="_cm-actions">
-    <button class="_cm-cancel" onclick="_closeCrop()">
-      <i class="fas fa-times" style="margin-left:6px"></i>إلغاء
-    </button>
-    <button class="_cm-save" id="_cSaveBtn" onclick="_saveCrop()">
-      <i class="fas fa-check" style="margin-left:6px"></i>✅ حفظ الصورة
-    </button>
+  <div class="crop-actions">
+    <button class="btn-cancel-crop" id="cancelCropBtn">إلغاء</button>
+    <button class="btn-save-crop" id="saveCropBtn">✅ حفظ الصورة</button>
   </div>
 </div>
 
 <script src="js/app.js"></script>
 <script>
+(function() {
+  'use strict';
 
-/* ══════════════════════════════════════════════════════
-   نظام صورة البروفايل — قص احترافي كامل
-══════════════════════════════════════════════════════ */
+  /* ══ متغيرات ══ */
+  var imgW = 0, imgH = 0;   /* أبعاد الصورة الأصلية */
+  var posX = 0, posY = 0;   /* موضع الصورة */
+  var scale = 1;             /* التكبير الحالي */
+  var minScale = 1;          /* أقل تكبير */
+  var maxScale = 5;          /* أقصى تكبير */
+  var SZ = 0;                /* حجم الدائرة */
 
-/* ── متغيرات ── */
-var _img_src = '';    /* مصدر الصورة */
-var _img_w   = 0;    /* عرض الصورة الأصلية */
-var _img_h   = 0;    /* ارتفاع الصورة الأصلية */
-var _scale   = 1;    /* مستوى التكبير الحالي */
-var _min_s   = 1;    /* أقل تكبير (يملأ الدائرة) */
-var _max_s   = 5;    /* أقصى تكبير */
-var _x       = 0;    /* إزاحة X */
-var _y       = 0;    /* إزاحة Y */
-var _crop_sz = 280;  /* حجم دائرة القص */
-
-/* ── تحميل الصورة الحالية في الحلقة ── */
-function _loadPic() {
-  var ring  = document.getElementById('_picRing');
-  var photo = localStorage.getItem('userPhoto');
-  if (!ring) return;
-  if (photo) {
-    ring.innerHTML = '<img src="' + photo + '" '
-      + 'style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block" '
-      + 'onerror="this.parentElement.innerHTML='<i class=\'fas fa-user\' style=\'font-size:2.3rem;color:var(--accent)\'></i>'">';
-  } else {
-    ring.innerHTML = '<i class="fas fa-user" style="font-size:2.3rem;color:var(--accent)"></i>';
+  /* ══ تحميل الصورة الحالية ══ */
+  function loadCurrentPic() {
+    var ring  = document.getElementById('picRing');
+    var photo = localStorage.getItem('userPhoto');
+    if (!ring) return;
+    if (photo) {
+      ring.innerHTML = '<img src="' + photo + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block">';
+    } else {
+      ring.innerHTML = '<i class="fas fa-user" style="font-size:2.4rem;color:var(--accent)"></i>';
+    }
   }
-}
 
-/* ── فتح المقص بعد اختيار صورة ── */
-function _onPicFile(input) {
-  var file = input && input.files && input.files[0];
-  if (!file) return;
-  if (!file.type.startsWith('image/')) { showToast && showToast('اختر صورة صالحة'); return; }
-  if (file.size > 15 * 1024 * 1024) { showToast && showToast('الصورة كبيرة جداً — الحد 15MB'); return; }
+  /* ══ فتح اختيار الملف ══ */
+  function openFilePicker() {
+    var input = document.getElementById('picFileInput');
+    if (input) input.click();
+  }
 
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    _img_src = e.target.result;
-    var tmpImg = new Image();
-    tmpImg.onload = function() {
-      _img_w = tmpImg.naturalWidth;
-      _img_h = tmpImg.naturalHeight;
-      _openCropModal();
+  /* ══ معالجة الملف المختار ══ */
+  function handleFileSelected(e) {
+    var file = e.target.files && e.target.files[0];
+    e.target.value = ''; /* مسح للسماح بإعادة اختيار نفس الملف */
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('يرجى اختيار صورة');
+      return;
+    }
+
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var src = ev.target.result;
+      var img = new Image();
+      img.onload = function() {
+        imgW = img.naturalWidth;
+        imgH = img.naturalHeight;
+        openCropModal(src);
+      };
+      img.onerror = function() { alert('تعذر فتح الصورة'); };
+      img.src = src;
     };
-    tmpImg.onerror = function() { showToast && showToast('تعذر قراءة الصورة'); };
-    tmpImg.src = _img_src;
-  };
-  reader.onerror = function() { showToast && showToast('تعذر فتح الملف'); };
-  reader.readAsDataURL(file);
-  input.value = ''; /* مسح الاختيار */
-}
-
-/* ── فتح نافذة القص ── */
-function _openCropModal() {
-  /* حساب حجم الدائرة حسب الشاشة */
-  _crop_sz = Math.min(280, window.innerWidth - 60);
-
-  /* الحد الأدنى للتكبير: الصورة تملأ الدائرة */
-  _min_s = Math.max(
-    _crop_sz / _img_w,
-    _crop_sz / _img_h
-  ) * 1.01; /* 1% زيادة لتجنب الهوامش */
-  _max_s   = _min_s * 5;
-  _scale   = _min_s;
-
-  /* توسيط الصورة */
-  _x = (_crop_sz - _img_w * _scale) / 2;
-  _y = (_crop_sz - _img_h * _scale) / 2;
-
-  /* تحديث الـ UI */
-  var wrap = document.getElementById('_cWrap');
-  if (wrap) {
-    wrap.style.width  = _crop_sz + 'px';
-    wrap.style.height = _crop_sz + 'px';
+    reader.onerror = function() { alert('تعذر قراءة الملف'); };
+    reader.readAsDataURL(file);
   }
 
-  var cImg = document.getElementById('_cImg');
-  if (cImg) {
-    cImg.src = _img_src;
-    cImg.onload = function() { _applyTransform(); };
-    if (cImg.complete) _applyTransform();
-  }
+  /* ══ فتح نافذة القص ══ */
+  function openCropModal(src) {
+    /* حجم الدائرة حسب الشاشة */
+    SZ = Math.min(280, window.innerWidth - 56);
+    var circle = document.getElementById('cropCircle');
+    circle.style.width  = SZ + 'px';
+    circle.style.height = SZ + 'px';
 
-  var zSlider = document.getElementById('_cZoom');
-  if (zSlider) {
-    zSlider.min   = _min_s;
-    zSlider.max   = _max_s;
-    zSlider.step  = 0.001;
-    zSlider.value = _scale;
-  }
+    /* حساب الزووم الأدنى */
+    minScale = Math.max(SZ / imgW, SZ / imgH) + 0.001;
+    maxScale = minScale * 6;
+    scale    = minScale;
 
-  /* إظهار الـ modal */
-  var modal = document.getElementById('_cropModal');
-  if (modal) {
-    modal.style.display = 'flex';
+    /* توسيط */
+    posX = (SZ - imgW * scale) / 2;
+    posY = (SZ - imgH * scale) / 2;
+
+    /* شريط الزووم: نستخدم 0-100 للتبسيط */
+    var slider = document.getElementById('zoomRange');
+    slider.value = 0;
+
+    /* ضع الصورة */
+    var cImg = document.getElementById('cropImage');
+    cImg.src = src;
+    applyTransform();
+
+    /* أظهر الـ modal */
+    var overlay = document.getElementById('cropOverlay');
+    overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
   }
-}
 
-/* ── تطبيق الإحداثيات على الصورة ── */
-function _applyTransform() {
-  /* تقييد الحركة — الصورة لا تخرج من الدائرة */
-  var dispW = _img_w * _scale;
-  var dispH = _img_h * _scale;
-  var maxX  =  0;
-  var minX  = _crop_sz - dispW;
-  var maxY  =  0;
-  var minY  = _crop_sz - dispH;
-  _x = Math.min(maxX, Math.max(minX, _x));
-  _y = Math.min(maxY, Math.max(minY, _y));
+  /* ══ تطبيق الإحداثيات ══ */
+  function applyTransform() {
+    /* منع الخروج */
+    var maxX = 0,        minX = SZ - imgW * scale;
+    var maxY = 0,        minY = SZ - imgH * scale;
+    posX = Math.min(maxX, Math.max(minX, posX));
+    posY = Math.min(maxY, Math.max(minY, posY));
 
-  var cImg = document.getElementById('_cImg');
-  if (!cImg) return;
-  cImg.style.position   = 'absolute';
-  cImg.style.left       = _x + 'px';
-  cImg.style.top        = _y + 'px';
-  cImg.style.width      = dispW + 'px';
-  cImg.style.height     = dispH + 'px';
-  cImg.style.userSelect = 'none';
-  cImg.style.pointerEvents = 'none';
-  cImg.style.touchAction   = 'none';
-}
-
-/* ── تغيير الزووم من الشريط ── */
-function _onZoomSlider(val) {
-  var oldScale = _scale;
-  _scale = parseFloat(val);
-  /* تكبير/تصغير من المركز */
-  var cx = _crop_sz / 2;
-  var cy = _crop_sz / 2;
-  _x = cx - (cx - _x) * (_scale / oldScale);
-  _y = cy - (cy - _y) * (_scale / oldScale);
-  _applyTransform();
-}
-
-/* ── أزرار زووم ── */
-function _zoomIn()  { _setZoom(_scale * 1.15); }
-function _zoomOut() { _setZoom(_scale / 1.15); }
-function _setZoom(s) {
-  var oldScale = _scale;
-  _scale = Math.min(_max_s, Math.max(_min_s, s));
-  var cx = _crop_sz / 2, cy = _crop_sz / 2;
-  _x = cx - (cx - _x) * (_scale / oldScale);
-  _y = cy - (cy - _y) * (_scale / oldScale);
-  var sl = document.getElementById('_cZoom');
-  if (sl) sl.value = _scale;
-  _applyTransform();
-}
-
-/* ── إغلاق بدون حفظ ── */
-function _closeCrop() {
-  var modal = document.getElementById('_cropModal');
-  if (modal) modal.style.display = 'none';
-  document.body.style.overflow = '';
-}
-
-/* ── حفظ الصورة المقصوصة ── */
-function _saveCrop() {
-  var saveBtn = document.getElementById('_cSaveBtn');
-  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ جاري الحفظ...'; }
-
-  try {
-    var OUTPUT_SIZE = 400;
-    var canvas = document.createElement('canvas');
-    canvas.width  = OUTPUT_SIZE;
-    canvas.height = OUTPUT_SIZE;
-    var ctx = canvas.getContext('2d');
-
-    /* قص دائري */
-    ctx.beginPath();
-    ctx.arc(OUTPUT_SIZE/2, OUTPUT_SIZE/2, OUTPUT_SIZE/2, 0, Math.PI * 2);
-    ctx.clip();
-
-    /* رسم الصورة بنسبة القص */
-    var ratio = OUTPUT_SIZE / _crop_sz;
-    var cImg  = document.getElementById('_cImg');
-    ctx.drawImage(
-      cImg,
-      -_x * ratio,
-      -_y * ratio,
-      _img_w * _scale * ratio,
-      _img_h * _scale * ratio
-    );
-
-    var dataUrl = canvas.toDataURL('image/jpeg', 0.90);
-    localStorage.setItem('userPhoto', dataUrl);
-    _loadPic();
-    _closeCrop();
-    showToast && showToast('✅ تم حفظ الصورة');
-
-  } catch(err) {
-    console.error('Crop error:', err);
-    showToast && showToast('❌ تعذر حفظ الصورة');
-  } finally {
-    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '✅ حفظ الصورة'; }
-  }
-}
-
-/* ══════════════════════════════════════════
-   أحداث السحب — Mouse + Touch + Pinch
-══════════════════════════════════════════ */
-(function setupEvents() {
-  var dragging    = false;
-  var startX      = 0, startY = 0;
-  var startImgX   = 0, startImgY = 0;
-  var lastPinchDist = 0;
-
-  function getWrap() { return document.getElementById('_cWrap'); }
-
-  function onDragStart(clientX, clientY) {
-    dragging  = true;
-    startX    = clientX;
-    startY    = clientY;
-    startImgX = _x;
-    startImgY = _y;
+    var img = document.getElementById('cropImage');
+    img.style.left   = posX + 'px';
+    img.style.top    = posY + 'px';
+    img.style.width  = (imgW * scale) + 'px';
+    img.style.height = (imgH * scale) + 'px';
   }
 
-  function onDragMove(clientX, clientY) {
-    if (!dragging) return;
-    _x = startImgX + (clientX - startX);
-    _y = startImgY + (clientY - startY);
-    _applyTransform();
+  /* ══ تغيير الزووم من المركز ══ */
+  function changeScale(newScale) {
+    newScale = Math.min(maxScale, Math.max(minScale, newScale));
+    var ratio = newScale / scale;
+    var cx = SZ / 2, cy = SZ / 2;
+    posX = cx - (cx - posX) * ratio;
+    posY = cy - (cy - posY) * ratio;
+    scale = newScale;
+    applyTransform();
+    /* مزامنة الشريط */
+    var pct = (scale - minScale) / (maxScale - minScale) * 100;
+    var sl = document.getElementById('zoomRange');
+    if (sl) sl.value = Math.round(pct);
   }
 
-  function onDragEnd() { dragging = false; }
+  /* ══ إغلاق ══ */
+  function closeCrop() {
+    document.getElementById('cropOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  /* ══ حفظ ══ */
+  function saveCrop() {
+    var btn = document.getElementById('saveCropBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ جاري...';
+    try {
+      var canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 400;
+      var ctx = canvas.getContext('2d');
+      ctx.beginPath();
+      ctx.arc(200, 200, 200, 0, Math.PI * 2);
+      ctx.clip();
+      var r = 400 / SZ;
+      ctx.drawImage(
+        document.getElementById('cropImage'),
+        -posX * r, -posY * r,
+        imgW * scale * r, imgH * scale * r
+      );
+      localStorage.setItem('userPhoto', canvas.toDataURL('image/jpeg', 0.9));
+      loadCurrentPic();
+      closeCrop();
+      if (typeof showToast === 'function') showToast('✅ تم حفظ الصورة');
+    } catch(err) {
+      alert('خطأ في الحفظ: ' + err.message);
+    }
+    btn.disabled = false;
+    btn.textContent = '✅ حفظ الصورة';
+  }
+
+  /* ══ أحداث السحب ══ */
+  var dragging = false, sx = 0, sy = 0, spx = 0, spy = 0;
+  var pinchDist = 0;
+
+  function getCircle() { return document.getElementById('cropCircle'); }
 
   /* Mouse */
   document.addEventListener('mousedown', function(e) {
-    if (e.target.closest && e.target.closest('#_cWrap')) {
-      onDragStart(e.clientX, e.clientY);
-      e.preventDefault();
-    }
+    if (!getCircle().contains(e.target)) return;
+    dragging = true; sx = e.clientX; sy = e.clientY;
+    spx = posX; spy = posY;
+    e.preventDefault();
   });
-  document.addEventListener('mousemove', function(e) { onDragMove(e.clientX, e.clientY); });
-  document.addEventListener('mouseup',   onDragEnd);
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    posX = spx + (e.clientX - sx);
+    posY = spy + (e.clientY - sy);
+    applyTransform();
+  });
+  document.addEventListener('mouseup', function() { dragging = false; });
 
   /* Touch */
   document.addEventListener('touchstart', function(e) {
-    var wrap = getWrap();
-    if (!wrap || !wrap.contains(e.target)) return;
+    if (!getCircle().contains(e.target)) return;
     if (e.touches.length === 1) {
-      onDragStart(e.touches[0].clientX, e.touches[0].clientY);
+      dragging = true;
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+      spx = posX; spy = posY;
     } else if (e.touches.length === 2) {
       dragging = false;
-      lastPinchDist = Math.hypot(
+      pinchDist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       );
     }
     e.preventDefault();
-  }, { passive: false });
+  }, {passive: false});
 
   document.addEventListener('touchmove', function(e) {
-    var wrap = getWrap();
-    if (!wrap || !wrap.contains(e.target)) return;
+    if (!getCircle().contains(e.target) && !dragging) return;
     if (e.touches.length === 1 && dragging) {
-      onDragMove(e.touches[0].clientX, e.touches[0].clientY);
-    } else if (e.touches.length === 2) {
-      var dist = Math.hypot(
+      posX = spx + (e.touches[0].clientX - sx);
+      posY = spy + (e.touches[0].clientY - sy);
+      applyTransform();
+    } else if (e.touches.length === 2 && pinchDist > 0) {
+      var d = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       );
-      if (lastPinchDist > 0) {
-        var factor = dist / lastPinchDist;
-        _setZoom(_scale * factor);
-      }
-      lastPinchDist = dist;
+      changeScale(scale * d / pinchDist);
+      pinchDist = d;
     }
     e.preventDefault();
-  }, { passive: false });
+  }, {passive: false});
 
-  document.addEventListener('touchend', function(e) {
-    onDragEnd();
-    lastPinchDist = 0;
+  document.addEventListener('touchend', function() {
+    dragging = false; pinchDist = 0;
   });
+
+  /* ══ ربط الأزرار بعد تحميل الصفحة ══ */
+  window.addEventListener('DOMContentLoaded', function() {
+
+    /* زر الكاميرا والدائرة */
+    document.getElementById('picRing').addEventListener('click', openFilePicker);
+    document.getElementById('picCamBtn').addEventListener('click', openFilePicker);
+
+    /* input الملف */
+    document.getElementById('picFileInput').addEventListener('change', handleFileSelected);
+
+    /* أزرار القص */
+    document.getElementById('cancelCropBtn').addEventListener('click', closeCrop);
+    document.getElementById('saveCropBtn').addEventListener('click', saveCrop);
+
+    /* زر الإغلاق بالنقر خارج الدائرة */
+    document.getElementById('cropOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeCrop();
+    });
+
+    /* زووم + */
+    document.getElementById('zoomInBtn').addEventListener('click', function() {
+      changeScale(scale * 1.15);
+    });
+    /* زووم - */
+    document.getElementById('zoomOutBtn').addEventListener('click', function() {
+      changeScale(scale / 1.15);
+    });
+    /* شريط الزووم */
+    document.getElementById('zoomRange').addEventListener('input', function() {
+      var pct = parseFloat(this.value) / 100;
+      changeScale(minScale + pct * (maxScale - minScale));
+    });
+
+    /* تحميل الصورة والبيانات */
+    loadCurrentPic();
+    document.getElementById('profileName').textContent  = localStorage.getItem('userName')  || 'مستخدم عقاري';
+    document.getElementById('profileEmail').textContent = localStorage.getItem('userEmail') || '';
+
+    setTimeout(function() {
+      var ads  = window.myProperties || [];
+      var favs = window.favorites    || [];
+      document.getElementById('myAdsCount').textContent      = ads.length;
+      document.getElementById('myAdsCountBadge').textContent = ads.length;
+      document.getElementById('favsCount').textContent       = favs.length;
+      document.getElementById('viewsCount').textContent      = ads.reduce(function(a,p){return a+(p.views||0);},0).toLocaleString();
+      var sec = document.getElementById('myAdsSection');
+      if (ads.length && sec) {
+        sec.innerHTML = ads.slice(0,5).map(function(p) {
+          var imgs = window.getPropImages ? window.getPropImages(p) : [];
+          var img  = imgs[0] || '';
+          return '<div onclick="gotoDetails('+p.id+')" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">'
+            +'<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;background:var(--gray-light);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--gray)">'
+            +(img?'<img src="'+img+'" style="width:100%;height:100%;object-fit:cover">':'<i class="fas fa-building"></i>')
+            +'</div><div style="flex:1;overflow:hidden">'
+            +'<div style="font-weight:700;font-size:0.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.title+'</div>'
+            +'<div style="font-size:0.77rem;color:var(--accent);font-weight:700;margin-top:2px">$'+(p.price||0).toLocaleString('en-US')+' USD</div>'
+            +'</div></div>';
+        }).join('');
+      }
+    }, 400);
+  });
+
 })();
-
-/* ── تحميل عند فتح الصفحة ── */
-window.addEventListener('load', function() {
-  _loadPic();
-  var n  = document.getElementById('profileName');
-  var em = document.getElementById('profileEmail');
-  if (n)  n.textContent  = localStorage.getItem('userName')  || 'مستخدم عقاري';
-  if (em) em.textContent = localStorage.getItem('userEmail') || '';
-  /* إحصاءات */
-  var ads  = window.myProperties || [];
-  var favs = window.favorites    || [];
-  var ac   = document.getElementById('myAdsCount');
-  var ab   = document.getElementById('myAdsCountBadge');
-  var fc   = document.getElementById('favsCount');
-  var vc   = document.getElementById('viewsCount');
-  if (ac) ac.textContent = ads.length;
-  if (ab) ab.textContent = ads.length;
-  if (fc) fc.textContent = favs.length;
-  if (vc) vc.textContent = ads.reduce(function(a,p){return a+(p.views||0);},0).toLocaleString();
-  /* إعلاناتي */
-  var sec = document.getElementById('myAdsSection');
-  if (ads.length && sec) {
-    sec.innerHTML = ads.slice(0,5).map(function(p) {
-      var img = (window.getPropImages ? window.getPropImages(p) : [])[0] || '';
-      return '<div onclick="gotoDetails('+p.id+')" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">'
-        + '<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;background:var(--gray-light);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--gray)">'
-        + (img ? '<img src="'+img+'" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">' : '<i class="fas fa-building"></i>')
-        + '</div><div style="flex:1;overflow:hidden">'
-        + '<div style="font-weight:700;font-size:0.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.title+'</div>'
-        + '<div style="font-size:0.77rem;color:var(--accent);font-weight:700;margin-top:2px">$'+(p.price||0).toLocaleString('en-US')+' USD</div>'
-        + '</div><span style="font-size:0.7rem;background:var(--success);color:white;padding:3px 8px;border-radius:99px;font-weight:700">نشط</span></div>';
-    }).join('');
-  }
-});
-
 </script>
 
 <script>
