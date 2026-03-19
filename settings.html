@@ -8,34 +8,34 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Ø¹ÙØ§Ø±Ù">
+  <meta name="apple-mobile-web-app-title" content="عقاري">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª - Ø¹ÙØ§Ø±Ù</title>
+    <title>الإعدادات - عقاري</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <header>
-        <a href="profile.html" class="header-icon-btn" aria-label="Ø§ÙØ¹ÙØ¯Ø©">
+        <a href="profile.html" class="header-icon-btn" aria-label="العودة">
             <i class="fas fa-arrow-right"></i>
         </a>
-        <div style="font-size:1rem;font-weight:800">Ø§ÙØ¥Ø¹Ø¯Ø§Ø¯Ø§Øª</div>
+        <div style="font-size:1rem;font-weight:800">الإعدادات</div>
         <div style="width:38px"></div>
     </header>
 
     <div class="container">
 
-        <!-- Ø§ÙØªÙØ¶ÙÙØ§Øª -->
+        <!-- التفضيلات -->
         <div style="font-size:0.78rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-right:4px">
-            Ø§ÙØªÙØ¶ÙÙØ§Øª
+            التفضيلات
         </div>
 
         <ul class="menu-list" style="margin-bottom:20px">
             <li class="menu-item" onclick="toggleTheme()">
                 <div class="toggle-row">
                     <span>
-                        <i class="fas fa-moon" style="margin-left:10px;color:var(--info)"></i>Ø§ÙÙØ¶Ø¹ Ø§ÙÙÙÙÙ
+                        <i class="fas fa-moon" style="margin-left:10px;color:var(--info)"></i>الوضع الليلي
                     </span>
                     <i id="themeIcon" class="fas fa-toggle-off fa-lg" style="color:var(--gray)"></i>
                 </div>
@@ -43,98 +43,97 @@
             <li class="menu-item" onclick="toggleNotif()">
                 <div class="toggle-row">
                     <span>
-                        <i class="fas fa-bell" style="margin-left:10px;color:var(--warning)"></i>Ø§ÙØ¥Ø´Ø¹Ø§Ø±Ø§Øª
+                        <i class="fas fa-bell" style="margin-left:10px;color:var(--warning)"></i>الإشعارات
                     </span>
                     <i id="notifIcon" class="fas fa-toggle-on fa-lg" style="color:var(--accent)"></i>
                 </div>
             </li>
             <li class="menu-item">
                 <span>
-                    <i class="fas fa-language" style="margin-left:10px;color:var(--gray)"></i>Ø§ÙÙØºØ©
+                    <i class="fas fa-language" style="margin-left:10px;color:var(--gray)"></i>اللغة
                 </span>
-                <span style="color:var(--gray);font-size:0.88rem;font-weight:600">Ø§ÙØ¹Ø±Ø¨ÙØ©</span>
+                <span style="color:var(--gray);font-size:0.88rem;font-weight:600">العربية</span>
             </li>
             <li class="menu-item">
                 <span>
-                    <i class="fas fa-map-marker-alt" style="margin-left:10px;color:var(--danger)"></i>Ø§ÙÙÙÙØ¹ Ø§ÙØ§ÙØªØ±Ø§Ø¶Ù
+                    <i class="fas fa-map-marker-alt" style="margin-left:10px;color:var(--danger)"></i>الموقع الافتراضي
                 </span>
-                <span style="color:var(--gray);font-size:0.88rem;font-weight:600">Ø¯ÙØ´Ù</span>
+                <span style="color:var(--gray);font-size:0.88rem;font-weight:600">دمشق</span>
             </li>
         </ul>
 
-        <!-- Ø§ÙØ­Ø³Ø§Ø¨ -->
+        <!-- الحساب -->
         <div style="font-size:0.78rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-right:4px">
-            Ø§ÙØ­Ø³Ø§Ø¨
+            الحساب
         </div>
 
         <ul class="menu-list" style="margin-bottom:20px">
-            <li class="menu-item" onclick="showToast('âï¸ ØªØ¹Ø¯ÙÙ Ø§ÙÙÙÙ Ø§ÙØ´Ø®ØµÙ ÙØ±ÙØ¨Ø§Ù')">
-                <span><i class="fas fa-user-edit" style="margin-left:10px;color:var(--accent)"></i>ØªØ¹Ø¯ÙÙ Ø§ÙÙÙÙ Ø§ÙØ´Ø®ØµÙ</span>
+            <li class="menu-item" onclick="showToast('✏️ تعديل الملف الشخصي قريباً')">
+                <span><i class="fas fa-user-edit" style="margin-left:10px;color:var(--accent)"></i>تعديل الملف الشخصي</span>
                 <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
             </li>
-            <li class="menu-item" onclick="showToast('ð ØªØºÙÙØ± ÙÙÙØ© Ø§ÙÙØ±ÙØ± ÙØ±ÙØ¨Ø§Ù')">
-                <span><i class="fas fa-lock" style="margin-left:10px;color:var(--gray)"></i>ØªØºÙÙØ± ÙÙÙØ© Ø§ÙÙØ±ÙØ±</span>
+            <li class="menu-item" onclick="showToast('🔒 تغيير كلمة المرور قريباً')">
+                <span><i class="fas fa-lock" style="margin-left:10px;color:var(--gray)"></i>تغيير كلمة المرور</span>
                 <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
             </li>
-            <li class="menu-item" onclick="showToast('â Ø§ÙÙÙÙØ© ÙÙØ«ÙØ©')">
-                <span><i class="fas fa-id-card" style="margin-left:10px;color:var(--success)"></i>ØªÙØ«ÙÙ Ø§ÙÙÙÙØ©</span>
-                <span style="background:var(--success);color:white;padding:2px 8px;border-radius:99px;font-size:0.68rem;font-weight:700">ÙÙØ«Ù</span>
+            <li class="menu-item" onclick="showToast('✅ الهوية موثقة')">
+                <span><i class="fas fa-id-card" style="margin-left:10px;color:var(--success)"></i>توثيق الهوية</span>
+                <span style="background:var(--success);color:white;padding:2px 8px;border-radius:99px;font-size:0.68rem;font-weight:700">موثق</span>
             </li>
         </ul>
 
-        <!-- Ø¹Ø§Ù -->
+        <!-- عام -->
         <div style="font-size:0.78rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-right:4px">
-            Ø¹Ø§Ù
+            عام
         </div>
 
         <ul class="menu-list" style="margin-bottom:20px">
-            <li class="menu-item" onclick="showToast('â­ Ø´ÙØ±Ø§Ù ÙÙ!')">
-                <span><i class="fas fa-star" style="margin-left:10px;color:var(--warning)"></i>ÙÙÙÙ Ø§ÙØªØ·Ø¨ÙÙ</span>
+            <li class="menu-item" onclick="showToast('⭐ شكراً لك!')">
+                <span><i class="fas fa-star" style="margin-left:10px;color:var(--warning)"></i>قيّم التطبيق</span>
                 <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
             </li>
-            <li class="menu-item" onclick="showToast('ð¤ Ø¬Ø§Ø±Ù Ø§ÙÙØ´Ø§Ø±ÙØ©...')">
-                <span><i class="fas fa-share-alt" style="margin-left:10px;color:var(--info)"></i>Ø´Ø§Ø±Ù Ø§ÙØªØ·Ø¨ÙÙ</span>
-                <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
-            </li>
-            <li class="menu-item">
-                <span><i class="fas fa-shield-alt" style="margin-left:10px;color:var(--gray)"></i>Ø³ÙØ§Ø³Ø© Ø§ÙØ®ØµÙØµÙØ©</span>
+            <li class="menu-item" onclick="showToast('📤 جاري المشاركة...')">
+                <span><i class="fas fa-share-alt" style="margin-left:10px;color:var(--info)"></i>شارك التطبيق</span>
                 <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
             </li>
             <li class="menu-item">
-                <span><i class="fas fa-file-contract" style="margin-left:10px;color:var(--gray)"></i>Ø´Ø±ÙØ· Ø§ÙØ§Ø³ØªØ®Ø¯Ø§Ù</span>
+                <span><i class="fas fa-shield-alt" style="margin-left:10px;color:var(--gray)"></i>سياسة الخصوصية</span>
                 <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
             </li>
             <li class="menu-item">
-                <span><i class="fas fa-info-circle" style="margin-left:10px;color:var(--gray)"></i>Ø¹Ù Ø§ÙØªØ·Ø¨ÙÙ</span>
+                <span><i class="fas fa-file-contract" style="margin-left:10px;color:var(--gray)"></i>شروط الاستخدام</span>
+                <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
+            </li>
+            <li class="menu-item">
+                <span><i class="fas fa-info-circle" style="margin-left:10px;color:var(--gray)"></i>عن التطبيق</span>
                 <span style="color:var(--gray);font-size:0.88rem;font-weight:600">v2.0.0</span>
             </li>
         </ul>
 
         <!-- Danger Zone -->
         <div style="font-size:0.78rem;font-weight:800;color:var(--danger);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-right:4px;opacity:0.7">
-            ÙÙØ·ÙØ© Ø§ÙØ®Ø·Ø±
+            منطقة الخطر
         </div>
 
         <ul class="menu-list" style="margin-bottom:30px">
             <li class="menu-item danger" onclick="clearAllData()">
-                <span><i class="fas fa-trash-alt" style="margin-left:10px"></i>ÙØ³Ø­ Ø§ÙØ¨ÙØ§ÙØ§Øª Ø§ÙÙØ­ÙÙØ¸Ø©</span>
+                <span><i class="fas fa-trash-alt" style="margin-left:10px"></i>مسح البيانات المحفوظة</span>
             </li>
             <li class="menu-item danger" onclick="deleteAccount()">
-                <span><i class="fas fa-user-times" style="margin-left:10px"></i>Ø­Ø°Ù Ø§ÙØ­Ø³Ø§Ø¨</span>
+                <span><i class="fas fa-user-times" style="margin-left:10px"></i>حذف الحساب</span>
             </li>
         </ul>
     </div>
 
     <nav class="bottom-nav">
-        <a href="index.html" class="nav-item" data-page="index"><i class="fas fa-home"></i><span>Ø§ÙØ±Ø¦ÙØ³ÙØ©</span></a>
-        <a href="favorites.html" class="nav-item" data-page="favorites"><i class="fas fa-heart"></i><span>Ø§ÙÙÙØ¶ÙØ©</span></a>
-        <a href="messages.html" class="nav-item" data-page="messages"><i class="fas fa-comment-dots"></i><span>Ø§ÙØ±Ø³Ø§Ø¦Ù</span></a>
-        <a href="profile.html" class="nav-item" data-page="profile"><i class="fas fa-user"></i><span>Ø­Ø³Ø§Ø¨Ù</span></a>
+        <a href="index.html" class="nav-item" data-page="index"><i class="fas fa-home"></i><span>الرئيسية</span></a>
+        <a href="favorites.html" class="nav-item" data-page="favorites"><i class="fas fa-heart"></i><span>المفضلة</span></a>
+        <a href="messages.html" class="nav-item" data-page="messages"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
+        <a href="profile.html" class="nav-item" data-page="profile"><i class="fas fa-user"></i><span>حسابي</span></a>
     </nav>
 
     <div id="toast" role="status" aria-live="polite"></div>
     <script src="js/app.js"></script>
-<script src="js/firebase.js"></script>
     <script>
         let notifEnabled = true;
 
@@ -143,13 +142,13 @@
             const icon = document.getElementById('notifIcon');
             icon.className = notifEnabled ? 'fas fa-toggle-on fa-lg' : 'fas fa-toggle-off fa-lg';
             icon.style.color = notifEnabled ? 'var(--accent)' : 'var(--gray)';
-            showToast(notifEnabled ? 'ð ØªÙ ØªÙØ¹ÙÙ Ø§ÙØ¥Ø´Ø¹Ø§Ø±Ø§Øª' : 'ð ØªÙ Ø¥ÙÙØ§Ù Ø§ÙØ¥Ø´Ø¹Ø§Ø±Ø§Øª');
+            showToast(notifEnabled ? '🔔 تم تفعيل الإشعارات' : '🔕 تم إيقاف الإشعارات');
         }
 
         function deleteAccount() {
-            if (confirm('â ï¸ ÙÙ Ø£ÙØª ÙØªØ£ÙØ¯ ÙÙ Ø­Ø°Ù Ø­Ø³Ø§Ø¨ÙØ Ø³ÙØªÙ Ø­Ø°Ù Ø¬ÙÙØ¹ Ø¨ÙØ§ÙØ§ØªÙ ÙÙØ§Ø¦ÙØ§Ù ÙÙØ§ ÙÙÙÙ Ø§ÙØªØ±Ø§Ø¬Ø¹.')) {
+            if (confirm('⚠️ هل أنت متأكد من حذف حسابك؟ سيتم حذف جميع بياناتك نهائياً ولا يمكن التراجع.')) {
                 localStorage.clear();
-                showToast('ð ØªÙ Ø­Ø°Ù Ø§ÙØ­Ø³Ø§Ø¨');
+                showToast('👋 تم حذف الحساب');
                 setTimeout(() => window.location.href = 'login.html', 1500);
             }
         }
@@ -159,8 +158,8 @@
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
     navigator.serviceWorker.register('sw.js')
-      .then(function(reg){console.log('[Ø¹ÙØ§Ø±Ù] SW ÙÙÙØ¹ÙÙ');})
-      .catch(function(e){console.warn('[Ø¹ÙØ§Ø±Ù] SW Ø®Ø·Ø£:',e);});
+      .then(function(reg){console.log('[عقاري] SW مُفعّل');})
+      .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
   });
 }
 </script>
