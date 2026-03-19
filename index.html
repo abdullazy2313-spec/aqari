@@ -28,7 +28,7 @@
 .hero-search-btn{background:linear-gradient(135deg,var(--accent),var(--accent-hover));border:none;border-radius:10px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:white;font-size:1rem;flex-shrink:0;}
 .search-suggestions{position:absolute;top:calc(100% + 6px);right:0;left:0;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);z-index:200;display:none;max-height:240px;overflow-y:auto;}
 /* Stats */
-.stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:26px 0 20px;}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:26px 0 20px;}
 .stat-pill{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;box-shadow:var(--shadow-sm);}
 .stat-pill-num{font-size:1.2rem;font-weight:900;color:var(--accent);}
 .stat-pill-lbl{font-size:0.66rem;color:var(--gray);font-weight:600;margin-top:3px;}
@@ -100,7 +100,7 @@
 .empty-state{text-align:center;padding:50px 20px;color:var(--gray);}
 .empty-state i{font-size:3rem;display:block;margin-bottom:12px;opacity:0.35;}
 /* action grid */
-.action-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin:22px 0 18px;}
+.action-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin:22px 0 18px;}
 .action-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:18px 10px 14px;background:var(--card);border:1px solid var(--border);border-radius:18px;cursor:pointer;text-decoration:none;box-shadow:var(--shadow-sm);transition:all 0.2s;-webkit-tap-highlight-color:transparent;}
 .action-btn:active{transform:scale(0.97);}
 .action-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
@@ -146,6 +146,13 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
       <div class="action-icon" style="background:rgba(52,152,219,0.12);color:#3498db"><i class="fas fa-map-marked-alt"></i></div>
       <div class="action-lbl">الخريطة</div>
     </a>
+    <a href="filter.html" class="action-btn">
+      <div class="action-icon" style="background:rgba(39,174,96,0.12);color:#27ae60;position:relative">
+        <i class="fas fa-search-location"></i>
+        <span style="position:absolute;top:-4px;left:-4px;width:16px;height:16px;background:#27ae60;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--card)"><i class="fas fa-plus" style="font-size:0.45rem;color:white"></i></span>
+      </div>
+      <div class="action-lbl">بحث متقدم</div>
+    </a>
     <a href="#" class="action-btn" onclick="openPriceCalc();return false">
       <div class="action-icon" style="background:rgba(155,89,182,0.12);color:#8e44ad"><i class="fas fa-calculator"></i></div>
       <div class="action-lbl">حاسبة القسط</div>
@@ -169,6 +176,10 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
   <div class="filter-strip">
     <span class="results-count" id="resultsCount" style="margin:0">جاري التحميل...</span>
     <div style="display:flex;gap:8px;align-items:center">
+      <a href="filter.html" class="filter-btn-adv">
+        <i class="fas fa-sliders-h"></i>فلترة متقدمة
+        <span class="active-filters-count" id="activeFiltersCount"></span>
+      </a>
       <div class="view-toggle">
         <button class="view-btn active" data-view="list" onclick="setView('list')"><i class="fas fa-list"></i></button>
         <button class="view-btn" data-view="grid" onclick="setView('grid')"><i class="fas fa-th"></i></button>
@@ -308,8 +319,6 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
 
 <div id="toast"></div>
 <script src="js/app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
 var _calcDP=10, _calcYr=15;
 function openPriceCalc(){document.getElementById('calcModal').style.display='block';calcLoan();}
