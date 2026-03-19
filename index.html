@@ -28,7 +28,7 @@
 .hero-search-btn{background:linear-gradient(135deg,var(--accent),var(--accent-hover));border:none;border-radius:10px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:white;font-size:1rem;flex-shrink:0;}
 .search-suggestions{position:absolute;top:calc(100% + 6px);right:0;left:0;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);z-index:200;display:none;max-height:240px;overflow-y:auto;}
 /* Stats */
-.stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:26px 0 20px;}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:26px 0 20px;}
 .stat-pill{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;box-shadow:var(--shadow-sm);}
 .stat-pill-num{font-size:1.2rem;font-weight:900;color:var(--accent);}
 .stat-pill-lbl{font-size:0.66rem;color:var(--gray);font-weight:600;margin-top:3px;}
@@ -40,9 +40,9 @@
 .type-tab.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
 /* Filter button */
 .filter-strip{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
-
-
-
+.filter-btn-adv{display:flex;align-items:center;gap:7px;padding:9px 16px;background:var(--card);border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:0.8rem;font-weight:700;cursor:pointer;color:var(--text-secondary);transition:all 0.2s;}
+.filter-btn-adv:hover{border-color:var(--accent);color:var(--accent);}
+.active-filters-count{background:var(--accent);color:white;border-radius:50%;width:18px;height:18px;font-size:0.62rem;font-weight:800;display:none;align-items:center;justify-content:center;}
 /* Section headers */
 .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
 .sec-title-txt{font-size:0.95rem;font-weight:900;color:var(--text);display:flex;align-items:center;gap:7px;}
@@ -146,7 +146,6 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
       <div class="action-icon" style="background:rgba(52,152,219,0.12);color:#3498db"><i class="fas fa-map-marked-alt"></i></div>
       <div class="action-lbl">الخريطة</div>
     </a>
-    
     <a href="#" class="action-btn" onclick="openPriceCalc();return false">
       <div class="action-icon" style="background:rgba(155,89,182,0.12);color:#8e44ad"><i class="fas fa-calculator"></i></div>
       <div class="action-lbl">حاسبة القسط</div>
@@ -166,7 +165,15 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
     </button>
   </div>
 
-  </div>
+  <!-- شريط الفلترة المتقدمة -->
+  <div class="filter-strip">
+    <span class="results-count" id="resultsCount" style="margin:0">جاري التحميل...</span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="view-toggle">
+        <button class="view-btn active" data-view="list" onclick="setView('list')"><i class="fas fa-list"></i></button>
+        <button class="view-btn" data-view="grid" onclick="setView('grid')"><i class="fas fa-th"></i></button>
+      </div>
+    </div>
   </div>
 
   <!-- Featured -->
@@ -333,5 +340,7 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </body>
 </html>
