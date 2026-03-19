@@ -312,6 +312,8 @@ body{overflow:hidden;background:#0f172a;font-family:var(--font,'Cairo',sans-seri
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="js/app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
 var map, tileLayer, mapFilter='all', curTile='osm';
 var allM=[], clusterM=[], myLocM=null;
@@ -417,39 +419,37 @@ function renderZoom(){
   }
 }
 
-function _getPinIcon(cat){
-  var m={villa:'fa-house-chimney',apartment:'fa-building',house:'fa-home',
+function addPin(p){
+  var sale = p.type !== 'rent';
+  var catIco = {villa:'fa-house-chimney',apartment:'fa-building',house:'fa-home',
     palace:'fa-chess-rook',land:'fa-mountain',commercial:'fa-store',
     office:'fa-briefcase',warehouse:'fa-warehouse',building:'fa-city'};
-  return m[cat]||'fa-home';
-}
-function _fmtPrice(p){
-  if(!p)return'0$';
-  if(p>=1000000)return(p/1000000).toFixed(1)+'M$';
-  if(p>=1000)return Math.round(p/1000)+'K$';
-  return p+'$';
-}
-function addPin(p){
-  var sale=p.type!=='rent';
-  var ico=_getPinIcon(p.category);
-  var price=_fmtPrice(p.price);
-  var grad=sale?'linear-gradient(135deg,#f97316,#dc2626)':'linear-gradient(135deg,#3b82f6,#6366f1)';
-  var tip=sale?'#dc2626':'#6366f1';
-  var lbl=sale?'بيع':'إيجار';
-  var shadow=sale?'rgba(249,115,22,0.4)':'rgba(59,130,246,0.4)';
-  var star=p.featured?'<div style="position:absolute;top:-7px;right:-7px;width:16px;height:16px;background:#fbbf24;border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:0.45rem;color:white"><i class=\\"fas fa-star\\"></i></div>':'';
-  var html='<div style="position:relative;display:inline-block;cursor:pointer">'+star
-    +'<div style="background:'+grad+';border-radius:18px 18px 18px 4px;padding:5px 9px 5px 7px;display:flex;align-items:center;gap:4px;white-space:nowrap;box-shadow:0 5px 18px '+shadow+',0 2px 5px rgba(0,0,0,0.18);border:2px solid rgba(255,255,255,0.55)">'
-    +'<div style="width:22px;height:22px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">'
-    +'<i class=\\"fas '+ico+'\\" style=\\"font-size:0.65rem;color:white\\"></i></div>'
-    +'<div style="line-height:1.1"><div style="font-size:0.72rem;font-weight:900;color:white">'+price+'</div>'
-    +'<div style="font-size:0.52rem;color:rgba(255,255,255,0.88);font-weight:600">'+lbl+'</div></div></div>'
-    +'<div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid '+tip+';margin-right:9px"></div></div>';
-  var m=L.marker([p._mlat,p._mlng],{
-    icon:L.divIcon({className:'',html:html,iconSize:[1,1],iconAnchor:[48,46]}),
-    zIndexOffset:p.featured?200:100
+  var ico = catIco[p.category] || 'fa-home';
+  var price = p.price >= 1000000 ? (p.price/1000000).toFixed(1)+'M$'
+    : p.price >= 1000 ? Math.round(p.price/1000)+'K$' : p.price+'$';
+  var grad  = sale ? 'linear-gradient(135deg,#f97316,#dc2626)' : 'linear-gradient(135deg,#3b82f6,#6366f1)';
+  var tip   = sale ? '#dc2626' : '#6366f1';
+  var shade = sale ? 'rgba(249,115,22,0.4)' : 'rgba(59,130,246,0.4)';
+  var lbl   = sale ? 'بيع' : 'إيجار';
+  var star  = p.featured
+    ? '<div style="position:absolute;top:-7px;right:-7px;width:16px;height:16px;background:#fbbf24;border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center"><i class=\\"fas fa-star\\" style=\\"font-size:0.45rem;color:white\\"></i></div>' : '';
+  var html  = '<div style="position:relative;display:inline-block;cursor:pointer">'
+    + star
+    + '<div style="background:'+grad+';border-radius:18px 18px 18px 4px;padding:5px 9px 5px 7px;'
+    + 'display:flex;align-items:center;gap:4px;white-space:nowrap;'
+    + 'box-shadow:0 5px 18px '+shade+',0 1px 5px rgba(0,0,0,0.2);border:2px solid rgba(255,255,255,0.55)">'
+    + '<div style="width:22px;height:22px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center">'
+    + '<i class=\\"fas '+ico+'\\" style=\\"font-size:0.65rem;color:white\\"></i></div>'
+    + '<div style="line-height:1.15">'
+    + '<div style="font-size:0.72rem;font-weight:900;color:white">'+price+'</div>'
+    + '<div style="font-size:0.52rem;color:rgba(255,255,255,0.88);font-weight:600">'+lbl+'</div>'
+    + '</div></div>'
+    + '<div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid '+tip+';margin-right:9px"></div></div>';
+  var m = L.marker([p._mlat,p._mlng],{
+    icon: L.divIcon({className:'',html:html,iconSize:[1,1],iconAnchor:[48,48]}),
+    zIndexOffset: p.featured ? 200 : 100
   }).addTo(map);
-  m.on('click',function(){openSheet(p);});
+  m.on('click', function(){ openSheet(p); });
   allM.push(m);
 }
 
@@ -577,7 +577,5 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </body>
 </html>
