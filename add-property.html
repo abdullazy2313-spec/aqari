@@ -312,10 +312,26 @@
       <div style="margin-top:12px">
         <div style="font-size:0.76rem;font-weight:700;color:var(--text-secondary);margin-bottom:5px;display:flex;align-items:center;gap:5px">
           <i class="fas fa-hand-pointer" style="color:var(--accent)"></i>
-          اضغط على الخريطة أو اسحب العلامة لتحديد الموقع الدقيق
+          حدد موقع العقار بدقة — ابحث أو اضغط على الخريطة أو استخدم GPS
+        </p>
+        <!-- شريط بحث الموقع -->
+        <div style="position:relative;margin-bottom:8px;display:flex;gap:8px">
+          <div style="flex:1;position:relative">
+            <input type="text" id="mapSearchInput" placeholder="ابحث عن حي، شارع، موقع..." 
+              class="if" style="padding-right:38px;font-size:0.82rem"
+              oninput="onLocationSearch(this.value)">
+            <i class="fas fa-search" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray);font-size:0.82rem;pointer-events:none"></i>
+          </div>
+          <button type="button" onclick="getGPSLocation()" id="gpsBtn"
+            style="width:44px;height:44px;border-radius:11px;background:var(--accent);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s"
+            title="موقعي الحالي">
+            <i class="fas fa-crosshairs"></i>
+          </button>
         </div>
+        <!-- نتائج البحث -->
+        <div id="locSearchResults" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;max-height:160px;overflow-y:auto;box-shadow:var(--shadow-md)"></div>
         <div id="mapPicker"></div>
-        <div class="map-coord-pill" id="coordPill"><i class="fas fa-check-circle"></i><span id="coordText">تم التحديد</span></div>
+        <div class="map-coord-pill" id="coordPill"><i class="fas fa-check-circle"></i><span id="coordText">تم التحديد</span> id="coordPill"><i class="fas fa-check-circle"></i><span id="coordText">تم التحديد</span></div>
       </div>
     </div>
   </div>
@@ -478,6 +494,8 @@
 <div id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="js/app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 .payment-method{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-size:0.78rem;font-weight:700;text-align:center;color:var(--text-secondary);transition:all 0.2s;}
 .payment-method.selected{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
@@ -559,34 +577,100 @@ function goStep(s){
 
 function initPickerMap(lat,lng,placed){
   if(pickerMap){pickerMap.remove();pickerMap=null;}
-  pickerMap=L.map('mapPicker',{center:[lat,lng],zoom:placed?14:7,attributionControl:false});
+  pickerMap=L.map('mapPicker',{center:[lat,lng],zoom:placed?15:8,attributionControl:false,zoomControl:false});
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(pickerMap);
+  L.control.zoom({position:'bottomleft'}).addTo(pickerMap);
   if(placed){placeMarker(lat,lng);}
-  pickerMap.on('click',e=>{placeMarker(e.latlng.lat,e.latlng.lng);showToast('تم تثبيت الموقع');});
+  pickerMap.on('click',e=>{
+    placeMarker(e.latlng.lat,e.latlng.lng);
+    showToast('📍 تم تثبيت الموقع — اسحب العلامة لضبطه');
+  });
 }
 
 function placeMarker(lat,lng){
   selLat=+lat.toFixed(6);selLng=+lng.toFixed(6);
   if(pickerMarker){pickerMap.removeLayer(pickerMarker);}
   pickerMarker=L.marker([lat,lng],{icon:markerIcon(),draggable:true}).addTo(pickerMap);
-  pickerMarker.on('dragend',e=>{const p=e.target.getLatLng();selLat=+p.lat.toFixed(6);selLng=+p.lng.toFixed(6);showCoord();});
+  pickerMarker.on('drag',e=>{const p=e.target.getLatLng();selLat=+p.lat.toFixed(6);selLng=+p.lng.toFixed(6);showCoord();});
+  pickerMarker.on('dragend',()=>showToast('✅ تم تعديل الموقع'));
+  pickerMap.flyTo([lat,lng],15,{duration:0.5});
   showCoord();
 }
 
 function showCoord(){
   const p=document.getElementById('coordPill');const t=document.getElementById('coordText');
-  if(p&&t){p.classList.add('show');t.textContent=`${selLat?.toFixed(4)}, ${selLng?.toFixed(4)}`;}
+  if(p&&t){p.classList.add('show');t.textContent='📍 '+selLat?.toFixed(5)+', '+selLng?.toFixed(5);}
+}
+
+/* بحث الموقع عبر Nominatim */
+let searchTimer=null;
+function onLocationSearch(q){
+  clearTimeout(searchTimer);
+  const box=document.getElementById('locSearchResults');
+  if(!q||q.trim().length<3){box.style.display='none';return;}
+  searchTimer=setTimeout(async()=>{
+    try{
+      const city=document.getElementById('propCity').value||'سوريا';
+      const res=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q+' '+city)}&limit=5&accept-language=ar`,{headers:{'Accept-Language':'ar'}});
+      const data=await res.json();
+      if(!data.length){box.style.display='none';return;}
+      box.style.display='block';
+      box.innerHTML=data.map(r=>`
+        <div onclick="pickLocation(${r.lat},${r.lon},'${r.display_name.replace(/'/g,"\'").substring(0,60)}')"
+          style="padding:10px 13px;border-bottom:1px solid var(--border);cursor:pointer;font-size:0.79rem;display:flex;align-items:center;gap:8px;transition:background 0.15s"
+          onmouseover="this.style.background='var(--gray-light)'" onmouseout="this.style.background=''">
+          <i class="fas fa-map-marker-alt" style="color:var(--accent);font-size:0.82rem;flex-shrink:0"></i>
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.display_name.substring(0,70)}</span>
+        </div>`).join('');
+    }catch(e){console.warn('Search error:',e);}
+  },600);
+}
+
+function pickLocation(lat,lng,name){
+  if(!pickerMap)initPickerMap(lat,lng,false);
+  placeMarker(lat,lng);
+  document.getElementById('locSearchResults').style.display='none';
+  const inp=document.getElementById('mapSearchInput');
+  if(inp)inp.value='';
+  showToast('📍 '+name);
+}
+
+/* GPS الموقع الحالي */
+function getGPSLocation(){
+  if(!navigator.geolocation){showToast('جهازك لا يدعم GPS');return;}
+  const btn=document.getElementById('gpsBtn');
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+  btn.disabled=true;
+  showToast('⏳ جاري تحديد موقعك...');
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      const lat=pos.coords.latitude,lng=pos.coords.longitude;
+      if(!pickerMap)initPickerMap(lat,lng,false);
+      placeMarker(lat,lng);
+      btn.innerHTML='<i class="fas fa-crosshairs"></i>';
+      btn.disabled=false;
+      showToast('✅ تم تحديد موقعك بدقة '+Math.round(pos.coords.accuracy)+' متر');
+    },
+    err=>{
+      btn.innerHTML='<i class="fas fa-crosshairs"></i>';
+      btn.disabled=false;
+      if(err.code===1)showToast('⚠️ يرجى السماح بالوصول للموقع من إعدادات المتصفح');
+      else showToast('تعذر تحديد الموقع، اضغط على الخريطة يدوياً');
+    },
+    {enableHighAccuracy:true,timeout:10000,maximumAge:0}
+  );
 }
 
 function onCityChange(city){
   const c=CMAP[city];if(!c)return;
-  if(pickerMap){pickerMap.flyTo([c.lat,c.lng],14,{duration:0.7});placeMarker(c.lat,c.lng);}
+  if(pickerMap){pickerMap.flyTo([c.lat,c.lng],13,{duration:0.7});placeMarker(c.lat,c.lng);}
   else if(document.getElementById('step2').style.display==='block'){initPickerMap(c.lat,c.lng,true);}
   showToast('الخريطة: '+city);
 }
 
 function onNbhdInput(){
-  const city=document.getElementById('propCity').value;const nbhd=document.getElementById('propNeighborhood').value.trim();
+  const city=document.getElementById('propCity').value;
+  const nbhd=document.getElementById('propNeighborhood').value.trim();
   if(!city||!nbhd||!pickerMap)return;
   const c=CMAP[city];if(!c)return;
   let h=0;for(let i=0;i<nbhd.length;i++)h=((h<<5)-h)+nbhd.charCodeAt(i);
@@ -597,13 +681,14 @@ function onNbhdInput(){
 function openPayModal(){
   const phone=document.getElementById('propPhone').value;
   if(!phone){showToast('يرجى إدخال رقم الهاتف');return;}
-  if(selLat) localStorage.setItem('pending_lat',selLat);
-  if(selLng) localStorage.setItem('pending_lng',selLng);
-  /* Images are already in window.UPLOAD_IMGS — publishProperty reads them directly */
+  if(selLat)localStorage.setItem('pending_lat',selLat);
+  if(selLng)localStorage.setItem('pending_lng',selLng);
   showPaymentModal();
 }
 
 document.getElementById('paymentModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+('click',function(e){if(e.target===this)closeModal();});
 </script>
 
 <script>
@@ -615,9 +700,5 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </body>
 </html>
