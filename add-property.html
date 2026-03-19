@@ -314,20 +314,6 @@
           <i class="fas fa-hand-pointer" style="color:var(--accent)"></i>
           اضغط على الخريطة أو اسحب العلامة لتحديد الموقع الدقيق
         </div>
-        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
-          <div style="flex:1;position:relative">
-            <input type="text" id="mapSrchIn"
-              placeholder="ابحث عن موقع، حي، شارع..."
-              class="if" style="padding-right:36px;font-size:0.82rem"
-              oninput="doMapSearch(this.value)">
-            <i class="fas fa-search" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--gray);font-size:0.8rem;pointer-events:none"></i>
-          </div>
-          <button type="button" onclick="doGPS()" id="gpsBtn"
-            style="width:44px;height:44px;border-radius:11px;background:var(--accent);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <i class="fas fa-crosshairs"></i>
-          </button>
-        </div>
-        <div id="mapSrchRes" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;max-height:150px;overflow-y:auto"></div>
         <div id="mapPicker"></div>
         <div class="map-coord-pill" id="coordPill"><i class="fas fa-check-circle"></i><span id="coordText">تم التحديد</span></div>
       </div>
@@ -492,8 +478,6 @@
 <div id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="js/app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 .payment-method{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-size:0.78rem;font-weight:700;text-align:center;color:var(--text-secondary);transition:all 0.2s;}
 .payment-method.selected{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
@@ -629,50 +613,6 @@ if('serviceWorker' in navigator){
       .then(function(reg){console.log('[عقاري] SW مُفعّل');})
       .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
   });
-}
-
-/* GPS */
-function doGPS(){
-  if(!navigator.geolocation){showToast('جهازك لا يدعم GPS');return;}
-  var btn=document.getElementById('gpsBtn');
-  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
-  btn.disabled=true;
-  navigator.geolocation.getCurrentPosition(function(pos){
-    btn.innerHTML='<i class="fas fa-crosshairs"></i>';btn.disabled=false;
-    var la=pos.coords.latitude,ln=pos.coords.longitude;
-    if(!pickerMap)initPickerMap(la,ln,false);
-    placeMarker(la,ln);
-    showToast('✅ موقعك (±'+Math.round(pos.coords.accuracy)+'م)');
-  },function(e){
-    btn.innerHTML='<i class="fas fa-crosshairs"></i>';btn.disabled=false;
-    showToast(e.code===1?'⚠️ اسمح للمتصفح بالوصول للموقع':'تعذر GPS — اضغط على الخريطة');
-  },{enableHighAccuracy:true,timeout:10000,maximumAge:0});
-}
-/* بحث Nominatim */
-var _sTimer=null;
-function doMapSearch(q){
-  clearTimeout(_sTimer);
-  var box=document.getElementById('mapSrchRes');
-  if(!q||q.trim().length<3){box.style.display='none';return;}
-  _sTimer=setTimeout(async function(){
-    try{
-      var city=document.getElementById('propCity').value||'سوريا';
-      var r=await fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q+' '+city)+'&limit=5&accept-language=ar');
-      var data=await r.json();
-      if(!data.length){box.style.display='none';return;}
-      box.style.display='block';
-      box.innerHTML=data.map(function(d){
-        return '<div onclick="pickSrchLoc('+d.lat+','+d.lon+')" style="padding:9px 13px;border-bottom:1px solid var(--border);cursor:pointer;font-size:0.78rem;display:flex;align-items:center;gap:8px"><i class=\"fas fa-map-marker-alt\" style=\"color:var(--accent);flex-shrink:0\"></i><span>'+d.display_name.substring(0,65)+'</span></div>';
-      }).join('');
-    }catch(e){}
-  },500);
-}
-function pickSrchLoc(la,ln){
-  document.getElementById('mapSrchRes').style.display='none';
-  document.getElementById('mapSrchIn').value='';
-  if(!pickerMap)initPickerMap(la,ln,false);
-  placeMarker(la,ln);
-  showToast('📍 تم تحديد الموقع');
 }
 </script>
 </body>
