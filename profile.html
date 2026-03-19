@@ -60,7 +60,6 @@
   color:white;font-size:1.1rem;cursor:pointer;
   display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .zoom-btn:active{background:rgba(255,255,255,0.25)}
-#zoomRange{flex:1;accent-color:var(--accent);cursor:pointer}
 .crop-actions{display:flex;gap:10px;margin-top:16px;width:100%;max-width:280px}
 .btn-cancel-crop{flex:1;padding:13px;border-radius:13px;
   background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);
@@ -159,19 +158,25 @@
 
 <!-- ══ Modal القص ══ -->
 <div id="cropOverlay">
-  <div class="crop-title">✂️ اضبط الصورة كما تريد</div>
+  <div class="crop-title"><i class="fas fa-crop-alt" style="margin-left:8px;color:var(--accent)"></i>اضبط الصورة</div>
   <div id="cropCircle">
     <img id="cropImage" alt="">
   </div>
-  <div class="crop-hint">اسحب لتحريك · إصبعان للتكبير</div>
+  <div class="crop-hint"><i class="fas fa-arrows-alt" style="margin-left:5px;opacity:0.6"></i>اسحب لتحريك الصورة</div>
   <div class="zoom-row">
-    <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-search-minus"></i></button>
-    <input type="range" id="zoomRange" min="0" max="100" value="0">
-    <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-search-plus"></i></button>
+    <button class="zoom-btn" id="zoomOutBtn" title="تصغير">
+      <i class="fas fa-minus"></i>
+    </button>
+    <span style="color:rgba(255,255,255,0.35);font-size:0.72rem;flex:1;text-align:center">
+      <i class="fas fa-hand-pointer" style="margin-left:4px"></i>إصبعان للتكبير
+    </span>
+    <button class="zoom-btn" id="zoomInBtn" title="تكبير">
+      <i class="fas fa-plus"></i>
+    </button>
   </div>
   <div class="crop-actions">
-    <button class="btn-cancel-crop" id="cancelCropBtn">إلغاء</button>
-    <button class="btn-save-crop" id="saveCropBtn">✅ حفظ الصورة</button>
+    <button class="btn-cancel-crop" id="cancelCropBtn"><i class="fas fa-times" style="margin-left:6px"></i>إلغاء</button>
+    <button class="btn-save-crop" id="saveCropBtn"><i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة</button>
   </div>
 </div>
 
@@ -191,12 +196,23 @@
   /* ══ تحميل الصورة الحالية ══ */
   function loadCurrentPic() {
     var ring  = document.getElementById('picRing');
+    var cam   = document.getElementById('picCamBtn');
     var photo = localStorage.getItem('userPhoto');
     if (!ring) return;
     if (photo) {
       ring.innerHTML = '<img src="' + photo + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block">';
+      /* بعد الإضافة: أيقونة قلم للتعديل */
+      if (cam) {
+        cam.innerHTML = '<i class="fas fa-pen"></i>';
+        cam.title = 'تعديل الصورة';
+      }
     } else {
       ring.innerHTML = '<i class="fas fa-user" style="font-size:2.4rem;color:var(--accent)"></i>';
+      /* بدون صورة: أيقونة كاميرا */
+      if (cam) {
+        cam.innerHTML = '<i class="fas fa-camera"></i>';
+        cam.title = 'إضافة صورة';
+      }
     }
   }
 
@@ -250,8 +266,6 @@
     posY = (SZ - imgH * scale) / 2;
 
     /* شريط الزووم: نستخدم 0-100 للتبسيط */
-    var slider = document.getElementById('zoomRange');
-    slider.value = 0;
 
     /* ضع الصورة */
     var cImg = document.getElementById('cropImage');
@@ -290,8 +304,6 @@
     applyTransform();
     /* مزامنة الشريط */
     var pct = (scale - minScale) / (maxScale - minScale) * 100;
-    var sl = document.getElementById('zoomRange');
-    if (sl) sl.value = Math.round(pct);
   }
 
   /* ══ إغلاق ══ */
@@ -304,7 +316,7 @@
   function saveCrop() {
     var btn = document.getElementById('saveCropBtn');
     btn.disabled = true;
-    btn.textContent = '⏳ جاري...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-left:6px"></i>جاري...';
     try {
       var canvas = document.createElement('canvas');
       canvas.width = canvas.height = 400;
@@ -326,7 +338,7 @@
       alert('خطأ في الحفظ: ' + err.message);
     }
     btn.disabled = false;
-    btn.textContent = '✅ حفظ الصورة';
+    btn.innerHTML = '<i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة';
   }
 
   /* ══ أحداث السحب ══ */
@@ -415,11 +427,7 @@
     document.getElementById('zoomOutBtn').addEventListener('click', function() {
       changeScale(scale / 1.15);
     });
-    /* شريط الزووم */
-    document.getElementById('zoomRange').addEventListener('input', function() {
-      var pct = parseFloat(this.value) / 100;
-      changeScale(minScale + pct * (maxScale - minScale));
-    });
+
 
     /* تحميل الصورة والبيانات */
     loadCurrentPic();
