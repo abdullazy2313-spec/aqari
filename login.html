@@ -213,27 +213,32 @@ try {
 /* ── ترجمة أخطاء Firebase ── */
 function fbErr(code) {
   const msgs = {
-    'auth/user-not-found':       'البريد الإلكتروني غير مسجل',
-    'auth/wrong-password':       'كلمة المرور غير صحيحة',
-    'auth/invalid-credential':   'البريد أو كلمة المرور غير صحيحة',
-    'auth/email-already-in-use': 'هذا البريد مسجل مسبقاً، جرب تسجيل الدخول',
-    'auth/weak-password':        'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
-    'auth/invalid-email':        'صيغة البريد الإلكتروني غير صحيحة',
-    'auth/too-many-requests':    'كثير من المحاولات، انتظر قليلاً ثم أعد المحاولة',
-    'auth/network-request-failed': 'تحقق من اتصالك بالإنترنت',
-    'auth/popup-blocked':        'المتصفح حجب النافذة المنبثقة — اضغط مرة أخرى',
-    'auth/popup-closed-by-user': 'تم إغلاق نافذة Google',
-    'auth/unauthorized-domain':  'الدومين غير مسموح — تحقق من Firebase Console',
-    'auth/operation-not-allowed':'فعّل Google في Firebase Authentication',
+    'auth/user-not-found':            '⚠️ هذا البريد غير مسجل — أنشئ حساباً جديداً',
+    'auth/wrong-password':            '❌ كلمة المرور غير صحيحة',
+    'auth/invalid-credential':        '❌ البريد أو كلمة المرور غير صحيحة',
+    'auth/invalid-login-credentials': '❌ البريد أو كلمة المرور غير صحيحة — تأكد من البيانات أو أنشئ حساباً جديداً',
+    'auth/email-already-in-use':      '⚠️ هذا البريد مسجل مسبقاً — اضغط "دخول"',
+    'auth/weak-password':             '⚠️ كلمة المرور قصيرة — 6 أحرف على الأقل',
+    'auth/invalid-email':             '⚠️ صيغة البريد الإلكتروني غير صحيحة',
+    'auth/too-many-requests':         '⏳ كثير من المحاولات — انتظر دقيقة ثم أعد المحاولة',
+    'auth/network-request-failed':    '📡 تحقق من اتصالك بالإنترنت',
+    'auth/popup-blocked':             '⚠️ السماح بالنوافذ المنبثقة في المتصفح ثم أعد المحاولة',
+    'auth/popup-closed-by-user':      'تم إغلاق نافذة Google',
+    'auth/unauthorized-domain':       '⚠️ أضف الدومين في Firebase Console → Authentication → Settings',
+    'auth/operation-not-allowed':     '⚠️ فعّل Google في Firebase → Authentication → Sign-in method',
+    'auth/requires-recent-login':     '⚠️ يرجى تسجيل الدخول مجدداً',
+    'auth/account-exists-with-different-credential': '⚠️ هذا البريد مسجل بطريقة مختلفة',
   };
   return msgs[code] || 'حدث خطأ، حاول مجدداً (' + code + ')';
 }
 
-function showErr(msg) {
-  const el = document.getElementById('authError');
-  document.getElementById('authErrorMsg').textContent = msg;
+function showErr(msg, hint) {
+  const el  = document.getElementById('authError');
+  const msg_el = document.getElementById('authErrorMsg');
+  msg_el.innerHTML = msg + (hint ? '<br><small style="opacity:0.8;margin-top:4px;display:block">' + hint + '</small>' : '');
   el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 5000);
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 6000);
 }
 
 function hideErr() {
@@ -271,7 +276,11 @@ async function doLogin() {
     showToast('✅ مرحباً بك!');
     gotoHome();
   } catch(e) {
-    showErr(fbErr(e.code));
+    let hint = null;
+    if (e.code === 'auth/invalid-login-credentials' || e.code === 'auth/user-not-found') {
+      hint = '💡 لا تملك حساباً؟ اضغط على "تسجيل جديد" لإنشاء حساب';
+    }
+    showErr(fbErr(e.code), hint);
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-sign-in-alt" style="margin-left:8px"></i> دخول';
   }
