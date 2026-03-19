@@ -2,160 +2,297 @@
 <html lang="ar" dir="rtl" data-theme="light">
 <head>
     <meta charset="UTF-8">
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#e67e22">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="عقاري">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#e67e22">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="عقاري">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>حسابي - عقاري</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+<style>
+/* صورة البروفايل */
+.pic-outer{position:relative;width:92px;height:92px;margin:0 auto 12px}
+.pic-ring{width:92px;height:92px;border-radius:50%;border:3px solid var(--accent);
+  overflow:hidden;background:var(--gray-light);display:flex;align-items:center;
+  justify-content:center;cursor:pointer;
+  box-shadow:0 4px 18px rgba(230,126,34,0.22);transition:box-shadow 0.2s}
+.pic-ring:active{box-shadow:0 6px 24px rgba(230,126,34,0.4)}
+.pic-ring i{font-size:2.3rem;color:var(--accent)}
+.pic-ring img{width:100%;height:100%;object-fit:cover}
+.pic-cam{position:absolute;bottom:2px;left:2px;width:28px;height:28px;border-radius:50%;
+  background:var(--accent);color:white;border:2.5px solid var(--card);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.7rem;
+  box-shadow:0 2px 8px rgba(230,126,34,0.45)}
+#_picFile{display:none}
+</style>
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <i class="fas fa-user" style="color:var(--accent);margin-left:8px"></i>حسابي
-        </div>
-        <a href="settings.html" class="header-icon-btn" aria-label="الإعدادات">
-            <i class="fas fa-cog"></i>
-        </a>
-    </header>
+<header>
+    <div class="logo"><i class="fas fa-user" style="color:var(--accent);margin-left:8px"></i>حسابي</div>
+    <a href="settings.html" class="header-icon-btn"><i class="fas fa-cog"></i></a>
+</header>
 
-    <div class="container">
-        <!-- Profile Header -->
-        <div class="profile-header">
-            <div class="pic-outer">
-                <div class="pic-ring" onclick="document.getElementById('picFileInput').click()" title="اضغط لتغيير الصورة">
-                  <div id="picDisplay" class="pic-ph"><i class="fas fa-user"></i></div>
-                </div>
-                <div class="pic-cam-btn" onclick="document.getElementById('picFileInput').click()">
-                  <i class="fas fa-camera"></i>
-                </div>
-              </div>
-              <input type="file" id="picFileInput" accept="image/*" onchange="openCropper(this)">
-
-              <!-- Modal قص الصورة -->
-              <div class="crop-modal-ov" id="cropModal">
-                <div class="crop-title">🖼️ اضبط الصورة</div>
-                <div class="crop-wrap" id="cropWrap">
-                  <img id="cropImg" class="crop-img">
-                </div>
-                <div class="crop-hint">اسحب الصورة لتوسيطها • استخدم الزووم للتكبير</div>
-                <input type="range" class="crop-zoom" id="cropZoom" min="1" max="3" step="0.01" value="1" oninput="applyCropZoom(this.value)">
-                <div class="crop-actions">
-                  <button class="crop-btn crop-btn-cancel" onclick="closeCropper()">إلغاء</button>
-                  <button class="crop-btn crop-btn-ok" onclick="saveCroppedPic()">✅ حفظ الصورة</button>
-                </div>
-              </div>
-            <h3 id="profileName" style="margin-bottom:4px;font-size:1.2rem;font-weight:800">مستخدم تجريبي</h3>
-            <p style="color:var(--gray);font-size:0.88rem;" id="profileEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1f6a6c7a6d5f7a677e726f737a317c7072">[email&#160;protected]</a></p>
-            <div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(39,174,96,0.1);padding:4px 14px;border-radius:20px;font-size:0.78rem;color:var(--success);border:1px solid rgba(39,174,96,0.2)">
-                <i class="fas fa-shield-alt"></i> حساب موثق
+<div class="container">
+    <!-- صورة البروفايل -->
+    <div class="profile-header">
+        <div class="pic-outer">
+            <div class="pic-ring" id="_picRing" onclick="document.getElementById('_picFile').click()">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="pic-cam" onclick="document.getElementById('_picFile').click()">
+                <i class="fas fa-camera"></i>
             </div>
         </div>
+        <input type="file" id="_picFile" accept="image/*" onchange="_onPicFile(this)">
 
-        <!-- Stats -->
-        <div class="stat-box" style="margin-bottom:20px">
-            <div class="stat">
-                <span class="stat-num" id="myAdsCount">0</span>
-                <span class="stat-label">إعلاناتي</span>
-            </div>
-            <div class="stat">
-                <span class="stat-num" id="favsCount">0</span>
-                <span class="stat-label">مفضلة</span>
-            </div>
-            <div class="stat">
-                <span class="stat-num" id="viewsCount">0</span>
-                <span class="stat-label">مشاهدات</span>
-            </div>
+        <h3 id="profileName" style="margin-bottom:4px;font-size:1.2rem;font-weight:800">مستخدم عقاري</h3>
+        <p id="profileEmail" style="color:var(--gray);font-size:0.88rem"></p>
+        <div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;
+          background:rgba(39,174,96,0.1);padding:4px 14px;border-radius:20px;
+          font-size:0.78rem;color:var(--success);border:1px solid rgba(39,174,96,0.2)">
+            <i class="fas fa-shield-alt"></i> حساب موثق
         </div>
-
-        <!-- Quick Actions -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
-            <a href="add-property.html" style="text-decoration:none;background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:white;padding:14px;border-radius:12px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:0.88rem">
-                <i class="fas fa-plus-circle fa-lg"></i>
-                <span>إضافة إعلان</span>
-            </a>
-            <a href="favorites.html" style="text-decoration:none;background:var(--gray-light);color:var(--text);padding:14px;border-radius:12px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:0.88rem;border:1px solid var(--border)">
-                <i class="fas fa-heart" style="color:var(--danger)"></i>
-                <span>المفضلة</span>
-            </a>
-        </div>
-
-        <!-- My Ads Section -->
-        <div style="background:var(--card);border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow-sm)">
-            <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-                <span style="font-weight:800;font-size:0.9rem"><i class="fas fa-clipboard-list" style="color:var(--accent);margin-left:8px"></i>إعلاناتي</span>
-                <span id="myAdsCountBadge" style="background:var(--accent-light);color:var(--accent);padding:2px 10px;border-radius:99px;font-size:0.75rem;font-weight:700">0</span>
-            </div>
-            <div id="myAdsSection" style="padding:16px">
-                <div class="empty-state" style="padding:20px 0">
-                    <i class="fas fa-plus-square" style="font-size:2rem;margin-bottom:10px;opacity:0.4"></i>
-                    <p style="font-size:0.85rem;font-weight:600;margin-bottom:6px">لم تنشر أي إعلانات بعد</p>
-                    <a href="add-property.html" style="font-size:0.8rem;color:var(--accent);text-decoration:none;font-weight:700">انشر إعلانك الأول →</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Menu -->
-        <ul class="menu-list">
-            <a href="settings.html" class="menu-item">
-                <span><i class="fas fa-cog" style="margin-left:10px;color:var(--gray)"></i> الإعدادات</span>
-                <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
-            </a>
-            <a href="#" class="menu-item" href="notifications.html">
-                <span><i class="fas fa-bell" style="margin-left:10px;color:var(--gray)"></i> الإشعارات</span>
-                <span style="background:var(--danger);color:white;padding:2px 8px;border-radius:99px;font-size:0.68rem;font-weight:700">3</span>
-            </a>
-            <a href="#" class="menu-item" href="notifications.html"">
-                <span><i class="fas fa-question-circle" style="margin-left:10px;color:var(--gray)"></i> المساعدة والدعم</span>
-                <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
-            </a>
-            <a href="#" class="menu-item" onclick="showToast('⭐ شكراً!')">
-                <span><i class="fas fa-star" style="margin-left:10px;color:var(--warning)"></i> قيّم التطبيق</span>
-                <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
-            </a>
-            <li class="menu-item danger" onclick="handleLogout()">
-                <span><i class="fas fa-sign-out-alt" style="margin-left:10px"></i> تسجيل الخروج</span>
-            </li>
-        </ul>
-
-        <p style="text-align:center;color:var(--gray);font-size:0.72rem;margin-top:24px;margin-bottom:8px">
-            عقاري v2.0.0 — جميع الحقوق محفوظة © 2024
-        </p>
     </div>
 
-    <nav class="bottom-nav">
-        <a href="index.html" class="nav-item" data-page="index"><i class="fas fa-home"></i><span>الرئيسية</span></a>
-        <a href="favorites.html" class="nav-item" data-page="favorites"><i class="fas fa-heart"></i><span>المفضلة</span></a>
-        <a href="messages.html" class="nav-item" data-page="messages"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
-        <a href="profile.html" class="nav-item active" data-page="profile"><i class="fas fa-user"></i><span>حسابي</span></a>
-    </nav>
+    <!-- إحصاءات -->
+    <div class="stat-box" style="margin-bottom:20px">
+        <div class="stat"><span class="stat-num" id="myAdsCount">0</span><span class="stat-label">إعلاناتي</span></div>
+        <div class="stat"><span class="stat-num" id="favsCount">0</span><span class="stat-label">مفضلة</span></div>
+        <div class="stat"><span class="stat-num" id="viewsCount">0</span><span class="stat-label">مشاهدات</span></div>
+    </div>
 
-    <div id="toast" role="status" aria-live="polite"></div>
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="js/app.js"></script>
-    <script>
-        // Load my ads in profile
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const myAds = window.myProperties || [];
-                const badge = document.getElementById('myAdsCountBadge');
-                const section = document.getElementById('myAdsSection');
-                if (badge) badge.textContent = myAds.length;
-                if (myAds.length > 0 && section) {
-                    section.innerHTML = myAds.slice(0, 3).map(p => `
-                        <div onclick="goToDetails(${p.id})" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">
-                            <div style="width:52px;height:52px;border-radius:10px;background:var(--gray-light);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--gray);flex-shrink:0">
-                                <i class="fas fa-building"></i>
-                            </div>
-                            <div style="flex:1;overflow:hidden">
-                                <div style="font-weight:700;font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.title}</div>
-                                <div style="font-size:0.78rem;color:var(--accent);font-weight:700;margin-top:2px">${p.price.toLocaleString('en-US')} $</div>
-                            </div>
-                            <span style="font-size:0.7rem;background:var(--success);color:white;padding:3px 8px;border-radius:99px;font-weight:700;flex-shrink:0">نشط</span>
-                        </div>`).join('') +
-                        (myAds.length > 3 ? `<div style="text-align:center;paddin
+    <!-- أزرار سريعة -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+        <a href="add-property.html" style="text-decoration:none;background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:white;padding:14px;border-radius:12px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:0.88rem">
+            <i class="fas fa-plus-circle fa-lg"></i><span>إضافة إعلان</span>
+        </a>
+        <a href="favorites.html" style="text-decoration:none;background:var(--gray-light);color:var(--text);padding:14px;border-radius:12px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:0.88rem;border:1px solid var(--border)">
+            <i class="fas fa-heart" style="color:var(--danger)"></i><span>المفضلة</span>
+        </a>
+    </div>
+
+    <!-- إعلاناتي -->
+    <div style="background:var(--card);border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow-sm)">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+            <span style="font-weight:800;font-size:0.9rem">
+                <i class="fas fa-clipboard-list" style="color:var(--accent);margin-left:8px"></i>إعلاناتي
+            </span>
+            <span id="myAdsCountBadge" style="background:var(--accent-light);color:var(--accent);padding:2px 10px;border-radius:99px;font-size:0.75rem;font-weight:700">0</span>
+        </div>
+        <div id="myAdsSection" style="padding:16px">
+            <div class="empty-state" style="padding:16px 0">
+                <i class="fas fa-plus-square" style="font-size:1.8rem;opacity:0.4;margin-bottom:10px"></i>
+                <p style="font-size:0.85rem;font-weight:600;margin-bottom:6px">لم تنشر أي إعلانات بعد</p>
+                <a href="add-property.html" style="font-size:0.8rem;color:var(--accent);text-decoration:none;font-weight:700">انشر إعلانك الأول →</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- قائمة الخيارات -->
+    <ul class="menu-list">
+        <a href="settings.html" class="menu-item">
+            <span><i class="fas fa-cog" style="margin-left:10px;color:var(--gray)"></i>الإعدادات</span>
+            <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
+        </a>
+        <a href="notifications.html" class="menu-item">
+            <span><i class="fas fa-bell" style="margin-left:10px;color:var(--gray)"></i>الإشعارات</span>
+        </a>
+        <a href="#" class="menu-item" onclick="showToast('⭐ شكراً!')">
+            <span><i class="fas fa-star" style="margin-left:10px;color:var(--warning)"></i>قيّم التطبيق</span>
+            <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
+        </a>
+        <li class="menu-item danger" onclick="handleLogout()">
+            <span><i class="fas fa-sign-out-alt" style="margin-left:10px"></i>تسجيل الخروج</span>
+        </li>
+    </ul>
+    <p style="text-align:center;color:var(--gray);font-size:0.72rem;margin-top:24px;margin-bottom:8px">
+        عقاري v3.0.0 — جميع الحقوق محفوظة © 2025
+    </p>
+</div>
+
+<nav class="bottom-nav">
+    <a href="index.html" class="nav-item" data-page="index"><i class="fas fa-home"></i><span>الرئيسية</span></a>
+    <a href="favorites.html" class="nav-item" data-page="favorites"><i class="fas fa-heart"></i><span>المفضلة</span></a>
+    <a href="messages.html" class="nav-item" data-page="messages"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
+    <a href="profile.html" class="nav-item active" data-page="profile"><i class="fas fa-user"></i><span>حسابي</span></a>
+</nav>
+
+<div id="toast"></div>
+
+<!-- ═══ Modal قص الصورة — خارج كل شيء ═══ -->
+<div id="_cropOv" style="display:none;position:fixed;inset:0;z-index:99999;
+  background:rgba(0,0,0,0.94);flex-direction:column;align-items:center;justify-content:center;padding:20px">
+  <div style="color:white;font-size:0.98rem;font-weight:800;margin-bottom:16px;text-align:center">
+    🖼️ اضبط صورتك
+  </div>
+  <div id="_cropWrap" style="position:relative;width:280px;height:280px;border-radius:50%;
+    overflow:hidden;border:3px solid #f97316;background:#111;cursor:move;touch-action:none;
+    box-shadow:0 0 0 4px rgba(249,115,22,0.25)">
+    <img id="_cropImg" style="position:absolute;transform-origin:0 0;user-select:none;pointer-events:none">
+  </div>
+  <div style="color:rgba(255,255,255,0.45);font-size:0.72rem;margin-top:10px;text-align:center">
+    اسحب لتوسيط الصورة · إصبعان للتكبير
+  </div>
+  <input id="_cropZoom" type="range" min="1" max="3" step="0.01" value="1"
+    style="width:280px;margin-top:10px;accent-color:#f97316"
+    oninput="_zoomChange(this.value)">
+  <div style="display:flex;gap:10px;margin-top:16px;width:280px">
+    <button onclick="_closeCrop()" style="flex:1;padding:13px;border-radius:12px;
+      background:#2d2d2d;border:none;color:#888;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer">
+      إلغاء
+    </button>
+    <button onclick="_saveCrop()" style="flex:1;padding:13px;border-radius:12px;
+      background:linear-gradient(135deg,#f97316,#dc2626);border:none;color:white;
+      font-family:inherit;font-size:0.88rem;font-weight:800;cursor:pointer">
+      ✅ حفظ الصورة
+    </button>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+/* ══════════════════════════════════════════
+   نظام صورة البروفايل مع القص
+══════════════════════════════════════════ */
+var _dx=0,_dy=0,_scale=1,_iW=0,_iH=0,_W=280;
+var _drag=false,_sx=0,_sy=0,_lp=0;
+
+function _loadPic(){
+  var ring=document.getElementById('_picRing');
+  var ph=localStorage.getItem('userPhoto');
+  if(ph){
+    ring.innerHTML='<img src="'+ph+'" alt="صورتي" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.parentElement.innerHTML='<i class=\"fas fa-user\" style=\"font-size:2.3rem;color:var(--accent)\"></i>'">';
+  } else {
+    ring.innerHTML='<i class="fas fa-user" style="font-size:2.3rem;color:var(--accent)"></i>';
+  }
+}
+
+function _onPicFile(inp){
+  var file=inp&&inp.files&&inp.files[0];
+  if(!file||!file.type.startsWith('image/')){showToast('اختر صورة صالحة');return;}
+  var r=new FileReader();
+  r.onload=function(e){
+    var img=document.getElementById('_cropImg');
+    img.onload=function(){
+      _iW=img.naturalWidth;_iH=img.naturalHeight;
+      var ms=_W/Math.min(_iW,_iH);
+      _scale=Math.max(1.02,ms);
+      var z=document.getElementById('_cropZoom');
+      z.min=_scale;z.max=Math.max(3,_scale*2.5);z.value=_scale;
+      _dx=(_W-_iW*_scale)/2;_dy=(_W-_iH*_scale)/2;
+      _clamp();_applyT();
+      var ov=document.getElementById('_cropOv');
+      ov.style.display='flex';
+      document.body.style.overflow='hidden';
+    };
+    img.src=e.target.result;
+  };
+  r.readAsDataURL(file);
+  inp.value='';
+}
+
+function _closeCrop(){
+  document.getElementById('_cropOv').style.display='none';
+  document.body.style.overflow='';
+}
+
+function _zoomChange(v){
+  var old=_scale;_scale=parseFloat(v);
+  _dx-=(_iW*(_scale-old))/2;_dy-=(_iH*(_scale-old))/2;
+  _clamp();_applyT();
+}
+
+function _clamp(){
+  _dx=Math.min(0,Math.max(_W-_iW*_scale,_dx));
+  _dy=Math.min(0,Math.max(_W-_iH*_scale,_dy));
+}
+
+function _applyT(){
+  var img=document.getElementById('_cropImg');
+  img.style.left=_dx+'px';img.style.top=_dy+'px';
+  img.style.width=(_iW*_scale)+'px';img.style.height=(_iH*_scale)+'px';
+}
+
+function _saveCrop(){
+  try{
+    var S=400,c=document.createElement('canvas');
+    c.width=S;c.height=S;
+    var ctx=c.getContext('2d');
+    ctx.beginPath();ctx.arc(S/2,S/2,S/2,0,Math.PI*2);ctx.clip();
+    var r=S/_W;
+    ctx.drawImage(document.getElementById('_cropImg'),-_dx*r,-_dy*r,_iW*_scale*r,_iH*_scale*r);
+    var url=c.toDataURL('image/jpeg',0.88);
+    localStorage.setItem('userPhoto',url);
+    _loadPic();_closeCrop();
+    showToast('✅ تم حفظ الصورة');
+  }catch(e){showToast('❌ تعذر حفظ الصورة');}
+}
+
+/* السحب */
+document.addEventListener('DOMContentLoaded',function(){
+  var w=document.getElementById('_cropWrap');
+  if(!w)return;
+  w.onmousedown=function(e){_drag=true;_sx=e.clientX-_dx;_sy=e.clientY-_dy;e.preventDefault();};
+  window.onmousemove=function(e){if(!_drag)return;_dx=e.clientX-_sx;_dy=e.clientY-_sy;_clamp();_applyT();};
+  window.onmouseup=function(){_drag=false;};
+  w.addEventListener('touchstart',function(e){
+    if(e.touches.length===1){_drag=true;_sx=e.touches[0].clientX-_dx;_sy=e.touches[0].clientY-_dy;}
+    else if(e.touches.length===2){_lp=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}
+    e.preventDefault();
+  },{passive:false});
+  window.addEventListener('touchmove',function(e){
+    if(e.touches.length===1&&_drag){_dx=e.touches[0].clientX-_sx;_dy=e.touches[0].clientY-_sy;_clamp();_applyT();}
+    else if(e.touches.length===2&&_lp>0){
+      var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      var z=document.getElementById('_cropZoom');
+      var ns=Math.min(parseFloat(z.max),Math.max(parseFloat(z.min),_scale*(d/_lp)));
+      _zoomChange(ns);z.value=ns;_lp=d;
+    }
+    e.preventDefault();
+  },{passive:false});
+  window.addEventListener('touchend',function(){_drag=false;_lp=0;});
+});
+
+/* تحميل عند فتح الصفحة */
+window.addEventListener('load',function(){
+  _loadPic();
+  var ads=window.myProperties||[];
+  var favs=window.favorites||[];
+  document.getElementById('profileName').textContent=localStorage.getItem('userName')||'مستخدم عقاري';
+  document.getElementById('profileEmail').textContent=localStorage.getItem('userEmail')||'';
+  document.getElementById('myAdsCount').textContent=ads.length;
+  document.getElementById('myAdsCountBadge').textContent=ads.length;
+  document.getElementById('favsCount').textContent=favs.length;
+  document.getElementById('viewsCount').textContent=ads.reduce(function(a,p){return a+(p.views||0);},0).toLocaleString();
+  var sec=document.getElementById('myAdsSection');
+  if(ads.length&&sec){
+    sec.innerHTML=ads.slice(0,5).map(function(p){
+      var img=(window.getPropImages?window.getPropImages(p):[])[0]||'';
+      return '<div onclick="gotoDetails('+p.id+')" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">'
+        +'<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;background:var(--gray-light);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--gray)">'
+        +(img?'<img src="'+img+'" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">':'<i class="fas fa-building"></i>')
+        +'</div>'
+        +'<div style="flex:1;overflow:hidden">'
+        +'<div style="font-weight:700;font-size:0.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.title+'</div>'
+        +'<div style="font-size:0.77rem;color:var(--accent);font-weight:700;margin-top:2px">$'+(p.price||0).toLocaleString('en-US')+' USD</div>'
+        +'</div>'
+        +'<span style="font-size:0.7rem;background:var(--success);color:white;padding:3px 8px;border-radius:99px;font-weight:700">نشط</span>'
+        +'</div>';
+    }).join('');
+  }
+});
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
