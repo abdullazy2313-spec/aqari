@@ -28,12 +28,29 @@
     <div class="container">
         <!-- Profile Header -->
         <div class="profile-header">
-            <div class="profile-pic">
-                <i class="fas fa-user"></i>
-                <button class="profile-edit-btn" href="notifications.html"">
-                    <i class="fas fa-camera"></i>
-                </button>
-            </div>
+            <div class="pic-outer">
+                <div class="pic-ring" onclick="document.getElementById('picFileInput').click()" title="اضغط لتغيير الصورة">
+                  <div id="picDisplay" class="pic-ph"><i class="fas fa-user"></i></div>
+                </div>
+                <div class="pic-cam-btn" onclick="document.getElementById('picFileInput').click()">
+                  <i class="fas fa-camera"></i>
+                </div>
+              </div>
+              <input type="file" id="picFileInput" accept="image/*" onchange="openCropper(this)">
+
+              <!-- Modal قص الصورة -->
+              <div class="crop-modal-ov" id="cropModal">
+                <div class="crop-title">🖼️ اضبط الصورة</div>
+                <div class="crop-wrap" id="cropWrap">
+                  <img id="cropImg" class="crop-img">
+                </div>
+                <div class="crop-hint">اسحب الصورة لتوسيطها • استخدم الزووم للتكبير</div>
+                <input type="range" class="crop-zoom" id="cropZoom" min="1" max="3" step="0.01" value="1" oninput="applyCropZoom(this.value)">
+                <div class="crop-actions">
+                  <button class="crop-btn crop-btn-cancel" onclick="closeCropper()">إلغاء</button>
+                  <button class="crop-btn crop-btn-ok" onclick="saveCroppedPic()">✅ حفظ الصورة</button>
+                </div>
+              </div>
             <h3 id="profileName" style="margin-bottom:4px;font-size:1.2rem;font-weight:800">مستخدم تجريبي</h3>
             <p style="color:var(--gray);font-size:0.88rem;" id="profileEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1f6a6c7a6d5f7a677e726f737a317c7072">[email&#160;protected]</a></p>
             <div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(39,174,96,0.1);padding:4px 14px;border-radius:20px;font-size:0.78rem;color:var(--success);border:1px solid rgba(39,174,96,0.2)">
