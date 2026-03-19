@@ -14,7 +14,10 @@
 <title>خريطة العقارات - عقاري</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" as="script" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{overflow:hidden;background:#0f172a;font-family:var(--font,'Cairo',sans-serif)}
@@ -224,24 +227,22 @@ body{overflow:hidden;background:#0f172a;font-family:var(--font,'Cairo',sans-seri
 .map-loader{
   position:fixed;inset:0;background:#0f172a;
   display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;
-  z-index:9999;transition:opacity 0.45s;
+  z-index:9999;transition:opacity 0.25s;
 }
 .ml-icon{
-  width:72px;height:72px;border-radius:22px;
+  width:64px;height:64px;border-radius:18px;
   background:linear-gradient(135deg,#f97316,#dc2626);
   display:flex;align-items:center;justify-content:center;
-  font-size:1.9rem;color:white;
-  box-shadow:0 12px 40px rgba(249,115,22,0.5);
-  animation:pulse 1.4s ease-in-out infinite;
+  font-size:1.7rem;color:white;
+  box-shadow:0 8px 28px rgba(249,115,22,0.5);
 }
-@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 12px 40px rgba(249,115,22,0.4)}50%{transform:scale(1.07);box-shadow:0 18px 52px rgba(249,115,22,0.7)}}
-.ml-title{color:white;font-weight:900;font-size:1.05rem;letter-spacing:0.5px}
-.ml-sub{color:rgba(255,255,255,0.4);font-size:0.77rem}
-.ml-dots{display:flex;gap:6px;margin-top:2px}
-.ml-d{width:7px;height:7px;border-radius:50%;background:rgba(249,115,22,0.5);animation:dotBounce 1.2s infinite}
-.ml-d:nth-child(2){animation-delay:0.2s}
-.ml-d:nth-child(3){animation-delay:0.4s}
-@keyframes dotBounce{0%,80%,100%{opacity:0.3;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}
+.ml-title{color:white;font-weight:900;font-size:1rem}
+.ml-sub{color:rgba(255,255,255,0.4);font-size:0.75rem}
+.ml-dots{display:flex;gap:5px;margin-top:2px}
+.ml-d{width:6px;height:6px;border-radius:50%;background:rgba(249,115,22,0.6);animation:dotB 0.8s infinite}
+.ml-d:nth-child(2){animation-delay:0.15s}
+.ml-d:nth-child(3){animation-delay:0.3s}
+@keyframes dotB{0%,80%,100%{opacity:0.3;transform:scale(0.8)}40%{opacity:1;transform:scale(1.1)}}
 
 @keyframes fadeSlide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 .leaflet-container{outline:none!important}
@@ -254,7 +255,6 @@ body{overflow:hidden;background:#0f172a;font-family:var(--font,'Cairo',sans-seri
   <div class="ml-icon"><i class="fas fa-map-marked-alt"></i></div>
   <div class="ml-title">خريطة العقارات</div>
   <div class="ml-dots"><div class="ml-d"></div><div class="ml-d"></div><div class="ml-d"></div></div>
-  <div class="ml-sub">جاري تحميل عقارات سوريا...</div>
 </div>
 
 <!-- MAP -->
@@ -322,8 +322,21 @@ var TILES={
 };
 
 function initMap(){
-  map=L.map('map',{center:SYR,zoom:SYR_Z,zoomControl:false,attributionControl:false,tap:true,tapTolerance:20});
-  tileLayer=L.tileLayer(TILES.osm,{maxZoom:19}).addTo(map);
+  map=L.map('map',{
+    center:SYR,zoom:SYR_Z,
+    zoomControl:false,
+    attributionControl:false,
+    tap:true,tapTolerance:20,
+    preferCanvas:true,      /* رسم أسرع */
+    renderer:L.canvas()     /* Canvas بدل SVG */
+  });
+  /* بلاطات مع lazy loading */
+  tileLayer=L.tileLayer(TILES.osm,{
+    maxZoom:19,
+    keepBuffer:2,           /* خزّن مربعين إضافيين */
+    updateWhenIdle:true,    /* حدّث فقط عند التوقف */
+    updateWhenZooming:false /* لا تحدّث أثناء الزووم */
+  }).addTo(map);
   map.on('zoomend moveend',debounce(renderZoom,220));
   map.on('click',function(e){
     var t=e.originalEvent&&e.originalEvent.target;
@@ -418,60 +431,19 @@ function renderZoom(){
 }
 
 function addPin(p){
-  if(!p._mlat||!p._mlng)coords(p);
-  var sale=p.type!=='rent';
-  var price=p.price>=1000000?(p.price/1000000).toFixed(1)+'M$':p.price>=1000?Math.round(p.price/1000)+'K$':p.price+'$';
-  var catSVG={
-    villa:'<svg viewBox="0 0 24 24" fill="white" width="13" height="13"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>',
-    apartment:'<svg viewBox="0 0 24 24" fill="white" width="13" height="13"><path d="M17 11V3H7v4H3v14h8v-4h2v4h8V11h-4z"/></svg>',
-    house:'<svg viewBox="0 0 24 24" fill="white" width="13" height="13"><path d="M12 3L4 9v12h5v-7h6v7h5V9z"/></svg>',
-    palace:'<svg viewBox="0 0 24 24" fill="white" width="13" height="13"><path d="M6 3h2v2h2V3h4v2h2V3h2v4l-1 1v2h1v11H6V10h1V8L6 7V3zm2 8v8h8v-8H8z"/></svg>',
-    land:'<svg viewBox="0 0 24 24" fill="white" width="13" height="13"><path d="M14 6l-1-2H5v17h2v-7h5l1 2h7V6h-6zm4 8h-4l-1-2H7V6h5l1 2h5v6z"/></svg>',
-    commercial:'<svg viewBox="0 0 24 24" fill="white" width="13" height="13"><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/></svg>',
-    office:'<svg viewBox="0 0 24 24" fill="white" width="13" height="13"><path d="M20 6h-3a3 3 0 00-6 0H8C6.9 6 6 6.9 6 8v12a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2zm-7-1a1 1 0 110 2 1 1 0 010-2zm2 14h-4v-2h4v2zm2-4h-8v-2h8v2zm0-4h-8V9h8v2z"/></svg>',
-    warehouse:'<svg viewBox="0 0 24 24" fill="white" width="13" height="13"><path d="M22 21V7L12 3 2 7v14h5v-9h10v9h5z"/></svg>',
-    building:'<svg viewBox="0 0 24 24" fill="white" width="13" height="13"><path d="M15 11V5l-3-3-3 3v2H3v14h18V11h-6zm-8 8H5v-2h2v2zm0-4H5v-2h2v2zm6 8h-2v-2h2v2zm0-4h-2v-2h2v2zm6 4h-2v-2h2v2zm0-4h-2v-2h2v2z"/></svg>'
-  };
-  var catNames={villa:'فيلا',apartment:'شقة',house:'دار',palace:'قصر',land:'أرض',commercial:'تجاري',office:'مكتب',warehouse:'مستودع',building:'مبنى'};
-  var svg=catSVG[p.category]||catSVG.apartment;
-  var cname=catNames[p.category]||'عقار';
-  var lbl=sale?'بيع':'إيجار';
-  var g1=sale?'#f97316':'#3b82f6';
-  var g2=sale?'#dc2626':'#6366f1';
-  var tip=sale?'#dc2626':'#6366f1';
-  var W=116,BH=42,AH=12;
-  var star=p.featured
-    ?'<div style="position:absolute;top:-9px;right:-9px;width:20px;height:20px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;z-index:3"><svg viewBox="0 0 24 24" fill="white" width="10" height="10"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></div>'
-    :'';
-  var html=
-    '<div style="position:relative;width:'+W+'px;height:'+(BH+AH)+'px">'
-    +star
-    +'<div style="position:absolute;top:0;left:0;width:'+W+'px;height:'+BH+'px;'
-    +'background:linear-gradient(135deg,'+g1+','+g2+');'
-    +'border-radius:12px 12px 12px 3px;'
-    +'display:flex;align-items:center;gap:5px;padding:0 9px 0 7px;'
-    +'box-shadow:0 4px 14px rgba(0,0,0,0.25);'
-    +'border:2px solid rgba(255,255,255,0.5)">'
-    +'<div style="width:24px;height:24px;background:rgba(255,255,255,0.22);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+svg+'</div>'
-    +'<div style="display:flex;flex-direction:column;line-height:1.1">'
-    +'<span style="font-size:0.73rem;font-weight:900;color:white;white-space:nowrap">'+price+'</span>'
-    +'<span style="font-size:0.52rem;color:rgba(255,255,255,0.9);white-space:nowrap">'+cname+' · '+lbl+'</span>'
-    +'</div></div>'
-    +'<svg style="position:absolute;bottom:0;left:0;width:'+W+'px;height:'+AH+'px" viewBox="0 0 '+W+' '+AH+'">'
-    +'<polygon points="'+(W/2-AH)+',0 '+(W/2+AH)+',0 '+(W/2)+','+AH+'" fill="'+tip+'"/>'
-    +'</svg>'
-    +'</div>';
-  var marker=L.marker([p._mlat,p._mlng],{
+  var pStr=p.price>=1000000?(p.price/1000000).toFixed(1)+'M$':p.price>=1000?Math.round(p.price/1000)+'K$':p.price+'$';
+  var cls=p.type==='rent'?'rent':'sale';
+  var ico=p.type==='rent'?'fa-key':'fa-home';
+  var m=L.marker([p._mlat,p._mlng],{
     icon:L.divIcon({
       className:'',
-      html:html,
-      iconSize:[W,BH+AH],
-      iconAnchor:[W/2,BH+AH]
+      html:'<div class="ppin '+cls+'"><div class="pi-dot"><i class="fas '+ico+'" style="font-size:0.62rem"></i></div>'+pStr+'</div>',
+      iconSize:[1,1],iconAnchor:[38,38]
     }),
-    zIndexOffset:p.featured?500:100
+    zIndexOffset:100
   }).addTo(map);
-  marker.on('click',function(){openSheet(p);});
-  allM.push(marker);
+  m.on('click',function(){openSheet(p);});
+  allM.push(m);
 }
 
 function debounce(fn,ms){var t;return function(){clearTimeout(t);t=setTimeout(fn,ms);};}
@@ -585,7 +557,24 @@ function checkDetailParam(){
 }
 
 window.addEventListener('load',function(){
-  setTimeout(function(){initMap();setTimeout(checkDetailParam,500);},300);
+  /* أخفِ الـ loader فوراً بعد رسم الخريطة */
+  function hideLoader(){
+    var el=document.getElementById('mapLoader');
+    if(!el)return;
+    el.style.opacity='0';
+    setTimeout(function(){el.style.display='none';},200);
+  }
+  /* ابدأ تحميل الخريطة فوراً */
+  initMap();
+  /* أخفِ الـ loader بعد أول بلاطة تظهر */
+  if(map){
+    map.once('tileloadstart',function(){
+      setTimeout(hideLoader,150);
+    });
+    /* في أسوأ حال: أخفِ بعد ثانية */
+    setTimeout(hideLoader,800);
+  }
+  setTimeout(checkDetailParam,400);
 });
 </script>
 
