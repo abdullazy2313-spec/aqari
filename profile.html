@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl" data-theme="light">
 <head>
     <meta charset="UTF-8">
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#e67e22">
   <meta name="mobile-web-app-capable" content="yes">
@@ -9,258 +10,130 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="عقاري">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>حسابي - عقاري</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css">
-<style>
-.profile-pic-wrap{position:relative;width:90px;height:90px;margin:0 auto 12px;}
-.profile-pic-wrap img,.profile-pic-wrap .pic-placeholder{
-  width:90px;height:90px;border-radius:50%;object-fit:cover;
-  border:3px solid var(--accent);display:flex;align-items:center;
-  justify-content:center;font-size:2.2rem;color:var(--accent);
-  background:var(--gray-light);
-}
-.pic-change-btn{
-  position:absolute;bottom:2px;left:2px;
-  width:28px;height:28px;border-radius:50%;
-  background:var(--accent);color:white;border:2px solid var(--card);
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;font-size:0.7rem;transition:all 0.2s;
-}
-.pic-change-btn:hover{transform:scale(1.1);}
-#picInput{display:none;}
-
-.my-ad-item{
-  display:flex;align-items:center;gap:12px;padding:12px 0;
-  border-bottom:1px solid var(--border);cursor:pointer;
-}
-.my-ad-img{
-  width:56px;height:56px;border-radius:12px;overflow:hidden;
-  background:var(--gray-light);flex-shrink:0;
-}
-.my-ad-img img{width:100%;height:100%;object-fit:cover;}
-.my-ad-info{flex:1;overflow:hidden;}
-.my-ad-title{font-weight:700;font-size:0.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.my-ad-price{font-size:0.77rem;color:var(--accent);font-weight:700;margin-top:2px;}
-.my-ad-del{
-  width:34px;height:34px;border-radius:10px;
-  background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.25);
-  color:#e74c3c;display:flex;align-items:center;justify-content:center;
-  cursor:pointer;font-size:0.85rem;flex-shrink:0;transition:all 0.2s;
-}
-.my-ad-del:hover{background:rgba(231,76,60,0.2);}
-</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>حسابي - عقاري</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header>
-    <div class="logo"><i class="fas fa-user" style="color:var(--accent);margin-left:8px"></i>حسابي</div>
-    <a href="settings.html" class="header-icon-btn"><i class="fas fa-cog"></i></a>
-</header>
+    <header>
+        <div class="logo">
+            <i class="fas fa-user" style="color:var(--accent);margin-left:8px"></i>حسابي
+        </div>
+        <a href="settings.html" class="header-icon-btn" aria-label="الإعدادات">
+            <i class="fas fa-cog"></i>
+        </a>
+    </header>
 
-<div class="container">
-    <!-- Profile Header -->
-    <div class="profile-header">
-        <!-- صورة البروفايل -->
-        <div class="profile-pic-wrap">
-            <div id="picDisplay"></div>
-            <div class="pic-change-btn" onclick="document.getElementById('picInput').click()" title="تغيير الصورة">
-                <i class="fas fa-camera"></i>
+    <div class="container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="pic-wrap">
+            <div id="picDisp"></div>
+            <div class="pic-cam" onclick="document.getElementById('picFile').click()">
+              <i class="fas fa-camera"></i>
+            </div>
+          </div>
+          <input type="file" id="picFile" accept="image/*" onchange="changePic(this)">
+
+        <!-- Stats -->
+        <div class="stat-box" style="margin-bottom:20px">
+            <div class="stat">
+                <span class="stat-num" id="myAdsCount">0</span>
+                <span class="stat-label">إعلاناتي</span>
+            </div>
+            <div class="stat">
+                <span class="stat-num" id="favsCount">0</span>
+                <span class="stat-label">مفضلة</span>
+            </div>
+            <div class="stat">
+                <span class="stat-num" id="viewsCount">0</span>
+                <span class="stat-label">مشاهدات</span>
             </div>
         </div>
-        <input type="file" id="picInput" accept="image/*" onchange="changePic(this)">
 
-        <h3 id="profileName" style="margin-bottom:4px;font-size:1.2rem;font-weight:800">مستخدم عقاري</h3>
-        <p id="profileEmail" style="color:var(--gray);font-size:0.88rem"></p>
-        <div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(39,174,96,0.1);padding:4px 14px;border-radius:20px;font-size:0.78rem;color:var(--success);border:1px solid rgba(39,174,96,0.2)">
-            <i class="fas fa-shield-alt"></i> حساب موثق
+        <!-- Quick Actions -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+            <a href="add-property.html" style="text-decoration:none;background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:white;padding:14px;border-radius:12px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:0.88rem">
+                <i class="fas fa-plus-circle fa-lg"></i>
+                <span>إضافة إعلان</span>
+            </a>
+            <a href="favorites.html" style="text-decoration:none;background:var(--gray-light);color:var(--text);padding:14px;border-radius:12px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:0.88rem;border:1px solid var(--border)">
+                <i class="fas fa-heart" style="color:var(--danger)"></i>
+                <span>المفضلة</span>
+            </a>
         </div>
-    </div>
 
-    <!-- Stats -->
-    <div class="stat-box" style="margin-bottom:20px">
-        <div class="stat"><span class="stat-num" id="myAdsCount">0</span><span class="stat-label">إعلاناتي</span></div>
-        <div class="stat"><span class="stat-num" id="favsCount">0</span><span class="stat-label">مفضلة</span></div>
-        <div class="stat"><span class="stat-num" id="viewsCount">0</span><span class="stat-label">مشاهدات</span></div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
-        <a href="add-property.html" style="text-decoration:none;background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:white;padding:14px;border-radius:12px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:0.88rem">
-            <i class="fas fa-plus-circle fa-lg"></i><span>إضافة إعلان</span>
-        </a>
-        <a href="favorites.html" style="text-decoration:none;background:var(--gray-light);color:var(--text);padding:14px;border-radius:12px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:0.88rem;border:1px solid var(--border)">
-            <i class="fas fa-heart" style="color:var(--danger)"></i><span>المفضلة</span>
-        </a>
-    </div>
-
-    <!-- My Ads Section -->
-    <div style="background:var(--card);border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow-sm)">
-        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-            <span style="font-weight:800;font-size:0.9rem"><i class="fas fa-clipboard-list" style="color:var(--accent);margin-left:8px"></i>إعلاناتي</span>
-            <span id="myAdsCountBadge" style="background:var(--accent-light);color:var(--accent);padding:2px 10px;border-radius:99px;font-size:0.75rem;font-weight:700">0</span>
+        <!-- My Ads Section -->
+        <div style="background:var(--card);border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow-sm)">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+                <span style="font-weight:800;font-size:0.9rem"><i class="fas fa-clipboard-list" style="color:var(--accent);margin-left:8px"></i>إعلاناتي</span>
+                <span id="myAdsCountBadge" style="background:var(--accent-light);color:var(--accent);padding:2px 10px;border-radius:99px;font-size:0.75rem;font-weight:700">0</span>
+            </div>
+            <div id="myAdsSection" style="padding:16px">
+                <div class="empty-state" style="padding:20px 0">
+                    <i class="fas fa-plus-square" style="font-size:2rem;margin-bottom:10px;opacity:0.4"></i>
+                    <p style="font-size:0.85rem;font-weight:600;margin-bottom:6px">لم تنشر أي إعلانات بعد</p>
+                    <a href="add-property.html" style="font-size:0.8rem;color:var(--accent);text-decoration:none;font-weight:700">انشر إعلانك الأول →</a>
+                </div>
+            </div>
         </div>
-        <div id="myAdsSection" style="padding:16px"></div>
+
+        <!-- Menu -->
+        <ul class="menu-list">
+            <a href="settings.html" class="menu-item">
+                <span><i class="fas fa-cog" style="margin-left:10px;color:var(--gray)"></i> الإعدادات</span>
+                <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
+            </a>
+            <a href="#" class="menu-item" href="notifications.html">
+                <span><i class="fas fa-bell" style="margin-left:10px;color:var(--gray)"></i> الإشعارات</span>
+                <span style="background:var(--danger);color:white;padding:2px 8px;border-radius:99px;font-size:0.68rem;font-weight:700">3</span>
+            </a>
+            <a href="#" class="menu-item" href="notifications.html"">
+                <span><i class="fas fa-question-circle" style="margin-left:10px;color:var(--gray)"></i> المساعدة والدعم</span>
+                <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
+            </a>
+            <a href="#" class="menu-item" onclick="showToast('⭐ شكراً!')">
+                <span><i class="fas fa-star" style="margin-left:10px;color:var(--warning)"></i> قيّم التطبيق</span>
+                <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
+            </a>
+            <li class="menu-item danger" onclick="handleLogout()">
+                <span><i class="fas fa-sign-out-alt" style="margin-left:10px"></i> تسجيل الخروج</span>
+            </li>
+        </ul>
+
+        <p style="text-align:center;color:var(--gray);font-size:0.72rem;margin-top:24px;margin-bottom:8px">
+            عقاري v2.0.0 — جميع الحقوق محفوظة © 2024
+        </p>
     </div>
 
-    <!-- Menu -->
-    <ul class="menu-list">
-        <a href="settings.html" class="menu-item">
-            <span><i class="fas fa-cog" style="margin-left:10px;color:var(--gray)"></i> الإعدادات</span>
-            <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
-        </a>
-        <a href="notifications.html" class="menu-item">
-            <span><i class="fas fa-bell" style="margin-left:10px;color:var(--gray)"></i> الإشعارات</span>
-            <span style="background:var(--danger);color:white;padding:2px 8px;border-radius:99px;font-size:0.68rem;font-weight:700" id="notifCountBadge"></span>
-        </a>
-        <a href="#" class="menu-item" onclick="showToast('⭐ شكراً!')">
-            <span><i class="fas fa-star" style="margin-left:10px;color:var(--warning)"></i> قيّم التطبيق</span>
-            <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
-        </a>
-        <li class="menu-item danger" onclick="handleLogout()">
-            <span><i class="fas fa-sign-out-alt" style="margin-left:10px"></i> تسجيل الخروج</span>
-        </li>
-    </ul>
-    <p style="text-align:center;color:var(--gray);font-size:0.72rem;margin-top:24px;margin-bottom:8px">عقاري v3.0.0 — جميع الحقوق محفوظة © 2025</p>
-</div>
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item" data-page="index"><i class="fas fa-home"></i><span>الرئيسية</span></a>
+        <a href="favorites.html" class="nav-item" data-page="favorites"><i class="fas fa-heart"></i><span>المفضلة</span></a>
+        <a href="messages.html" class="nav-item" data-page="messages"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
+        <a href="profile.html" class="nav-item active" data-page="profile"><i class="fas fa-user"></i><span>حسابي</span></a>
+    </nav>
 
-<nav class="bottom-nav">
-    <a href="index.html" class="nav-item" data-page="index"><i class="fas fa-home"></i><span>الرئيسية</span></a>
-    <a href="favorites.html" class="nav-item" data-page="favorites"><i class="fas fa-heart"></i><span>المفضلة</span></a>
-    <a href="messages.html" class="nav-item" data-page="messages"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
-    <a href="profile.html" class="nav-item active" data-page="profile"><i class="fas fa-user"></i><span>حسابي</span></a>
-</nav>
-
-<div id="toast"></div>
-<script src="js/app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script>
-/* ── صورة البروفايل ── */
-function loadPic() {
-  const display = document.getElementById('picDisplay');
-  const photo = localStorage.getItem('userPhoto');
-  if (photo) {
-    display.innerHTML = '<img src="'+photo+'" alt="صورتي">';
-  } else {
-    display.innerHTML = '<div class="pic-placeholder"><i class="fas fa-user"></i></div>';
-  }
-}
-
-function changePic(input) {
-  const file = input.files && input.files[0];
-  if (!file) return;
-  showToast('⏳ جاري تحميل الصورة...');
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const img = new Image();
-    img.onload = function() {
-      try {
-        const MAX = 400;
-        let w = img.width, h = img.height;
-        if (w > MAX || h > MAX) {
-          const r = Math.min(MAX/w, MAX/h);
-          w = Math.round(w*r); h = Math.round(h*r);
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        localStorage.setItem('userPhoto', dataUrl);
-        loadPic();
-        showToast('✅ تم تحديث صورة البروفايل');
-      } catch(err) {
-        localStorage.setItem('userPhoto', e.target.result);
-        loadPic();
-        showToast('✅ تم تحديث الصورة');
-      }
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-  input.value = '';
-}
-
-/* ── إعلاناتي ── */
-function loadMyAds() {
-  const name  = localStorage.getItem('userName') || 'مستخدم عقاري';
-  const email = localStorage.getItem('userEmail') || '';
-  document.getElementById('profileName').textContent  = name;
-  document.getElementById('profileEmail').textContent = email;
-
-  const myAds = window.myProperties || [];
-  const favs  = window.favorites    || [];
-
-  document.getElementById('myAdsCount').textContent      = myAds.length;
-  document.getElementById('myAdsCountBadge').textContent = myAds.length;
-  document.getElementById('favsCount').textContent       = favs.length;
-  document.getElementById('viewsCount').textContent      = myAds.reduce((a,p)=>a+(p.views||0),0).toLocaleString();
-
-  const sec = document.getElementById('myAdsSection');
-  if (!myAds.length) {
-    sec.innerHTML = '<div class="empty-state" style="padding:20px 0"><i class="fas fa-plus-square" style="font-size:2rem;margin-bottom:10px;opacity:0.4"></i><p style="font-size:0.85rem;font-weight:600;margin-bottom:6px">لم تنشر أي إعلانات بعد</p><a href="add-property.html" style="font-size:0.8rem;color:var(--accent);text-decoration:none;font-weight:700">انشر إعلانك الأول →</a></div>';
-    return;
-  }
-
-  sec.innerHTML = myAds.slice(0, 10).map(p => {
-    const imgs = window.getPropImages ? window.getPropImages(p) : [];
-    const img  = imgs[0] || '';
-    return `<div class="my-ad-item" onclick="gotoDetails(${p.id})">
-      <div class="my-ad-img">${img ? '<img src="'+img+'" alt="" onerror="this.style.display=\'none\'">' : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--gray)"><i class="fas fa-building fa-lg"></i></div>'}</div>
-      <div class="my-ad-info">
-        <div class="my-ad-title">${p.title}</div>
-        <div class="my-ad-price">$${(p.price||0).toLocaleString('en-US')} USD</div>
-        <div style="font-size:0.68rem;color:var(--gray);margin-top:2px">${p.location||''}</div>
-      </div>
-      <div class="my-ad-del" onclick="event.stopPropagation();confirmDeleteAd('${p.firestoreId||p.id}',this)" title="حذف الإعلان">
-        <i class="fas fa-trash-alt"></i>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function confirmDeleteAd(propId, btn) {
-  if (!confirm('حذف هذا الإعلان نهائياً؟')) return;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-  /* Firebase */
-  if (typeof fbDeleteProperty === 'function' && window.firebaseReady) {
-    fbDeleteProperty(String(propId)).then(ok => {
-      if (ok) { showToast('✅ تم حذف الإعلان'); setTimeout(()=>location.reload(), 800); }
-      else { showToast('❌ فشل الحذف'); btn.innerHTML = '<i class="fas fa-trash-alt"></i>'; }
-    });
-  } else {
-    /* حذف محلي */
-    if (window.myProperties) {
-      window.myProperties = window.myProperties.filter(p => String(p.id) !== String(propId) && String(p.firestoreId) !== String(propId));
-      try { localStorage.setItem('aqari_props', JSON.stringify(window.myProperties)); } catch(e){}
-    }
-    showToast('✅ تم حذف الإعلان');
-    setTimeout(() => location.reload(), 800);
-  }
-}
-
-window.confirmDeleteAd = confirmDeleteAd;
-
-window.addEventListener('load', function() {
-  loadPic();
-  setTimeout(loadMyAds, 400);
-  /* عدد الإشعارات */
-  const notifs = JSON.parse(localStorage.getItem('aqari_notifs')||'[]');
-  const unread = notifs.filter(n=>!n.read).length;
-  const badge = document.getElementById('notifCountBadge');
-  if (badge && unread) { badge.textContent = unread; badge.style.display='inline'; }
-  else if (badge) badge.style.display='none';
-});
-</script>
-<script>
-if('serviceWorker' in navigator){
-  window.addEventListener('load',function(){
-    navigator.serviceWorker.register('sw.js')
-      .then(r=>console.log('[عقاري] SW مُفعّل'))
-      .catch(e=>console.warn('[عقاري] SW خطأ:',e));
-  });
-}
-</script>
-</body>
-</html>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="js/app.js"></script>
+    <script>
+        // Load my ads in profile
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const myAds = window.myProperties || [];
+                const badge = document.getElementById('myAdsCountBadge');
+                const section = document.getElementById('myAdsSection');
+                if (badge) badge.textContent = myAds.length;
+                if (myAds.length > 0 && section) {
+                    section.innerHTML = myAds.slice(0, 3).map(p => `
+                        <div onclick="goToDetails(${p.id})" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">
+                            <div style="width:52px;height:52px;border-radius:10px;background:var(--gray-light);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--gray);flex-shrink:0">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div style="flex:1;overflow:hidden">
+                                <div style="font-weight:700;font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.title}</div>
+                                <div style="font-size:0.78rem;color:var(--accent);font-weight:700;margin-top:2px">${p.price.toLocaleString('en-US')} $</div>
+                            </div>
+                            <span style="font-size:0.7rem;background:var(--success);color:white;padding:3px 8px;border-radius:99px;font-weight:700;flex-shrink:0">نشط</span>
+                        </div>`).join('') +
+                        (myAds.length > 3 ? `<div style="text-align:center;paddin
