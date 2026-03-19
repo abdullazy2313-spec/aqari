@@ -1,113 +1,34 @@
-/* ═══════════════════════════════════════════════════
-   عقاري PWA — Service Worker
-   يدعم العمل بدون إنترنت ويسرّع تحميل الصفحات
-═══════════════════════════════════════════════════ */
+/* عقاري SW v11 - يجبر التحديث الفوري */
+const V = 'v11-dialogs';
+const C = 'aqari-' + V;
 
-const CACHE_NAME = 'aqari-v4';
-const STATIC_CACHE = 'aqari-static-v4';
-const DYNAMIC_CACHE = 'aqari-dynamic-v4';
-
-// الملفات التي تُحفظ عند التثبيت (تعمل بدون نت)
-const STATIC_ASSETS = [
-  '/index.html',
-  '/login.html',
-  '/add-property.html',
-  '/map.html',
-  '/details.html',
-  '/favorites.html',
-  '/messages.html',
-  '/chat.html',
-  '/notifications.html',
-  '/profile.html',
-  '/settings.html',
-  '/filter.html',
-  '/css/style.css',
-  '/js/app.js',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
-];
-
-// ── التثبيت: حفظ الملفات الأساسية ──────────────────
-self.addEventListener('install', function(event) {
-  event.waitUntil(
-    caches.open(STATIC_CACHE).then(function(cache) {
-      return cache.addAll(STATIC_ASSETS.map(url => {
-        return new Request(url, { cache: 'reload' });
-      })).catch(function(err) {
-        console.warn('[SW] بعض الملفات لم تُحفظ:', err);
-        // حفظ ما أمكن حفظه
-        return Promise.all(
-          STATIC_ASSETS.map(url =>
-            cache.add(url).catch(() => {})
-          )
-        );
-      });
-    })
-  );
+self.addEventListener('install', e => {
   self.skipWaiting();
 });
 
-// ── التفعيل: تنظيف الكاش القديم ─────────────────────
-self.addEventListener('activate', function(event) {
-  event.waitUntil(
-    caches.keys().then(function(keys) {
-      return Promise.all(
-        keys
-          .filter(key => key !== STATIC_CACHE && key !== DYNAMIC_CACHE)
-          .map(key => caches.delete(key))
-      );
-    })
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
+  self.clients.matchAll({includeUncontrolled:true}).then(clients =>
+    clients.forEach(c => c.postMessage({type:'RELOAD'}))
+  );
 });
 
-// ── الطلبات: استراتيجية Cache First للملفات الثابتة ──
-self.addEventListener('fetch', function(event) {
-  var url = event.request.url;
-
-  // تجاهل طلبات POST وطلبات خارجية (خرائط، CDN)
-  if (event.request.method !== 'GET') return;
-  if (url.includes('tile.openstreetmap') || url.includes('arcgisonline') || url.includes('nominatim')) return;
-  if (url.includes('cdnjs.cloudflare') || url.includes('fontawesome')) {
-    // للـ CDN: شبكة أولاً ثم كاش
-    event.respondWith(
-      fetch(event.request)
-        .then(function(res) {
-          var clone = res.clone();
-          caches.open(DYNAMIC_CACHE).then(c => c.put(event.request, clone));
-          return res;
-        })
-        .catch(function() {
-          return caches.match(event.request);
-        })
-    );
+self.addEventListener('fetch', e => {
+  const url = e.request.url;
+  if (e.request.method !== 'GET') return;
+  if (url.includes('googleapis.com') || url.includes('firebaseio') || url.includes('gstatic.com/firebasejs')) return;
+  if (url.includes('.html') || url.includes('app.js') || url.includes('style.css')) {
+    e.respondWith(fetch(e.request, {cache:'no-store'}).catch(() => caches.match(e.request)));
     return;
   }
-
-  // للملفات الداخلية: كاش أولاً ثم شبكة
-  event.respondWith(
-    caches.match(event.request).then(function(cached) {
-      if (cached) return cached;
-      return fetch(event.request).then(function(res) {
-        if (res && res.status === 200) {
-          var clone = res.clone();
-          caches.open(DYNAMIC_CACHE).then(c => c.put(event.request, clone));
-        }
-        return res;
-      }).catch(function() {
-        // بدون إنترنت: عرض الصفحة الرئيسية
-        if (event.request.headers.get('accept').includes('text/html')) {
-          return caches.match('/index.html');
-        }
-      });
-    })
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+      if (res.ok) { const c = res.clone(); caches.open(C).then(ca => ca.put(e.request, c)); }
+      return res;
+    }))
   );
-});
-
-// ── رسائل من التطبيق ─────────────────────────────────
-self.addEventListener('message', function(event) {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
 });
