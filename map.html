@@ -417,33 +417,90 @@ function renderZoom(){
   }
 }
 
+function getPinIcon(category) {
+  const icons = {
+    villa:      'fa-house-chimney',
+    apartment:  'fa-building',
+    house:      'fa-home',
+    palace:     'fa-chess-rook',
+    land:       'fa-mountain',
+    commercial: 'fa-store',
+    office:     'fa-briefcase',
+    warehouse:  'fa-warehouse',
+    building:   'fa-city',
+  };
+  return icons[category] || 'fa-home';
+}
+
 function formatPrice(price) {
   if (!price) return '0$';
-  if (price >= 1000000) return (price/1000000).toFixed(1) + 'M$';
-  if (price >= 1000) return Math.round(price/1000) + 'K$';
-  return price + '$';
+  if (price >= 1000000) return (price/1000000).toFixed(1) + 'M';
+  if (price >= 1000) return Math.round(price/1000) + 'K';
+  return String(price);
 }
 
 function addPin(p){
-  var price = formatPrice(p.price);
   var isSale = p.type !== 'rent';
-  var catIcons = {villa:'🏡',apartment:'🏢',house:'🏠',palace:'🏰',land:'🌍',commercial:'🏪'};
-  var catIcon = catIcons[p.category] || '🏠';
-  var featured = p.featured ? '<div style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:#f97316;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid white;font-size:0.45rem;color:white"><i class=\"fas fa-star\"></i></div>' : '';
+  var faIcon = getPinIcon(p.category);
+  var price  = formatPrice(p.price);
+  var gradSale = 'linear-gradient(135deg,#f97316,#dc2626)';
+  var gradRent = 'linear-gradient(135deg,#3b82f6,#6366f1)';
+  var grad     = isSale ? gradSale : gradRent;
+  var shadow   = isSale ? 'rgba(249,115,22,0.45)' : 'rgba(59,130,246,0.45)';
+  var label    = isSale ? 'بيع' : 'إيجار';
+  var tipColor = isSale ? '#dc2626' : '#6366f1';
 
-  var pinHtml = isSale
-    ? '<div style="position:relative;display:inline-block">'+featured+'<div style="background:linear-gradient(135deg,#f97316,#dc2626);border-radius:22px 22px 22px 4px;padding:5px 10px 5px 7px;display:flex;align-items:center;gap:5px;white-space:nowrap;box-shadow:0 4px 20px rgba(249,115,22,0.45),0 1px 6px rgba(0,0,0,0.15);border:2px solid rgba(255,255,255,0.5);cursor:pointer;transition:all 0.18s"><span style="font-size:0.85rem">'+catIcon+'</span><div><div style="font-size:0.72rem;font-weight:900;color:white;line-height:1">'+price+'</div><div style="font-size:0.55rem;color:rgba(255,255,255,0.85);font-weight:600;line-height:1;margin-top:1px">للبيع</div></div></div><div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:8px solid #dc2626;margin-right:8px"></div></div>'
-    : '<div style="position:relative;display:inline-block">'+featured+'<div style="background:linear-gradient(135deg,#3b82f6,#6366f1);border-radius:22px 22px 22px 4px;padding:5px 10px 5px 7px;display:flex;align-items:center;gap:5px;white-space:nowrap;box-shadow:0 4px 20px rgba(59,130,246,0.45),0 1px 6px rgba(0,0,0,0.15);border:2px solid rgba(255,255,255,0.5);cursor:pointer;transition:all 0.18s"><span style="font-size:0.85rem">'+catIcon+'</span><div><div style="font-size:0.72rem;font-weight:900;color:white;line-height:1">'+price+'</div><div style="font-size:0.55rem;color:rgba(255,255,255,0.85);font-weight:600;line-height:1;margin-top:1px">إيجار</div></div></div><div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:8px solid #6366f1;margin-right:8px"></div></div>';
+  var star = p.featured
+    ? '<div style="position:absolute;top:-8px;right:-8px;width:18px;height:18px;background:#fbbf24;border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(251,191,36,0.6);z-index:1"><i class=\\"fas fa-star\\" style=\\"font-size:0.5rem;color:white\\"></i></div>'
+    : '';
 
-  var m=L.marker([p._mlat,p._mlng],{
-    icon:L.divIcon({
-      className:'',
-      html:pinHtml,
-      iconSize:[1,1],iconAnchor:[50,46]
+  var pinHtml = `<div style="position:relative;display:inline-block;cursor:pointer">
+    ${star}
+    <div style="
+      background:${grad};
+      border-radius:20px 20px 20px 4px;
+      padding:6px 10px 6px 8px;
+      display:flex;align-items:center;gap:5px;
+      white-space:nowrap;
+      box-shadow:0 6px 22px ${shadow},0 2px 6px rgba(0,0,0,0.2);
+      border:2.5px solid rgba(255,255,255,0.6);
+      transition:all 0.18s;
+    ">
+      <div style="
+        width:24px;height:24px;
+        background:rgba(255,255,255,0.22);
+        border-radius:50%;
+        display:flex;align-items:center;justify-content:center;
+        flex-shrink:0;
+      ">
+        <i class=\\"fas ${faIcon}\\" style=\\"font-size:0.7rem;color:white\\"></i>
+      </div>
+      <div style="display:flex;flex-direction:column;line-height:1.1">
+        <span style="font-size:0.75rem;font-weight:900;color:white">${price}$</span>
+        <span style="font-size:0.55rem;color:rgba(255,255,255,0.85);font-weight:600">${label}</span>
+      </div>
+    </div>
+    <div style="
+      width:0;height:0;
+      border-left:6px solid transparent;
+      border-right:6px solid transparent;
+      border-top:8px solid ${tipColor};
+      margin-right:10px;
+      filter:drop-shadow(0 3px 3px rgba(0,0,0,0.15));
+    "></div>
+  </div>`;
+
+  var m = L.marker([p._mlat,p._mlng],{
+    icon: L.divIcon({
+      className: '',
+      html: pinHtml,
+      iconSize: [1,1],
+      iconAnchor: [52, 50]
     }),
     zIndexOffset: p.featured ? 200 : 100
   }).addTo(map);
-  m.on('click',function(){ openSheet(p); });
+
+  m.on('click', function(){ openSheet(p); });
   allM.push(m);
 }
 
@@ -571,7 +628,6 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </body>
