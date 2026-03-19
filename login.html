@@ -32,11 +32,94 @@
         <div style="width:100%;max-width:340px">
             <!-- Tabs -->
             <div style="display:flex;gap:0;background:var(--gray-light);border-radius:12px;padding:4px;margin-bottom:24px">
-                <button onclick="signInGoogle()" id="gBtn"
-      style="width:100%;padding:12px;border:1.5px solid #dadce0;border-radius:12px;background:white;cursor:pointer;font-family:var(--font);font-size:0.88rem;font-weight:700;color:#3c4043;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20" alt="">
-      <span>المتابعة عبر Google</span>
-    </button>
+                <button id="loginTab" onclick="switchTab('login')" 
+                        style="flex:1;padding:9px;border:none;border-radius:9px;background:var(--card);font-family:var(--font);font-size:0.88rem;font-weight:700;cursor:pointer;color:var(--text);box-shadow:var(--shadow-sm);transition:all 0.2s">
+                    دخول
+                </button>
+                <button id="registerTab" onclick="switchTab('register')"
+                        style="flex:1;padding:9px;border:none;border-radius:9px;background:transparent;font-family:var(--font);font-size:0.88rem;font-weight:600;cursor:pointer;color:var(--gray);transition:all 0.2s">
+                    تسجيل جديد
+                </button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-envelope" style="color:var(--accent);margin-left:6px"></i>البريد الإلكتروني
+                    </label>
+                    <input type="email" id="emailInput" class="form-input" placeholder="example@mail.com" 
+                           value="user@example.com" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-lock" style="color:var(--accent);margin-left:6px"></i>كلمة المرور
+                    </label>
+                    <div style="position:relative">
+                        <input type="password" id="passInput" class="form-input" placeholder="••••••••" 
+                               value="123456" autocomplete="current-password">
+                        <button onclick="togglePass()" type="button"
+                                style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gray);cursor:pointer;padding:6px;">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div style="text-align:left;margin-bottom:20px">
+                    <a href="#" style="font-size:0.8rem;color:var(--accent);text-decoration:none;font-weight:600">نسيت كلمة المرور؟</a>
+                </div>
+                <button class="btn-primary btn-accent" onclick="handleLogin()" id="loginBtn">
+                    <i class="fas fa-sign-in-alt" style="margin-left:8px"></i> دخول
+                </button>
+            </div>
+
+            <!-- Register Form -->
+            <div id="registerForm" style="display:none">
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-user" style="color:var(--accent);margin-left:6px"></i>الاسم الكامل
+                    </label>
+                    <input type="text" class="form-input" id="regName" placeholder="محمد العبدالله">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-phone" style="color:var(--accent);margin-left:6px"></i>رقم الجوال
+                    </label>
+                    <input type="tel" class="form-input" id="regPhone" placeholder="05XXXXXXXX">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-envelope" style="color:var(--accent);margin-left:6px"></i>البريد الإلكتروني
+                    </label>
+                    <input type="email" class="form-input" id="regEmail" placeholder="example@mail.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-lock" style="color:var(--accent);margin-left:6px"></i>كلمة المرور
+                    </label>
+                    <input type="password" class="form-input" id="regPass" placeholder="6 أحرف على الأقل">
+                </div>
+                <button class="btn-primary btn-accent" onclick="handleRegister()">
+                    <i class="fas fa-user-plus" style="margin-left:8px"></i> إنشاء حساب
+                </button>
+            </div>
+
+            <p style="margin-top:16px;font-size:0.78rem;color:var(--gray);text-align:center;">
+                <i class="fas fa-info-circle"></i> أي بيانات تعمل للتجربة
+            </p>
+
+            <!-- Social Login -->
+            <div style="margin-top:20px;text-align:center">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                    <div style="flex:1;height:1px;background:var(--border)"></div>
+                    <span style="font-size:0.78rem;color:var(--gray)">أو سجّل بـ</span>
+                    <div style="flex:1;height:1px;background:var(--border)"></div>
+                </div>
+                <div style="display:flex;gap:10px">
+                    <button onclick="socialLogin('Google')" 
+                            style="flex:1;padding:11px;border:1.5px solid var(--border);border-radius:10px;background:var(--card);cursor:pointer;font-family:var(--font);font-size:0.85rem;font-weight:600;color:var(--text);display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s">
+                        <img src="https://www.google.com/favicon.ico" width="16" height="16" alt="Google">
+                        Google
+                    </button>
                     <button onclick="socialLogin('Apple')"
                             style="flex:1;padding:11px;border:1.5px solid var(--border);border-radius:10px;background:var(--card);cursor:pointer;font-family:var(--font);font-size:0.85rem;font-weight:600;color:var(--text);display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s">
                         <i class="fab fa-apple" style="font-size:1rem"></i>
@@ -150,46 +233,6 @@ if('serviceWorker' in navigator){
       .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
   });
 }
-</script>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script>
-(function(){
-  var cfg={apiKey:"AIzaSyCvVYtCsC7UR52bGLYvHebQqOumtat7poU",
-    authDomain:"aqari-app-7c43f.firebaseapp.com",
-    projectId:"aqari-app-7c43f"};
-  try{if(!firebase.apps.length)firebase.initializeApp(cfg);}catch(e){}
-  
-  window.signInGoogle=async function(){
-    var btn=document.getElementById('gBtn');
-    btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> جاري...';
-    btn.disabled=true;
-    try{
-      var auth=firebase.auth();
-      var p=new firebase.auth.GoogleAuthProvider();
-      p.setCustomParameters({prompt:'select_account'});
-      var r=await auth.signInWithPopup(p);
-      var u=r.user;
-      localStorage.setItem('isLoggedIn','true');
-      localStorage.setItem('userEmail',u.email||'');
-      localStorage.setItem('userName',u.displayName||'مستخدم Google');
-      if(u.photoURL)localStorage.setItem('userPhoto',u.photoURL);
-      showToast('✅ مرحباً '+u.displayName);
-      setTimeout(function(){location.href='index.html';},600);
-    }catch(e){
-      btn.innerHTML='<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20"> <span>المتابعة عبر Google</span>';
-      btn.disabled=false;
-      var msgs={
-        'auth/popup-blocked':'⚠️ السماح بالنوافذ المنبثقة في المتصفح',
-        'auth/popup-closed-by-user':'تم إغلاق النافذة',
-        'auth/unauthorized-domain':'⚠️ أضف الدومين في Firebase Console',
-        'auth/operation-not-allowed':'⚠️ فعّل Google في Firebase Authentication'
-      };
-      showToast(msgs[e.code]||'❌ تعذر تسجيل الدخول: '+e.code);
-    }
-  };
-})();
 </script>
 </body>
 </html>
