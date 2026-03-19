@@ -672,7 +672,8 @@ function renderFavorites() {
 }
 function clearAllFavorites() {
   if (!favorites.length) { showToast('لا توجد مفضلة'); return; }
-  showDialog({icon:'❤️',iconBg:'rgba(231,76,60,0.1)',title:'مسح المفضلة',msg:'هل تريد مسح جميع العقارات المفضلة؟',okText:'مسح الكل',okBg:'linear-gradient(135deg,#e74c3c,#c0392b)',onOk:()=>{favorites=[];window.favorites=favorites;saveData();renderFavorites();showToast('تم مسح المفضلة');}});
+  if (!confirm('مسح جميع المفضلة؟')) return;
+  favorites = []; window.favorites = favorites; saveData(); renderFavorites(); showToast('تم المسح');
 }
 
 /* ─────────────────────────────
@@ -755,7 +756,12 @@ function renderDetails() {
     <div id="detMapWrap"></div>
     <div class="section-title"><i class="fas fa-user-tie"></i>المعلن</div>
     <div class="agent-card">
-      <div class="agent-avatar"><i class="fas fa-user"></i></div>
+      <div class="agent-avatar" style="overflow:hidden;padding:0;background:transparent">
+        ${p.agentPhoto
+          ? '<img src="' + p.agentPhoto + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"><div style="display:none;width:100%;height:100%;background:linear-gradient(135deg,var(--primary),var(--accent));align-items:center;justify-content:center;color:white;font-size:1.2rem;border-radius:50%"><i class=\"fas fa-user\"></i></div>'
+          : '<div style="width:100%;height:100%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;border-radius:50%"><i class=\"fas fa-user\"></i></div>'
+        }
+      </div>
       <div class="agent-info">
         <div class="agent-name">${p.agentName || 'مالك العقار'}</div>
         <div class="agent-label">مالك مباشر</div>
@@ -983,7 +989,11 @@ function clearAllImgs() {
     showToast('لا توجد صور لحذفها');
     return;
   }
-  showDialog({icon:'🖼️',iconBg:'rgba(139,92,246,0.1)',title:'حذف الصور',msg:'هل تريد حذف جميع الصور؟',okText:'احذف',okBg:'linear-gradient(135deg,#8b5cf6,#7c3aed)',onOk:()=>{window.UPLOAD_IMGS=[];renderImgGrid();showToast('تم حذف الصور');}});
+  if (confirm('حذف جميع الصور؟')) {
+    window.UPLOAD_IMGS = [];
+    renderImgGrid();
+    showToast('تم مسح جميع الصور');
+  }
 }
 
 // تصدير الدوال عالمياً
@@ -1081,6 +1091,7 @@ function publishProperty() {
         views:       0,
         postedAt:    new Date().toISOString().split('T')[0],
         agentName:   localStorage.getItem('userName') || 'أنت',
+        agentPhoto:  localStorage.getItem('userPhoto') || '',
         agentVerified: false,
         lat: lat0 || (cc.lat + (Math.random() - 0.5) * 0.02),
         lng: lng0 || (cc.lng + (Math.random() - 0.5) * 0.02)
@@ -1349,7 +1360,8 @@ function handleRegister() {
   }, 800);
 }
 function handleLogout() {
-  showDialog({icon:'🚪',iconBg:'rgba(100,116,139,0.1)',title:'تسجيل الخروج',msg:'هل تريد تسجيل الخروج؟',okText:'خروج',cancelText:'البقاء',okBg:'linear-gradient(135deg,#64748b,#475569)',onOk:()=>{localStorage.removeItem('isLoggedIn');location.href='login.html';}});
+  if (!confirm('تسجيل الخروج؟')) return;
+  localStorage.removeItem('isLoggedIn'); location.href = 'login.html';
 }
 function switchTab(tab) {
   document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
@@ -1431,10 +1443,7 @@ function initSplash() {
   if (s) { setTimeout(() => { s.classList.add('hidden'); setTimeout(() => s.remove(), 500); }, 1800); }
 }
 function clearAllData() {
-  showDialog({icon:'⚠️',iconBg:'rgba(231,76,60,0.1)',title:'مسح البيانات',msg:'سيتم مسح جميع البيانات من الجهاز.',okText:'مسح',okBg:'linear-gradient(135deg,#e74c3c,#c0392b)',onOk:()=>_doRealClear()});
-  return;
-}
-function _doRealClear() {
+  if (!confirm('مسح جميع البيانات؟')) return;
   const k = { isLoggedIn: localStorage.getItem('isLoggedIn'), userEmail: localStorage.getItem('userEmail'), userName: localStorage.getItem('userName'), aqari_theme: localStorage.getItem('aqari_theme') };
   /* Clear image keys first */
   _clearAllPropImages();
@@ -1523,51 +1532,3 @@ window.initCardSwipes   = initCardSwipes;
 
 window.conversations    = conversations_data;
 window.notifications    = notifications_data;
-
-
-/* ═══════════════════════════════════════
-   نظام الحوارات الاحترافي
-═══════════════════════════════════════ */
-function showDialog({icon='❓', iconBg='rgba(230,126,34,0.12)', title='تأكيد', msg='', okText='تأكيد', cancelText='إلغاء', okBg='linear-gradient(135deg,#f97316,#ea580c)', onOk=null} = {}) {
-  /* CSS */
-  if (!document.getElementById('_dlgSt')) {
-    const s = document.createElement('style');
-    s.id = '_dlgSt';
-    s.textContent = `
-      .dlg-ov{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.5);backdrop-filter:blur(5px);display:flex;align-items:flex-end;justify-content:center;animation:dlgFi .2s ease}
-      @keyframes dlgFi{from{opacity:0}to{opacity:1}}
-      .dlg-bx{background:var(--card,#fff);border-radius:24px 24px 0 0;padding:20px 20px calc(22px + env(safe-area-inset-bottom));width:100%;max-width:480px;animation:dlgUp .3s cubic-bezier(.34,1.56,.64,1)}
-      @keyframes dlgUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-      .dlg-hd{width:40px;height:4px;background:var(--border,#e2e8f0);border-radius:99px;margin:0 auto 16px}
-      .dlg-ic{width:62px;height:62px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:1.9rem;margin:0 auto 12px}
-      .dlg-ti{font-size:1.02rem;font-weight:900;text-align:center;color:var(--text,#1e293b);margin-bottom:6px}
-      .dlg-ms{font-size:0.82rem;color:var(--gray,#64748b);text-align:center;line-height:1.6;margin-bottom:20px}
-      .dlg-bt{display:flex;gap:10px}
-      .dlg-no{flex:1;padding:13px;border-radius:13px;background:var(--gray-light,#f1f5f9);border:1.5px solid var(--border,#e2e8f0);color:var(--text-secondary,#64748b);font-family:var(--font,'Cairo',sans-serif);font-size:.88rem;font-weight:700;cursor:pointer}
-      .dlg-ok{flex:1;padding:13px;border-radius:13px;border:none;color:white;font-family:var(--font,'Cairo',sans-serif);font-size:.88rem;font-weight:800;cursor:pointer}
-    `;
-    document.head.appendChild(s);
-  }
-
-  const ov = document.createElement('div');
-  ov.className = 'dlg-ov';
-  ov.innerHTML = `
-    <div class="dlg-bx">
-      <div class="dlg-hd"></div>
-      <div class="dlg-ic" style="background:${iconBg}">${icon}</div>
-      <div class="dlg-ti">${title}</div>
-      <div class="dlg-ms">${msg}</div>
-      <div class="dlg-bt">
-        <button class="dlg-no" id="_dlgNo">${cancelText}</button>
-        <button class="dlg-ok" style="background:${okBg}" id="_dlgOk">${okText}</button>
-      </div>
-    </div>`;
-
-  document.body.appendChild(ov);
-
-  const close = () => { ov.style.opacity='0'; ov.style.transition='.15s'; setTimeout(()=>ov.remove(),150); };
-  ov.querySelector('#_dlgNo').onclick = close;
-  ov.querySelector('#_dlgOk').onclick = () => { close(); onOk && onOk(); };
-  ov.addEventListener('click', e => { if(e.target===ov) close(); });
-}
-window.showDialog = showDialog;
