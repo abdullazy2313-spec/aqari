@@ -14,85 +14,187 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="css/style.css">
 <style>
-.pic-outer{position:relative;width:96px;height:96px;margin:0 auto 14px}
-.pic-ring{width:96px;height:96px;border-radius:50%;border:3.5px solid var(--accent);
-  overflow:hidden;background:var(--gray-light);display:flex;align-items:center;
-  justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(230,126,34,0.25)}
-.pic-ring i{font-size:2.4rem;color:var(--accent)}
-.pic-cam{position:absolute;bottom:2px;left:2px;width:30px;height:30px;border-radius:50%;
-  background:var(--accent);color:white;border:2.5px solid var(--card);
-  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.72rem;
-  box-shadow:0 2px 10px rgba(230,126,34,0.5);z-index:2}
-
-#CP{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.97);
-  display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px}
-#CP.on{display:flex}
-.cp-title{color:white;font-size:0.95rem;font-weight:800;margin-bottom:14px;
-  display:flex;align-items:center;gap:8px}
-.cp-title i{color:var(--accent)}
-
-/* الدائرة */
-#CP-circle{
-  position:relative;
-  border-radius:50%;
-  overflow:hidden;
-  border:3px solid var(--accent);
-  background:#111;
-  cursor:grab;
-  touch-action:none;
-  box-shadow:0 0 0 6px rgba(230,126,34,0.15), 0 12px 48px rgba(0,0,0,0.7);
-  flex-shrink:0;
+/* ── صورة البروفايل ── */
+.pic-outer {
+  position: relative;
+  width: 96px; height: 96px;
+  margin: 0 auto 14px;
 }
-#CP-circle.drag{cursor:grabbing}
-
-/* الصورة — left/top/width/height فقط، لا transform */
-#CP-img{
-  position:absolute;
-  pointer-events:none;
-  user-select:none;
-  touch-action:none;
-  display:block;
+/* label يغطي الدائرة كاملاً = نقر في أي مكان يفتح المعرض */
+.pic-label {
+  display: block;
+  width: 96px; height: 96px;
+  border-radius: 50%;
+  border: 3.5px solid var(--accent);
+  overflow: hidden;
+  background: var(--gray-light);
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(230,126,34,0.25);
+  position: relative;
+}
+.pic-label img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
+}
+.pic-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
+.pic-placeholder i { font-size: 2.4rem; color: var(--accent); }
+/* أيقونة الكاميرا/القلم */
+.pic-badge {
+  position: absolute;
+  bottom: 2px; left: 2px;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  border: 2.5px solid var(--card);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem;
+  box-shadow: 0 2px 10px rgba(230,126,34,0.5);
+  pointer-events: none; /* لا يمنع النقر على الـ label */
 }
 
-.cp-hint{color:rgba(255,255,255,0.38);font-size:0.7rem;margin-top:10px;text-align:center}
-.cp-btns{display:flex;gap:10px;margin-top:16px;width:100%;max-width:320px}
-.cp-cancel{flex:1;padding:13px;border-radius:13px;background:rgba(255,255,255,0.07);
-  border:1.5px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.75);
-  font-family:var(--font);font-size:0.88rem;font-weight:700;cursor:pointer}
-.cp-save{flex:1.6;padding:13px;border-radius:13px;border:none;
-  background:linear-gradient(135deg,var(--accent),var(--accent-hover));
-  color:white;font-family:var(--font);font-size:0.88rem;font-weight:800;cursor:pointer;
-  box-shadow:0 4px 16px rgba(230,126,34,0.4)}
-.cp-save:disabled{opacity:0.5;cursor:not-allowed}
+/* ── Modal القص ── */
+#CROP {
+  position: fixed; inset: 0; z-index: 99999;
+  background: rgba(0,0,0,0.97);
+  display: none;
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 16px;
+}
+#CROP.open { display: flex; }
+
+.crop-title {
+  color: white; font-size: 0.95rem; font-weight: 800;
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.crop-title i { color: var(--accent); }
+
+/* دائرة القص */
+#crop-circle {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--accent);
+  background: #111;
+  cursor: grab;
+  touch-action: none;
+  box-shadow: 0 0 0 6px rgba(230,126,34,0.15), 0 12px 48px rgba(0,0,0,0.7);
+  flex-shrink: 0;
+}
+#crop-circle.grabbing { cursor: grabbing; }
+
+/* الصورة داخل الدائرة — left/top/width/height للعرض والحفظ */
+#crop-img {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  touch-action: none;
+}
+
+.crop-hint {
+  color: rgba(255,255,255,0.4);
+  font-size: 0.72rem;
+  margin-top: 10px;
+  text-align: center;
+  line-height: 1.6;
+}
+.crop-actions {
+  display: flex; gap: 10px;
+  margin-top: 16px;
+  width: 100%; max-width: 320px;
+}
+.crop-btn-cancel {
+  flex: 1; padding: 13px; border-radius: 13px;
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.8);
+  font-family: var(--font); font-size: 0.88rem; font-weight: 700;
+  cursor: pointer;
+}
+.crop-btn-save {
+  flex: 1.6; padding: 13px; border-radius: 13px;
+  border: none;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: white;
+  font-family: var(--font); font-size: 0.88rem; font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(230,126,34,0.4);
+}
+.crop-btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo"><i class="fas fa-user" style="color:var(--accent);margin-left:8px"></i>حسابي</div>
+  <div class="logo">
+    <i class="fas fa-user" style="color:var(--accent);margin-left:8px"></i>حسابي
+  </div>
   <a href="settings.html" class="header-icon-btn"><i class="fas fa-cog"></i></a>
 </header>
 
 <div class="container">
   <div class="profile-header">
+
+    <!-- ✅ الحل الجذري: label + input مباشرة في HTML -->
     <div class="pic-outer">
-      <div class="pic-ring" id="PR"></div>
-      <div class="pic-cam" id="PC"><i class="fas fa-camera"></i></div>
+
+      <!-- label يفتح المعرض مباشرة بدون JavaScript -->
+      <label class="pic-label" for="pic-file-input" id="pic-label">
+        <div class="pic-placeholder" id="pic-placeholder">
+          <i class="fas fa-user"></i>
+        </div>
+      </label>
+
+      <!-- أيقونة الكاميرا (تعديل: تتحول لقلم) -->
+      <label class="pic-badge" for="pic-file-input" id="pic-badge">
+        <i class="fas fa-camera" id="pic-badge-icon"></i>
+      </label>
+
+      <!-- input الملف — مخفي -->
+      <input
+        type="file"
+        id="pic-file-input"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/*"
+        style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"
+      >
     </div>
-    <input type="file" id="PF" accept="image/*" style="display:none">
-    <h3 id="profileName" style="margin-bottom:4px;font-size:1.2rem;font-weight:800">مستخدم عقاري</h3>
+
+    <h3 id="profileName" style="margin-bottom:4px;font-size:1.2rem;font-weight:800">
+      مستخدم عقاري
+    </h3>
     <p id="profileEmail" style="color:var(--gray);font-size:0.88rem"></p>
-    <div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(39,174,96,0.1);padding:4px 14px;border-radius:20px;font-size:0.78rem;color:var(--success);border:1px solid rgba(39,174,96,0.2)">
+    <div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;
+      background:rgba(39,174,96,0.1);padding:4px 14px;border-radius:20px;
+      font-size:0.78rem;color:var(--success);border:1px solid rgba(39,174,96,0.2)">
       <i class="fas fa-shield-alt"></i> حساب موثق
     </div>
   </div>
 
+  <!-- إحصاءات -->
   <div class="stat-box" style="margin-bottom:20px">
-    <div class="stat"><span class="stat-num" id="myAdsCount">0</span><span class="stat-label">إعلاناتي</span></div>
-    <div class="stat"><span class="stat-num" id="favsCount">0</span><span class="stat-label">مفضلة</span></div>
-    <div class="stat"><span class="stat-num" id="viewsCount">0</span><span class="stat-label">مشاهدات</span></div>
+    <div class="stat">
+      <span class="stat-num" id="myAdsCount">0</span>
+      <span class="stat-label">إعلاناتي</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num" id="favsCount">0</span>
+      <span class="stat-label">مفضلة</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num" id="viewsCount">0</span>
+      <span class="stat-label">مشاهدات</span>
+    </div>
   </div>
 
+  <!-- أزرار سريعة -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
     <a href="add-property.html" style="text-decoration:none;background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:white;padding:14px;border-radius:12px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:0.88rem">
       <i class="fas fa-plus-circle fa-lg"></i><span>إضافة إعلان</span>
@@ -102,9 +204,12 @@
     </a>
   </div>
 
+  <!-- إعلاناتي -->
   <div style="background:var(--card);border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow-sm)">
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <span style="font-weight:800;font-size:0.9rem"><i class="fas fa-clipboard-list" style="color:var(--accent);margin-left:8px"></i>إعلاناتي</span>
+      <span style="font-weight:800;font-size:0.9rem">
+        <i class="fas fa-clipboard-list" style="color:var(--accent);margin-left:8px"></i>إعلاناتي
+      </span>
       <span id="myAdsCountBadge" style="background:var(--accent-light);color:var(--accent);padding:2px 10px;border-radius:99px;font-size:0.75rem;font-weight:700">0</span>
     </div>
     <div id="myAdsSection" style="padding:16px">
@@ -116,6 +221,7 @@
     </div>
   </div>
 
+  <!-- القائمة -->
   <ul class="menu-list">
     <a href="settings.html" class="menu-item">
       <span><i class="fas fa-cog" style="margin-left:10px;color:var(--gray)"></i>الإعدادات</span>
@@ -135,6 +241,7 @@
   <p style="text-align:center;color:var(--gray);font-size:0.72rem;margin-top:24px;margin-bottom:8px">عقاري v3.0 © 2025</p>
 </div>
 
+<!-- Bottom Nav -->
 <nav class="bottom-nav">
   <a href="index.html"    class="nav-item" data-page="index"><i class="fas fa-home"></i><span>الرئيسية</span></a>
   <a href="favorites.html" class="nav-item" data-page="favorites"><i class="fas fa-heart"></i><span>المفضلة</span></a>
@@ -143,20 +250,24 @@
 </nav>
 <div id="toast"></div>
 
-<!-- Cropper -->
-<div id="CP">
-  <div class="cp-title"><i class="fas fa-crop-alt"></i>اضبط الصورة</div>
-  <div id="CP-circle"><img id="CP-img" alt=""></div>
-  <div class="cp-hint">
-    <i class="fas fa-arrows-alt" style="margin-left:4px"></i>اسحب لتحريك
-    &nbsp;·&nbsp;
-    <i class="fas fa-search-plus" style="margin-left:4px"></i>إصبعان للتكبير
+<!-- ═══ Modal القص ═══ -->
+<div id="CROP">
+  <div class="crop-title">
+    <i class="fas fa-crop-alt"></i> اضبط الصورة
   </div>
-  <div class="cp-btns">
-    <button class="cp-cancel" id="CP-cancel">
+  <div id="crop-circle">
+    <img id="crop-img" alt="">
+  </div>
+  <div class="crop-hint">
+    <i class="fas fa-hand-pointer"></i> اسحب لتحريك
+    &nbsp;·&nbsp;
+    <i class="fas fa-search-plus"></i> إصبعان للتكبير
+  </div>
+  <div class="crop-actions">
+    <button class="crop-btn-cancel" id="crop-cancel">
       <i class="fas fa-times" style="margin-left:6px"></i>إلغاء
     </button>
-    <button class="cp-save" id="CP-save">
+    <button class="crop-btn-save" id="crop-save">
       <i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة
     </button>
   </div>
@@ -164,57 +275,49 @@
 
 <script src="js/app.js"></script>
 <script>
-(function(){
+(function() {
 'use strict';
 
-/*
-  ══════════════════════════════════════════════════════
-  المبدأ: left/top/width/height للعرض والحفظ معاً
-  
-  الصورة في الدائرة (CP-circle بحجم SZ×SZ):
-    - left = X   (يمكن سالب)
-    - top  = Y   (يمكن سالب)
-    - width  = nat_w * S
-    - height = nat_h * S
+/* ═══════════════════════════════════════════════════════
+   متغيرات القص
+   الصورة في الدائرة (SZ × SZ):
+     left = X, top = Y, width = NW*S, height = NH*S
+   الحفظ في Canvas (OUT × OUT):
+     ratio = OUT/SZ
+     drawImage(img, X*ratio, Y*ratio, NW*S*ratio, NH*S*ratio)
+═══════════════════════════════════════════════════════ */
 
-  عند الحفظ في Canvas (OUT×OUT):
-    - ratio = OUT / SZ
-    - drawImage(img, X*ratio, Y*ratio, nat_w*S*ratio, nat_h*S*ratio)
-    
-  هذا المبدأ يضمن أن ما تراه = ما يُحفظ بالضبط
-  ══════════════════════════════════════════════════════
-*/
+var SZ    = 280;   /* حجم دائرة القص */
+var OUT   = 400;   /* حجم الصورة المحفوظة */
+var X     = 0;     /* left */
+var Y     = 0;     /* top  */
+var S     = 1;     /* scale */
+var S_MIN = 1;
+var S_MAX = 8;
+var NW    = 0;     /* عرض الصورة الأصلية */
+var NH    = 0;     /* ارتفاع الصورة الأصلية */
+var SRC   = '';    /* مصدر الصورة */
 
-var SZ  = 0;     /* حجم دائرة القص */
-var OUT = 400;   /* حجم الصورة المحفوظة */
-var X   = 0;     /* left الصورة */
-var Y   = 0;     /* top الصورة */
-var S   = 1;     /* scale = عرض الصورة المعروضة / nat_w */
-var S_MIN = 1;   /* أقل تكبير */
-var S_MAX = 8;   /* أقصى تكبير */
-var NW  = 0;     /* العرض الأصلي للصورة */
-var NH  = 0;     /* الارتفاع الأصلي للصورة */
-var SRC = '';    /* data-url */
-
-/* تطبيق الإحداثيات على الـ DOM */
-function draw(){
-  /* قيود: الصورة تغطي الدائرة دائماً */
+/* ── تطبيق الإحداثيات ── */
+function draw() {
   var dw = NW * S;
   var dh = NH * S;
-  if(X > 0) X = 0;
-  if(Y > 0) Y = 0;
-  if(X < SZ - dw) X = SZ - dw;
-  if(Y < SZ - dh) Y = SZ - dh;
+  /* قيود */
+  if (X > 0) X = 0;
+  if (Y > 0) Y = 0;
+  if (X < SZ - dw) X = SZ - dw;
+  if (Y < SZ - dh) Y = SZ - dh;
 
-  var img = document.getElementById('CP-img');
+  var img = document.getElementById('crop-img');
+  if (!img) return;
   img.style.left   = X + 'px';
   img.style.top    = Y + 'px';
   img.style.width  = dw + 'px';
   img.style.height = dh + 'px';
 }
 
-/* تغيير التكبير من نقطة (cx,cy) */
-function scaleFrom(newS, cx, cy){
+/* ── تغيير التكبير من نقطة ── */
+function doZoom(newS, cx, cy) {
   newS = Math.min(S_MAX, Math.max(S_MIN, newS));
   var r = newS / S;
   X = cx - (cx - X) * r;
@@ -223,245 +326,289 @@ function scaleFrom(newS, cx, cy){
   draw();
 }
 
-/* فتح المقص */
-function open(src){
+/* ── فتح المقص بمصدر صورة ── */
+function openCrop(src) {
   SRC = src;
   var loader = new Image();
-  loader.onload = function(){
+  loader.onload = function() {
     NW = loader.naturalWidth;
     NH = loader.naturalHeight;
 
-    /* حجم الدائرة */
     SZ = Math.min(300, window.innerWidth - 64);
-    var circle = document.getElementById('CP-circle');
+    var circle = document.getElementById('crop-circle');
     circle.style.width  = SZ + 'px';
     circle.style.height = SZ + 'px';
 
-    /* الحد الأدنى: يملأ الدائرة */
     S_MIN = Math.max(SZ / NW, SZ / NH) * 1.001;
     S_MAX = S_MIN * 8;
     S     = S_MIN;
+    X     = (SZ - NW * S) / 2;
+    Y     = (SZ - NH * S) / 2;
 
-    /* توسيط */
-    X = (SZ - NW * S) / 2;
-    Y = (SZ - NH * S) / 2;
-
-    /* ضع الصورة */
-    var img = document.getElementById('CP-img');
-    img.style.left = '0'; img.style.top = '0';
-    img.style.width = ''; img.style.height = '';
-    img.onload = function(){ draw(); };
+    var img = document.getElementById('crop-img');
+    img.style.left = img.style.top = img.style.width = img.style.height = '';
+    img.onload = function() { draw(); };
     img.src = src;
-    if(img.complete && img.naturalWidth > 0) draw();
+    if (img.complete && img.naturalWidth > 0) draw();
 
-    /* أظهر */
-    document.getElementById('CP').classList.add('on');
+    document.getElementById('CROP').classList.add('open');
     document.body.style.overflow = 'hidden';
+  };
+  loader.onerror = function() {
+    if (typeof showToast === 'function') showToast('تعذر فتح الصورة');
   };
   loader.src = src;
 }
 
-/* إغلاق */
-function close(){
-  document.getElementById('CP').classList.remove('on');
+/* ── إغلاق ── */
+function closeCrop() {
+  document.getElementById('CROP').classList.remove('open');
   document.body.style.overflow = '';
 }
 
-/* حفظ */
-function save(){
-  var btn = document.getElementById('CP-save');
+/* ── حفظ الصورة ── */
+function saveCrop() {
+  var btn = document.getElementById('crop-save');
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-left:6px"></i>جاري...';
 
+  var img = document.getElementById('crop-img');
   var ratio = OUT / SZ;
 
-  /* ارسم مباشرة بدون صورة جديدة لضمان الدقة */
-  var canvas  = document.createElement('canvas');
-  canvas.width = canvas.height = OUT;
-  var ctx = canvas.getContext('2d');
+  function render(srcImg) {
+    var canvas = document.createElement('canvas');
+    canvas.width = canvas.height = OUT;
+    var ctx = canvas.getContext('2d');
 
-  ctx.beginPath();
-  ctx.arc(OUT/2, OUT/2, OUT/2, 0, Math.PI*2);
-  ctx.clip();
+    /* قص دائري */
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(OUT / 2, OUT / 2, OUT / 2, 0, Math.PI * 2);
+    ctx.clip();
 
-  var img = document.getElementById('CP-img');
-
-  function doSave(srcImg){
-    ctx.drawImage(srcImg,
+    /* رسم الصورة بنفس إحداثيات العرض × ratio */
+    ctx.drawImage(
+      srcImg,
       X * ratio,
       Y * ratio,
       NW * S * ratio,
       NH * S * ratio
     );
-    var url = canvas.toDataURL('image/jpeg', 0.93);
+    ctx.restore();
+
+    var url = canvas.toDataURL('image/jpeg', 0.92);
     localStorage.setItem('userPhoto', url);
     renderRing();
-    close();
-    if(typeof showToast==='function') showToast('تم حفظ الصورة');
+    closeCrop();
+    if (typeof showToast === 'function') showToast('تم حفظ الصورة بنجاح');
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة';
   }
 
-  /* استخدم الصورة الموجودة مباشرة */
-  if(img.complete && img.naturalWidth > 0){
-    doSave(img);
+  /* إذا الصورة محملة استخدمها مباشرة */
+  if (img.complete && img.naturalWidth > 0) {
+    render(img);
   } else {
+    /* وإلا حملها من جديد */
     var tmp = new Image();
-    tmp.onload = function(){ doSave(tmp); };
-    tmp.onerror = function(){
+    tmp.onload  = function() { render(tmp); };
+    tmp.onerror = function() {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة';
+      if (typeof showToast === 'function') showToast('خطأ في الحفظ');
     };
     tmp.src = SRC;
   }
 }
 
-/* عرض الصورة في الحلقة */
-function renderRing(){
-  var ring  = document.getElementById('PR');
-  var cam   = document.getElementById('PC');
-  var photo = localStorage.getItem('userPhoto');
-  if(!ring) return;
-  if(photo){
-    ring.innerHTML =
-      '<img src="' + photo + '" '
-      + 'style="width:100%;height:100%;object-fit:cover;display:block;border-radius:50%" '
-      + 'onerror="this.parentElement.innerHTML='<i class=\'fas fa-user\' style=\'font-size:2.4rem;color:var(--accent)\'></i>'">';
-    if(cam){
-      cam.innerHTML = '<i class="fas fa-pen"></i>';
-      cam.dataset.mode = 'edit';
+/* ── عرض الصورة في دائرة البروفايل ── */
+function renderRing() {
+  var placeholder = document.getElementById('pic-placeholder');
+  var badgeIcon   = document.getElementById('pic-badge-icon');
+  var photo       = localStorage.getItem('userPhoto');
+
+  if (placeholder) {
+    if (photo) {
+      placeholder.innerHTML =
+        '<img src="' + photo + '" '
+        + 'onerror="this.parentElement.innerHTML='<i class=\'fas fa-user\' style=\'font-size:2.4rem;color:var(--accent)\'></i>'">';
+    } else {
+      placeholder.innerHTML = '<i class="fas fa-user" style="font-size:2.4rem;color:var(--accent)"></i>';
+    }
+  }
+
+  if (badgeIcon) {
+    badgeIcon.className = photo ? 'fas fa-pen' : 'fas fa-camera';
+  }
+
+  /* إذا الصورة موجودة — القلم يفتح المقص للتعديل بدل المعرض */
+  var badge = document.getElementById('pic-badge');
+  var label = document.getElementById('pic-label');
+  var input = document.getElementById('pic-file-input');
+
+  if (photo) {
+    /* ألغِ ربط label بالـ input */
+    if (badge) badge.removeAttribute('for');
+    if (label) label.removeAttribute('for');
+
+    /* القلم: أعد تعديل الصورة */
+    if (badge && !badge._editBound) {
+      badge._editBound = true;
+      badge.addEventListener('click', function(e) {
+        e.preventDefault();
+        openCrop(localStorage.getItem('userPhoto'));
+      });
+    }
+
+    /* دائرة الصورة: فتح معرض لاستبدال */
+    if (label && !label._clickBound) {
+      label._clickBound = true;
+      label.addEventListener('click', function(e) {
+        e.preventDefault();
+        input.click();
+      });
     }
   } else {
-    ring.innerHTML = '<i class="fas fa-user" style="font-size:2.4rem;color:var(--accent)"></i>';
-    if(cam){
-      cam.innerHTML = '<i class="fas fa-camera"></i>';
-      cam.dataset.mode = 'add';
-    }
+    /* بدون صورة: label + for يفتح المعرض مباشرة */
+    if (badge) badge.setAttribute('for', 'pic-file-input');
+    if (label) label.setAttribute('for', 'pic-file-input');
   }
 }
 
-/* ══ أحداث السحب ══ */
-var dragging=false, sx=0, sy=0, ox=0, oy=0, pd=0;
+/* ═══ أحداث السحب ═══ */
+var drag = false, sx = 0, sy = 0, ox = 0, oy = 0, pd = 0;
 
-document.addEventListener('mousedown', function(e){
-  if(!document.getElementById('CP-circle').contains(e.target)) return;
-  dragging=true; sx=e.clientX; sy=e.clientY; ox=X; oy=Y;
-  document.getElementById('CP-circle').classList.add('drag');
+document.addEventListener('mousedown', function(e) {
+  var c = document.getElementById('crop-circle');
+  if (!c || !c.contains(e.target)) return;
+  drag = true; sx = e.clientX; sy = e.clientY; ox = X; oy = Y;
+  c.classList.add('grabbing');
   e.preventDefault();
 });
-document.addEventListener('mousemove', function(e){
-  if(!dragging) return;
-  X = ox+(e.clientX-sx); Y = oy+(e.clientY-sy); draw();
+document.addEventListener('mousemove', function(e) {
+  if (!drag) return;
+  X = ox + (e.clientX - sx);
+  Y = oy + (e.clientY - sy);
+  draw();
 });
-document.addEventListener('mouseup', function(){
-  dragging=false;
-  var c=document.getElementById('CP-circle');
-  if(c) c.classList.remove('drag');
+document.addEventListener('mouseup', function() {
+  drag = false;
+  var c = document.getElementById('crop-circle');
+  if (c) c.classList.remove('grabbing');
 });
 
-document.addEventListener('touchstart', function(e){
-  var c=document.getElementById('CP-circle');
-  if(!c||!c.contains(e.target)) return;
-  if(e.touches.length===1){
-    dragging=true; pd=0;
-    sx=e.touches[0].clientX; sy=e.touches[0].clientY; ox=X; oy=Y;
-    c.classList.add('drag');
-  } else if(e.touches.length===2){
-    dragging=false; c.classList.remove('drag');
-    pd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,
-                   e.touches[0].clientY-e.touches[1].clientY);
+document.addEventListener('touchstart', function(e) {
+  var c = document.getElementById('crop-circle');
+  if (!c || !c.contains(e.target)) return;
+  if (e.touches.length === 1) {
+    drag = true; pd = 0;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    ox = X; oy = Y;
+    c.classList.add('grabbing');
+  } else if (e.touches.length === 2) {
+    drag = false;
+    c.classList.remove('grabbing');
+    pd = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
   }
   e.preventDefault();
-},{passive:false});
+}, { passive: false });
 
-document.addEventListener('touchmove', function(e){
-  var c=document.getElementById('CP-circle');
-  if(!c) return;
-  if(e.touches.length===1 && dragging){
-    X=ox+(e.touches[0].clientX-sx); Y=oy+(e.touches[0].clientY-sy); draw();
-  } else if(e.touches.length===2 && pd>0){
-    var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,
-                     e.touches[0].clientY-e.touches[1].clientY);
-    var cx=(e.touches[0].clientX+e.touches[1].clientX)/2;
-    var cy=(e.touches[0].clientY+e.touches[1].clientY)/2;
-    var rect=c.getBoundingClientRect();
-    scaleFrom(S*(d/pd), cx-rect.left, cy-rect.top);
-    pd=d;
+document.addEventListener('touchmove', function(e) {
+  var c = document.getElementById('crop-circle');
+  if (!c) return;
+  if (e.touches.length === 1 && drag) {
+    X = ox + (e.touches[0].clientX - sx);
+    Y = oy + (e.touches[0].clientY - sy);
+    draw();
+  } else if (e.touches.length === 2 && pd > 0) {
+    var d = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    var rect = c.getBoundingClientRect();
+    var cx = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+    var cy = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
+    doZoom(S * (d / pd), cx, cy);
+    pd = d;
   }
-  e.preventDefault();
-},{passive:false});
+  if (c.contains(e.target) || drag) e.preventDefault();
+}, { passive: false });
 
-document.addEventListener('touchend', function(){
-  dragging=false; pd=0;
-  var c=document.getElementById('CP-circle');
-  if(c) c.classList.remove('drag');
+document.addEventListener('touchend', function() {
+  drag = false; pd = 0;
+  var c = document.getElementById('crop-circle');
+  if (c) c.classList.remove('grabbing');
 });
 
-/* ══ ربط الأزرار ══ */
-window.addEventListener('DOMContentLoaded', function(){
-  var pf=document.getElementById('PF');
+/* ═══ تهيئة عند تحميل الصفحة ═══ */
+document.addEventListener('DOMContentLoaded', function() {
 
-  pf.addEventListener('change', function(){
-    var file=this.files&&this.files[0];
-    this.value='';
-    if(!file||!file.type.startsWith('image/')) return;
-    var r=new FileReader();
-    r.onload=function(e){ open(e.target.result); };
-    r.readAsDataURL(file);
+  /* 1. قراءة الملف المختار */
+  var input = document.getElementById('pic-file-input');
+  input.addEventListener('change', function() {
+    var file = this.files && this.files[0];
+    this.value = ''; /* مسح للسماح بإعادة الاختيار */
+    if (!file || !file.type.startsWith('image/')) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      openCrop(ev.target.result);
+    };
+    reader.readAsDataURL(file);
   });
 
-  document.getElementById('PR').addEventListener('click', function(){
-    pf.click();
+  /* 2. إغلاق المقص */
+  document.getElementById('crop-cancel').addEventListener('click', closeCrop);
+  document.getElementById('crop-save').addEventListener('click', saveCrop);
+  document.getElementById('CROP').addEventListener('click', function(e) {
+    if (e.target === this) closeCrop();
   });
 
-  document.getElementById('PC').addEventListener('click', function(e){
-    e.stopPropagation();
-    if(this.dataset.mode==='edit'){
-      var saved=localStorage.getItem('userPhoto');
-      if(saved){ open(saved); return; }
-    }
-    pf.click();
-  });
-
-  document.getElementById('CP-cancel').addEventListener('click', close);
-  document.getElementById('CP-save').addEventListener('click', save);
-  document.getElementById('CP').addEventListener('click', function(e){
-    if(e.target===this) close();
-  });
-
-  /* بيانات الصفحة */
+  /* 3. تحميل البيانات */
   renderRing();
   document.getElementById('profileName').textContent  = localStorage.getItem('userName')  || 'مستخدم عقاري';
   document.getElementById('profileEmail').textContent = localStorage.getItem('userEmail') || '';
 
-  setTimeout(function(){
-    var ads=window.myProperties||[], favs=window.favorites||[];
+  /* 4. إحصاءات */
+  setTimeout(function() {
+    var ads  = window.myProperties || [];
+    var favs = window.favorites    || [];
     document.getElementById('myAdsCount').textContent      = ads.length;
     document.getElementById('myAdsCountBadge').textContent = ads.length;
     document.getElementById('favsCount').textContent       = favs.length;
-    document.getElementById('viewsCount').textContent      = ads.reduce(function(a,p){return a+(p.views||0);},0).toLocaleString();
-    var sec=document.getElementById('myAdsSection');
-    if(ads.length&&sec){
-      sec.innerHTML=ads.slice(0,5).map(function(p){
-        var img=(window.getPropImages?window.getPropImages(p):[])[0]||'';
-        return '<div onclick="gotoDetails('+p.id+')" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">'
-          +'<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;background:var(--gray-light);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--gray)">'
-          +(img?'<img src="'+img+'" style="width:100%;height:100%;object-fit:cover">':'<i class="fas fa-building"></i>')
-          +'</div><div style="flex:1;overflow:hidden">'
-          +'<div style="font-weight:700;font-size:0.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.title+'</div>'
-          +'<div style="font-size:0.77rem;color:var(--accent);font-weight:700;margin-top:2px">$'+(p.price||0).toLocaleString('en-US')+' USD</div>'
-          +'</div></div>';
+    document.getElementById('viewsCount').textContent      =
+      ads.reduce(function(a, p) { return a + (p.views || 0); }, 0).toLocaleString();
+
+    var sec = document.getElementById('myAdsSection');
+    if (ads.length && sec) {
+      sec.innerHTML = ads.slice(0, 5).map(function(p) {
+        var imgs = window.getPropImages ? window.getPropImages(p) : [];
+        var img  = imgs[0] || '';
+        return '<div onclick="gotoDetails(' + p.id + ')" '
+          + 'style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">'
+          + '<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;'
+          + 'background:var(--gray-light);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--gray)">'
+          + (img ? '<img src="' + img + '" style="width:100%;height:100%;object-fit:cover">'
+                 : '<i class="fas fa-building"></i>')
+          + '</div><div style="flex:1;overflow:hidden">'
+          + '<div style="font-weight:700;font-size:0.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
+          + p.title + '</div>'
+          + '<div style="font-size:0.77rem;color:var(--accent);font-weight:700;margin-top:2px">$'
+          + (p.price || 0).toLocaleString('en-US') + ' USD</div>'
+          + '</div></div>';
       }).join('');
     }
-  },350);
+  }, 350);
 });
 
 })();
 </script>
 <script>
-if('serviceWorker' in navigator){
-  window.addEventListener('load',function(){
-    navigator.serviceWorker.register('sw.js').catch(function(){});
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js').catch(function() {});
   });
 }
 </script>
