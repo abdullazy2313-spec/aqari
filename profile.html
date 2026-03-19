@@ -28,13 +28,18 @@
     <div class="container">
         <!-- Profile Header -->
         <div class="profile-header">
-            <div class="pic-wrap">
-            <div id="picDisp"></div>
-            <div class="pic-cam" onclick="document.getElementById('picFile').click()">
-              <i class="fas fa-camera"></i>
+            <div class="profile-pic">
+                <i class="fas fa-user"></i>
+                <button class="profile-edit-btn" href="notifications.html"">
+                    <i class="fas fa-camera"></i>
+                </button>
             </div>
-          </div>
-          <input type="file" id="picFile" accept="image/*" onchange="changePic(this)">
+            <h3 id="profileName" style="margin-bottom:4px;font-size:1.2rem;font-weight:800">مستخدم تجريبي</h3>
+            <p style="color:var(--gray);font-size:0.88rem;" id="profileEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1f6a6c7a6d5f7a677e726f737a317c7072">[email&#160;protected]</a></p>
+            <div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(39,174,96,0.1);padding:4px 14px;border-radius:20px;font-size:0.78rem;color:var(--success);border:1px solid rgba(39,174,96,0.2)">
+                <i class="fas fa-shield-alt"></i> حساب موثق
+            </div>
+        </div>
 
         <!-- Stats -->
         <div class="stat-box" style="margin-bottom:20px">
