@@ -1,4 +1,136 @@
 'use strict';
+
+/* ═══════════════════════════════════════════════════
+   نظام الحوارات الاحترافي — يستبدل confirm() العادي
+═══════════════════════════════════════════════════ */
+
+/* CSS الحوارات — يُضاف مرة واحدة */
+(function injectDialogCSS() {
+  if (document.getElementById('_dlg_css')) return;
+  const style = document.createElement('style');
+  style.id = '_dlg_css';
+  style.textContent = `
+    .dlg-overlay {
+      position: fixed; inset: 0; z-index: 99999;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: flex-end; justify-content: center;
+      animation: dlgFadeIn 0.2s ease;
+    }
+    @keyframes dlgFadeIn { from { opacity: 0 } to { opacity: 1 } }
+    .dlg-box {
+      background: var(--card, #fff);
+      border-radius: 24px 24px 0 0;
+      padding: 20px 20px calc(24px + env(safe-area-inset-bottom));
+      width: 100%; max-width: 480px;
+      animation: dlgSlideUp 0.32s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes dlgSlideUp {
+      from { transform: translateY(110%) }
+      to   { transform: translateY(0) }
+    }
+    .dlg-handle {
+      width: 40px; height: 4px;
+      background: var(--border, #e2e8f0);
+      border-radius: 99px;
+      margin: 0 auto 18px;
+    }
+    .dlg-icon-wrap {
+      width: 64px; height: 64px; border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; margin: 0 auto 14px;
+    }
+    .dlg-title {
+      font-size: 1.05rem; font-weight: 900;
+      text-align: center; color: var(--text, #1e293b);
+      margin-bottom: 7px;
+    }
+    .dlg-msg {
+      font-size: 0.83rem; color: var(--gray, #64748b);
+      text-align: center; line-height: 1.65;
+      margin-bottom: 22px;
+    }
+    .dlg-btns { display: flex; gap: 10px; }
+    .dlg-btn-cancel {
+      flex: 1; padding: 13px; border-radius: 13px;
+      background: var(--gray-light, #f1f5f9);
+      border: 1.5px solid var(--border, #e2e8f0);
+      color: var(--text-secondary, #64748b);
+      font-family: var(--font, 'Cairo', sans-serif);
+      font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .dlg-btn-cancel:hover { background: var(--border, #e2e8f0); }
+    .dlg-btn-ok {
+      flex: 1; padding: 13px; border-radius: 13px;
+      border: none; color: white;
+      font-family: var(--font, 'Cairo', sans-serif);
+      font-size: 0.9rem; font-weight: 800; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .dlg-btn-ok:hover { filter: brightness(1.08); }
+
+    /* Toast محسّن */
+    #toast {
+      position: fixed !important;
+      bottom: calc(90px + env(safe-area-inset-bottom)) !important;
+      left: 50% !important; right: auto !important;
+      transform: translateX(-50%) translateY(20px) !important;
+      background: rgba(15,23,42,0.92) !important;
+      color: white !important;
+      padding: 11px 22px !important;
+      border-radius: 99px !important;
+      font-size: 0.85rem !important;
+      font-weight: 700 !important;
+      white-space: nowrap !important;
+      pointer-events: none !important;
+      opacity: 0 !important;
+      transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1) !important;
+      z-index: 99998 !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
+      backdrop-filter: blur(8px) !important;
+      max-width: 90vw !important;
+    }
+    #toast.show {
+      opacity: 1 !important;
+      transform: translateX(-50%) translateY(0) !important;
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
+/* دالة الحوار الرئيسية */
+function showDialog({ icon, iconBg, title, msg, okText, cancelText, okBg, onOk, onCancel }) {
+  /* أضف CSS إذا لم يكن موجوداً */
+  injectDialogCSS();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'dlg-overlay';
+  overlay.innerHTML = `
+    <div class="dlg-box">
+      <div class="dlg-handle"></div>
+      <div class="dlg-icon-wrap" style="background:${iconBg || 'rgba(230,126,34,0.12)'}">
+        ${icon || '<i class="fas fa-question-circle" style="color:var(--accent)"></i>'}
+      </div>
+      <div class="dlg-title">${title || 'تأكيد'}</div>
+      <div class="dlg-msg">${msg || ''}</div>
+      <div class="dlg-btns">
+        <button class="dlg-btn-cancel" id="_dlgCancel">${cancelText || 'إلغاء'}</button>
+        <button class="dlg-btn-ok" style="background:${okBg || 'linear-gradient(135deg,var(--accent),var(--accent-hover))'}" id="_dlgOk">
+          ${okText || 'تأكيد'}
+        </button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  const close = () => { overlay.style.animation = 'dlgFadeIn 0.15s ease reverse'; setTimeout(() => overlay.remove(), 140); };
+  overlay.querySelector('#_dlgCancel').onclick = () => { close(); onCancel && onCancel(); };
+  overlay.querySelector('#_dlgOk').onclick     = () => { close(); onOk && onOk(); };
+  overlay.addEventListener('click', e => { if (e.target === overlay) { close(); onCancel && onCancel(); } });
+}
+window.showDialog = showDialog;
+
 /* ═══════════════════════════════════════════════════════
    عقاري — APP.JS — v6.0  (Image Fix + Full Cleanup)
    - Uploaded images compressed & stored separately
@@ -672,8 +804,16 @@ function renderFavorites() {
 }
 function clearAllFavorites() {
   if (!favorites.length) { showToast('لا توجد مفضلة'); return; }
-  if (!confirm('مسح جميع المفضلة؟')) return;
-  favorites = []; window.favorites = favorites; saveData(); renderFavorites(); showToast('تم المسح');
+  showDialog({
+    icon: '<i class="far fa-heart" style="color:#e74c3c"></i>',
+    iconBg: 'rgba(231,76,60,0.1)',
+    title: 'مسح المفضلة',
+    msg: 'هل تريد مسح جميع العقارات من المفضلة؟',
+    okText: '<i class="fas fa-trash-alt" style="margin-left:6px"></i> مسح الكل',
+    cancelText: 'إلغاء',
+    okBg: 'linear-gradient(135deg,#e74c3c,#c0392b)',
+    onOk: () => { favorites = []; window.favorites = favorites; saveData(); renderFavorites(); showToast('تم مسح المفضلة'); }
+  });
 }
 
 /* ─────────────────────────────
@@ -984,11 +1124,16 @@ function clearAllImgs() {
     showToast('لا توجد صور لحذفها');
     return;
   }
-  if (confirm('حذف جميع الصور؟')) {
-    window.UPLOAD_IMGS = [];
-    renderImgGrid();
-    showToast('تم مسح جميع الصور');
-  }
+  showDialog({
+    icon: '<i class="fas fa-images" style="color:#8b5cf6"></i>',
+    iconBg: 'rgba(139,92,246,0.1)',
+    title: 'حذف الصور',
+    msg: 'هل تريد حذف جميع الصور المرفوعة؟',
+    okText: '<i class="fas fa-trash-alt" style="margin-left:6px"></i> احذف',
+    cancelText: 'إلغاء',
+    okBg: 'linear-gradient(135deg,#8b5cf6,#7c3aed)',
+    onOk: () => { window.UPLOAD_IMGS = []; renderImgGrid(); showToast('تم حذف الصور'); }
+  });
 }
 
 // تصدير الدوال عالمياً
@@ -1354,8 +1499,16 @@ function handleRegister() {
   }, 800);
 }
 function handleLogout() {
-  if (!confirm('تسجيل الخروج؟')) return;
-  localStorage.removeItem('isLoggedIn'); location.href = 'login.html';
+  showDialog({
+    icon: '<i class="fas fa-sign-out-alt" style="color:#64748b"></i>',
+    iconBg: 'rgba(100,116,139,0.1)',
+    title: 'تسجيل الخروج',
+    msg: 'هل تريد تسجيل الخروج من حسابك؟',
+    okText: '<i class="fas fa-sign-out-alt" style="margin-left:6px"></i> خروج',
+    cancelText: 'البقاء',
+    okBg: 'linear-gradient(135deg,#64748b,#475569)',
+    onOk: () => { localStorage.removeItem('isLoggedIn'); location.href = 'login.html'; }
+  });
 }
 function switchTab(tab) {
   document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
@@ -1437,7 +1590,19 @@ function initSplash() {
   if (s) { setTimeout(() => { s.classList.add('hidden'); setTimeout(() => s.remove(), 500); }, 1800); }
 }
 function clearAllData() {
-  if (!confirm('مسح جميع البيانات؟')) return;
+  showDialog({
+    icon: '<i class="fas fa-database" style="color:#e74c3c"></i>',
+    iconBg: 'rgba(231,76,60,0.1)',
+    title: 'مسح البيانات',
+    msg: 'سيتم مسح جميع البيانات المحفوظة على الجهاز.<br>لا يمكن التراجع عن هذه العملية.',
+    okText: '<i class="fas fa-trash-alt" style="margin-left:6px"></i> مسح الكل',
+    cancelText: 'إلغاء',
+    okBg: 'linear-gradient(135deg,#e74c3c,#c0392b)',
+    onOk: () => { _doClearData(); }
+  });
+  return;
+}
+function _doClearData() {
   const k = { isLoggedIn: localStorage.getItem('isLoggedIn'), userEmail: localStorage.getItem('userEmail'), userName: localStorage.getItem('userName'), aqari_theme: localStorage.getItem('aqari_theme') };
   /* Clear image keys first */
   _clearAllPropImages();
