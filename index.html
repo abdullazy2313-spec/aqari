@@ -8,9 +8,9 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Ø¹ÙØ§Ø±Ù">
+  <meta name="apple-mobile-web-app-title" content="عقاري">
   <link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Ø§ÙØ±Ø¦ÙØ³ÙØ© - Ø¹ÙØ§Ø±Ù</title>
+<title>الرئيسية - عقاري</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="css/style.css">
 <style>
@@ -32,7 +32,7 @@
 .stat-pill{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;box-shadow:var(--shadow-sm);}
 .stat-pill-num{font-size:1.2rem;font-weight:900;color:var(--accent);}
 .stat-pill-lbl{font-size:0.66rem;color:var(--gray);font-weight:600;margin-top:3px;}
-/* Type tabs â ÙÙØ· ÙÙØ¨ÙØ¹ ÙØ§ÙØ¥ÙØ¬Ø§Ø± */
+/* Type tabs — فقط للبيع والإيجار */
 .type-tabs{display:flex;gap:8px;margin-bottom:14px;}
 .type-tab{flex:1;padding:11px 8px;border:2px solid var(--border);border-radius:12px;font-family:var(--font);font-size:0.86rem;font-weight:800;cursor:pointer;transition:all 0.25s;color:var(--text-secondary);background:var(--card);display:flex;align-items:center;justify-content:center;gap:6px;}
 .type-tab.active-sale{background:#eafaf1;border-color:#27ae60;color:#27ae60;}
@@ -118,7 +118,7 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
 </head>
 <body>
 <header>
-  <div class="logo"><i class="fas fa-building" style="color:var(--accent)"></i>Ø¹ÙÙ<span style="color:var(--accent)">ÙØ§Ø±Ù</span></div>
+  <div class="logo"><i class="fas fa-building" style="color:var(--accent)"></i>عقـ<span style="color:var(--accent)">ـاري</span></div>
   <div class="header-actions">
     <a href="notifications.html" class="header-icon-btn" style="position:relative">
       <i class="fas fa-bell"></i>
@@ -130,54 +130,54 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
 <div class="container">
   <!-- Hero -->
   <div class="hero-section">
-    <div class="hero-greeting">ÙÙØµØ© Ø§ÙØ¹ÙØ§Ø±Ø§Øª Ø§ÙØ£ÙÙÙ ÙÙ Ø³ÙØ±ÙØ§ â <span id="totalCount" style="color:var(--accent);font-weight:900">â</span> Ø¥Ø¹ÙØ§Ù ÙØ´Ø·</div>
-    <div class="hero-title">Ø§Ø¨Ø­Ø« Ø¹Ù <span>Ø¹ÙØ§Ø±Ù Ø§ÙÙØ«Ø§ÙÙ</span><br>ÙÙ Ø³ÙØ±ÙØ§</div>
+    <div class="hero-greeting">منصة العقارات الأولى في سوريا — <span id="totalCount" style="color:var(--accent);font-weight:900">—</span> إعلان نشط</div>
+    <div class="hero-title">ابحث عن <span>عقارك المثالي</span><br>في سوريا</div>
     <div class="hero-search-wrap">
       <i class="fas fa-search"></i>
-      <input type="text" id="searchInput" placeholder="Ø§Ø¨Ø­Ø« Ø¨Ø§ÙÙØ¯ÙÙØ©Ø Ø§ÙØ­ÙØ Ø§ÙÙÙØ¹..." autocomplete="off">
+      <input type="text" id="searchInput" placeholder="ابحث بالمدينة، الحي، النوع..." autocomplete="off">
       <button class="hero-search-btn"><i class="fas fa-arrow-left"></i></button>
       <div class="search-suggestions" id="searchSuggestions"></div>
     </div>
   </div>
 
-  <!-- 3 Ø£Ø²Ø±Ø§Ø± Ø§ÙØ¥Ø¬Ø±Ø§Ø¡Ø§Øª Ø§ÙØ±Ø¦ÙØ³ÙØ© -->
+  <!-- 3 أزرار الإجراءات الرئيسية -->
   <div class="action-grid">
     <a href="map.html" class="action-btn">
       <div class="action-icon" style="background:rgba(52,152,219,0.12);color:#3498db"><i class="fas fa-map-marked-alt"></i></div>
-      <div class="action-lbl">Ø§ÙØ®Ø±ÙØ·Ø©</div>
+      <div class="action-lbl">الخريطة</div>
     </a>
     <a href="filter.html" class="action-btn">
       <div class="action-icon" style="background:rgba(39,174,96,0.12);color:#27ae60;position:relative">
         <i class="fas fa-search-location"></i>
         <span style="position:absolute;top:-4px;left:-4px;width:16px;height:16px;background:#27ae60;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--card)"><i class="fas fa-plus" style="font-size:0.45rem;color:white"></i></span>
       </div>
-      <div class="action-lbl">Ø¨Ø­Ø« ÙØªÙØ¯Ù</div>
+      <div class="action-lbl">بحث متقدم</div>
     </a>
     <a href="#" class="action-btn" onclick="openPriceCalc();return false">
       <div class="action-icon" style="background:rgba(155,89,182,0.12);color:#8e44ad"><i class="fas fa-calculator"></i></div>
-      <div class="action-lbl">Ø­Ø§Ø³Ø¨Ø© Ø§ÙÙØ³Ø·</div>
+      <div class="action-lbl">حاسبة القسط</div>
     </a>
   </div>
 
-  <!-- ÙÙØ· Ø²Ø±ÙÙ: ÙÙØ¨ÙØ¹ / ÙÙØ¥ÙØ¬Ø§Ø± + Ø²Ø± Ø§ÙÙÙØªØ±Ø© -->
+  <!-- فقط زرين: للبيع / للإيجار + زر الفلترة -->
   <div class="type-tabs">
     <button class="type-tab active" id="tabAll" onclick="setActiveType('all',this)">
-      <i class="fas fa-th-large"></i>Ø§ÙÙÙ
+      <i class="fas fa-th-large"></i>الكل
     </button>
     <button class="type-tab" id="tabSale" onclick="setActiveType('sale',this)">
-      <i class="fas fa-tag"></i>ÙÙØ¨ÙØ¹
+      <i class="fas fa-tag"></i>للبيع
     </button>
     <button class="type-tab" id="tabRent" onclick="setActiveType('rent',this)">
-      <i class="fas fa-key"></i>ÙÙØ¥ÙØ¬Ø§Ø±
+      <i class="fas fa-key"></i>للإيجار
     </button>
   </div>
 
-  <!-- Ø´Ø±ÙØ· Ø§ÙÙÙØªØ±Ø© Ø§ÙÙØªÙØ¯ÙØ© -->
+  <!-- شريط الفلترة المتقدمة -->
   <div class="filter-strip">
-    <span class="results-count" id="resultsCount" style="margin:0">Ø¬Ø§Ø±Ù Ø§ÙØªØ­ÙÙÙ...</span>
+    <span class="results-count" id="resultsCount" style="margin:0">جاري التحميل...</span>
     <div style="display:flex;gap:8px;align-items:center">
       <a href="filter.html" class="filter-btn-adv">
-        <i class="fas fa-sliders-h"></i>ÙÙØªØ±Ø© ÙØªÙØ¯ÙØ©
+        <i class="fas fa-sliders-h"></i>فلترة متقدمة
         <span class="active-filters-count" id="activeFiltersCount"></span>
       </a>
       <div class="view-toggle">
@@ -189,20 +189,20 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
 
   <!-- Featured -->
   <div class="sec-head featured-section">
-    <div class="sec-title-txt"><div class="sec-bar"></div>Ø§ÙØ¹ÙØ§Ø±Ø§Øª Ø§ÙÙÙÙØ²Ø©</div>
-    <button class="sec-more-btn" onclick="setActiveType('all',document.getElementById('tabAll'))"><i class="fas fa-arrow-left"></i> Ø§ÙÙÙ</button>
+    <div class="sec-title-txt"><div class="sec-bar"></div>العقارات المميزة</div>
+    <button class="sec-more-btn" onclick="setActiveType('all',document.getElementById('tabAll'))"><i class="fas fa-arrow-left"></i> الكل</button>
   </div>
   <div class="featured-scroll" id="featuredList"></div>
 
   <!-- Sort -->
   <div class="sort-bar">
-    <span style="font-size:0.8rem;color:var(--gray);font-weight:600">ØªØ±ØªÙØ¨:</span>
+    <span style="font-size:0.8rem;color:var(--gray);font-weight:600">ترتيب:</span>
     <select class="sort-select" onchange="changeSort(this.value)">
-      <option value="newest">Ø§ÙØ£Ø­Ø¯Ø«</option>
-      <option value="featured">Ø§ÙÙÙÙØ²Ø©</option>
-      <option value="price-asc">Ø§ÙØ£Ø±Ø®Øµ</option>
-      <option value="price-desc">Ø§ÙØ£ØºÙÙ</option>
-      <option value="area">Ø§ÙÙØ³Ø§Ø­Ø©</option>
+      <option value="newest">الأحدث</option>
+      <option value="featured">المميزة</option>
+      <option value="price-asc">الأرخص</option>
+      <option value="price-desc">الأغلى</option>
+      <option value="area">المساحة</option>
     </select>
   </div>
 
@@ -212,11 +212,11 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
 <!-- Bottom nav with centered FAB -->
 <div class="bottom-nav-wrap">
   <nav class="bottom-nav-new">
-    <a href="index.html" class="nav-item-new active"><i class="fas fa-home"></i><span>Ø§ÙØ±Ø¦ÙØ³ÙØ©</span></a>
-    <a href="favorites.html" class="nav-item-new"><i class="fas fa-heart"></i><span>Ø§ÙÙÙØ¶ÙØ©</span></a>
+    <a href="index.html" class="nav-item-new active"><i class="fas fa-home"></i><span>الرئيسية</span></a>
+    <a href="favorites.html" class="nav-item-new"><i class="fas fa-heart"></i><span>المفضلة</span></a>
     <div class="nav-fab-space"></div>
-    <a href="messages.html" class="nav-item-new"><i class="fas fa-comment-dots"></i><span>Ø§ÙØ±Ø³Ø§Ø¦Ù</span></a>
-    <a href="profile.html" class="nav-item-new"><i class="fas fa-user"></i><span>Ø­Ø³Ø§Ø¨Ù</span></a>
+    <a href="messages.html" class="nav-item-new"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
+    <a href="profile.html" class="nav-item-new"><i class="fas fa-user"></i><span>حسابي</span></a>
   </nav>
   <a href="add-property.html" class="nav-fab-center">
     <i class="fas fa-plus"></i>
@@ -230,19 +230,19 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div style="font-size:1.05rem;font-weight:900;color:var(--text);display:flex;align-items:center;gap:8px">
         <div style="width:36px;height:36px;background:rgba(155,89,182,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center"><i class="fas fa-calculator" style="color:#8e44ad"></i></div>
-        Ø­Ø§Ø³Ø¨Ø© Ø§ÙÙØ³Ø· Ø§ÙØ´ÙØ±Ù
+        حاسبة القسط الشهري
       </div>
       <button onclick="closeCalc()" style="background:var(--gray-light);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:0.85rem;color:var(--gray);display:flex;align-items:center;justify-content:center"><i class="fas fa-times"></i></button>
     </div>
     <!-- Inputs -->
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
       <div>
-        <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px"><i class="fas fa-dollar-sign" style="color:var(--accent);margin-left:4px"></i>Ø³Ø¹Ø± Ø§ÙØ¹ÙØ§Ø± (USD)</div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px"><i class="fas fa-dollar-sign" style="color:var(--accent);margin-left:4px"></i>سعر العقار (USD)</div>
         <div style="position:relative"><span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--accent);font-weight:800;font-size:0.85rem;pointer-events:none">$</span>
-        <input type="number" id="calcPrice" placeholder="ÙØ«Ø§Ù: 100000" style="width:100%;padding:12px 32px 12px 12px;border:2px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);font-family:var(--font);font-size:0.9rem;outline:none;box-sizing:border-box" oninput="calcLoan()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></div>
+        <input type="number" id="calcPrice" placeholder="مثال: 100000" style="width:100%;padding:12px 32px 12px 12px;border:2px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);font-family:var(--font);font-size:0.9rem;outline:none;box-sizing:border-box" oninput="calcLoan()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></div>
       </div>
       <div>
-        <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px"><i class="fas fa-percentage" style="color:var(--accent);margin-left:4px"></i>Ø§ÙØ¯ÙØ¹Ø© Ø§ÙØ£ÙÙÙ %</div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px"><i class="fas fa-percentage" style="color:var(--accent);margin-left:4px"></i>الدفعة الأولى %</div>
         <div style="display:flex;gap:8px;margin-bottom:8px" id="dpButtons">
           <button class="dp-btn on" onclick="setDP(10,this)">10%</button>
           <button class="dp-btn" onclick="setDP(20,this)">20%</button>
@@ -253,7 +253,7 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
         <div style="text-align:center;font-size:0.78rem;font-weight:700;color:var(--accent);margin-top:4px"><span id="dpVal">10</span>%</div>
       </div>
       <div>
-        <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px"><i class="fas fa-calendar-alt" style="color:var(--accent);margin-left:4px"></i>ÙØ¯Ø© Ø§ÙÙØ±Ø¶ (Ø³ÙØ©)</div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px"><i class="fas fa-calendar-alt" style="color:var(--accent);margin-left:4px"></i>مدة القرض (سنة)</div>
         <div style="display:flex;gap:8px;margin-bottom:8px" id="yrButtons">
           <button class="dp-btn" onclick="setYr(10,this)">10</button>
           <button class="dp-btn on" onclick="setYr(15,this)">15</button>
@@ -262,16 +262,16 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
         </div>
       </div>
       <div>
-        <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px"><i class="fas fa-percent" style="color:var(--accent);margin-left:4px"></i>ÙØ¹Ø¯Ù Ø§ÙÙØ§Ø¦Ø¯Ø© Ø§ÙØ³ÙÙÙ %</div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);margin-bottom:6px"><i class="fas fa-percent" style="color:var(--accent);margin-left:4px"></i>معدل الفائدة السنوي %</div>
         <input type="range" id="calcRate" min="1" max="15" step="0.5" value="6" style="width:100%;accent-color:var(--accent)" oninput="document.getElementById('rateVal').textContent=this.value;calcLoan()">
         <div style="text-align:center;font-size:0.78rem;font-weight:700;color:var(--accent);margin-top:4px"><span id="rateVal">6</span>%</div>
       </div>
     </div>
     <!-- Result -->
     <div id="calcResult" style="background:linear-gradient(135deg,rgba(155,89,182,0.08),rgba(155,89,182,0.04));border:1.5px solid rgba(155,89,182,0.2);border-radius:16px;padding:16px;text-align:center">
-      <div style="font-size:0.75rem;color:var(--gray);margin-bottom:4px">Ø§ÙÙØ³Ø· Ø§ÙØ´ÙØ±Ù Ø§ÙØªÙØ¯ÙØ±Ù</div>
-      <div style="font-size:2rem;font-weight:900;color:#8e44ad" id="monthlyPmt">â</div>
-      <div style="font-size:0.72rem;color:var(--text-secondary);margin-top:2px" id="loanSummary">Ø£Ø¯Ø®Ù Ø¨ÙØ§ÙØ§Øª Ø§ÙØ¹ÙØ§Ø± Ø£Ø¹ÙØ§Ù</div>
+      <div style="font-size:0.75rem;color:var(--gray);margin-bottom:4px">القسط الشهري التقديري</div>
+      <div style="font-size:2rem;font-weight:900;color:#8e44ad" id="monthlyPmt">—</div>
+      <div style="font-size:0.72rem;color:var(--text-secondary);margin-top:2px" id="loanSummary">أدخل بيانات العقار أعلاه</div>
     </div>
   </div>
 </div>
@@ -319,7 +319,6 @@ body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
 
 <div id="toast"></div>
 <script src="js/app.js"></script>
-<script src="js/firebase.js"></script>
 <script>
 var _calcDP=10, _calcYr=15;
 function openPriceCalc(){document.getElementById('calcModal').style.display='block';calcLoan();}
@@ -331,15 +330,15 @@ function calcLoan(){
   var price=parseFloat(document.getElementById('calcPrice').value)||0;
   var dp=_calcDP/100;var years=_calcYr;
   var rate=parseFloat(document.getElementById('calcRate').value)||6;
-  if(!price){document.getElementById('monthlyPmt').textContent='â';document.getElementById('loanSummary').textContent='Ø£Ø¯Ø®Ù Ø³Ø¹Ø± Ø§ÙØ¹ÙØ§Ø± Ø£Ø¹ÙØ§Ù';return;}
+  if(!price){document.getElementById('monthlyPmt').textContent='—';document.getElementById('loanSummary').textContent='أدخل سعر العقار أعلاه';return;}
   var loan=price*(1-dp);
   var r=(rate/100)/12;var n=years*12;
   var monthly=r===0?loan/n:loan*(r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1);
   var total=monthly*n;
-  document.getElementById('monthlyPmt').textContent='$'+Math.round(monthly).toLocaleString('en-US')+'/Ø´ÙØ±';
+  document.getElementById('monthlyPmt').textContent='$'+Math.round(monthly).toLocaleString('en-US')+'/شهر';
   document.getElementById('loanSummary').textContent=
-    'ÙØ¨ÙØº Ø§ÙØªÙÙÙÙ: $'+Math.round(loan).toLocaleString('en-US')+
-    ' | Ø¥Ø¬ÙØ§ÙÙ Ø§ÙÙÙØ§Ø¦Ø¯: $'+Math.round(total-loan).toLocaleString('en-US');
+    'مبلغ التمويل: $'+Math.round(loan).toLocaleString('en-US')+
+    ' | إجمالي الفوائد: $'+Math.round(total-loan).toLocaleString('en-US');
 }
 </script>
 
@@ -347,8 +346,8 @@ function calcLoan(){
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
     navigator.serviceWorker.register('sw.js')
-      .then(function(reg){console.log('[Ø¹ÙØ§Ø±Ù] SW ÙÙÙØ¹ÙÙ');})
-      .catch(function(e){console.warn('[Ø¹ÙØ§Ø±Ù] SW Ø®Ø·Ø£:',e);});
+      .then(function(reg){console.log('[عقاري] SW مُفعّل');})
+      .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
   });
 }
 </script>
