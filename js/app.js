@@ -765,7 +765,7 @@ function renderDetails() {
     </div>
     <div class="contact-section" style="margin-top:14px">
       <a href="tel:+${p.phone || ''}" class="btn-call"><i class="fas fa-phone"></i> اتصال</a>
-      
+      <a href="https://wa.me/${p.phone || ''}?text=${encodeURIComponent('مرحباً، رأيت إعلانك: ' + p.title)}" class="btn-whatsapp" target="_blank"><i class="fab fa-whatsapp"></i> واتساب</a>
       <button class="btn-chat" onclick="startChatWith('${(p.agentName || 'المعلن').replace(/'/g, "\\'")}','${p.id}','${p.title.replace(/'/g, "\\'")}')"><i class="fas fa-comment-dots"></i></button>
     </div>
     ${nearby.length ? `
@@ -1086,7 +1086,6 @@ function publishProperty() {
         views:       0,
         postedAt:    new Date().toISOString().split('T')[0],
         agentName:   localStorage.getItem('userName') || 'أنت',
-        agentPhoto:  localStorage.getItem('userPhoto') || '',
         agentVerified: false,
         lat: lat0 || (cc.lat + (Math.random() - 0.5) * 0.02),
         lng: lng0 || (cc.lng + (Math.random() - 0.5) * 0.02)
@@ -1527,140 +1526,3 @@ window.initCardSwipes   = initCardSwipes;
 
 window.conversations    = conversations_data;
 window.notifications    = notifications_data;
-
-
-/* ═══════════════════════════════════════════════
-   FIREBASE INTEGRATION — إضافة منفصلة آمنة
-═══════════════════════════════════════════════ */
-(function() {
-  'use strict';
-  
-  var FB_CFG = {
-    apiKey:            "AIzaSyCvVYtCsC7UR52bGLYvHebQqOumtat7poU",
-    authDomain:        "aqari-app-7c43f.firebaseapp.com",
-    projectId:         "aqari-app-7c43f",
-    storageBucket:     "aqari-app-7c43f.firebasestorage.app",
-    messagingSenderId: "61607617094",
-    appId:             "1:61607617094:web:6939a1e6ef47c7885b2047"
-  };
-
-  var _db = null;
-  var _ready = false;
-  var _unsub = null;
-
-  function _init() {
-    if (typeof firebase === 'undefined') return;
-    try {
-      if (!firebase.apps.length) firebase.initializeApp(FB_CFG);
-      _db = firebase.firestore();
-      _db.enablePersistence({synchronizeTabs: true}).catch(function() {});
-      _ready = true;
-      console.log('[Firebase] ✅ متصل');
-    } catch(e) { console.warn('[Firebase]', e.message); }
-  }
-
-  function _mapDoc(doc) {
-    var d = doc.data();
-    return {
-      id: d.id || doc.id,
-      firestoreId: doc.id,
-      isFirebase: true,
-      type: d.type || 'sale',
-      subtype: d.subtype || 'residential',
-      category: d.category || 'apartment',
-      title: d.title || 'عقار',
-      price: d.price || 0,
-      area: d.area || 0,
-      rooms: d.rooms || 0,
-      bathrooms: d.bathrooms || 0,
-      age: d.age || 0,
-      location: d.location || d.city || 'دمشق',
-      city: d.city || 'دمشق',
-      phone: d.phone || '',
-      featured: !!(d.featured),
-      furnished: !!(d.furnished),
-      description: d.description || '',
-      features: d.features || [],
-      views: d.views || 0,
-      postedAt: d.postedAt || '',
-      agentName: d.agentName || 'مالك العقار',
-      agentPhoto: d.agentPhoto || '',
-      agentVerified: !!(d.agentVerified),
-      lat: d.lat || null,
-      lng: d.lng || null,
-      active: d.active !== false
-    };
-  }
-
-  window.fbReady = false;
-
-  window.fbSaveProperty = function(prop) {
-    if (!_ready || !_db) return Promise.resolve(false);
-    var clean = Object.assign({}, prop);
-    delete clean.images; delete clean.image;
-    clean.active = true;
-    clean.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-    return _db.collection('properties').doc(String(prop.id)).set(clean)
-      .then(function() { return true; })
-      .catch(function() { return false; });
-  };
-
-  window.fbDeleteProperty = function(propId) {
-    if (!_ready || !_db) return Promise.resolve(false);
-    return _db.collection('properties').doc(String(propId)).delete()
-      .then(function() { return true; })
-      .catch(function() { return false; });
-  };
-
-  window.fbLoadAndWatch = function(onUpdate) {
-    if (!_ready || !_db) return;
-    if (_unsub) _unsub();
-    _unsub = _db.collection('properties')
-      .where('active', '==', true)
-      .orderBy('createdAt', 'desc')
-      .onSnapshot(function(snap) {
-        var props = [];
-        snap.forEach(function(doc) { props.push(_mapDoc(doc)); });
-        onUpdate(props);
-      }, function(err) { console.warn('[Firebase watch]', err.code); });
-  };
-
-  /* تفعيل Firebase عند تحميل الصفحة */
-  document.addEventListener('DOMContentLoaded', function() {
-    _init();
-    if (!_ready) return;
-    window.fbReady = true;
-    
-    var page = (location.pathname.split('/').pop() || 'index').replace('.html', '');
-    
-    if (page === 'index') {
-      /* مزامنة فورية في الصفحة الرئيسية */
-      window.fbLoadAndWatch(function(fbProps) {
-        if (!fbProps || !fbProps.length) return;
-        window.myProperties = fbProps;
-        try { localStorage.setItem('aqari_props', JSON.stringify(fbProps.map(function(p) {
-          var c = Object.assign({}, p); delete c.images; delete c.image; return c;
-        }))); } catch(e) {}
-        window.allProperties = (window.SAMPLE_PROPERTIES || []).concat(fbProps);
-        window.filteredProperties = window.allProperties.slice();
-        if (typeof renderFeatured === 'function') renderFeatured();
-        if (typeof renderProperties === 'function') renderProperties();
-      });
-    }
-  });
-
-  /* رفع على Firebase عند نشر عقار */
-  var _origPublish = null;
-  document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-      if (typeof publishProperty === 'function' && !_origPublish) {
-        _origPublish = publishProperty;
-        window.publishProperty = function() {
-          _origPublish.apply(this, arguments);
-          /* Firebase رفع يحدث من الـ setTimeout الداخلي */
-        };
-      }
-    }, 500);
-  });
-
-})();
