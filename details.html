@@ -70,6 +70,17 @@
 #detMapWrap iframe{position:relative;z-index:0;}
 #detMapWrap > div{position:relative;z-index:0;}
 .leaflet-container{z-index:0!important;}
+
+.btn-delete{
+  width:100%;margin-top:10px;padding:12px;
+  background:rgba(231,76,60,0.08);
+  border:1.5px solid rgba(231,76,60,0.3);
+  color:#e74c3c;border-radius:12px;
+  font-size:0.88rem;font-weight:800;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  font-family:var(--font);transition:all 0.2s;
+}
+.btn-delete:hover{background:rgba(231,76,60,0.15);border-color:#e74c3c;}
 </style>
 </head>
 <body>
@@ -96,5 +107,45 @@ if('serviceWorker' in navigator){
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+  /* زر الحذف — يُضاف تلقائياً إن كان الإعلان للمستخدم الحالي */
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      var id = parseInt(localStorage.getItem('aqari_selected'));
+      var props = window.allProperties || [];
+      var p = props.find(function(x){ return x.id == id; });
+      if (!p) return;
+      var myName = localStorage.getItem('userName') || '';
+      var isOwner = p.agentName === myName || p.isFirebase;
+      if (!isOwner) return;
+      /* أضف زر الحذف */
+      var contact = document.querySelector('.contact-section');
+      if (!contact) return;
+      var delBtn = document.createElement('button');
+      delBtn.className = 'btn-delete';
+      delBtn.innerHTML = '<i class="fas fa-trash-alt"></i> حذف الإعلان';
+      delBtn.onclick = function() { deleteThisAd(p.firestoreId || p.id); };
+      contact.parentNode.insertBefore(delBtn, contact.nextSibling);
+    }, 800);
+  });
+
+  function deleteThisAd(propId) {
+    if (!confirm('حذف هذا الإعلان نهائياً؟\nلا يمكن التراجع عن هذه العملية')) return;
+    showToast('⏳ جاري الحذف...');
+    if (typeof fbDeleteProperty === 'function') {
+      fbDeleteProperty(String(propId)).then(function(ok) {
+        if (ok) { showToast('✅ تم حذف الإعلان'); setTimeout(function(){location.href='index.html';},1000); }
+        else { showToast('❌ فشل الحذف، حاول مجدداً'); }
+      });
+    } else {
+      var props = JSON.parse(localStorage.getItem('aqari_props')||'[]');
+      props = props.filter(function(p){ return String(p.id)!==String(propId) && String(p.firestoreId)!==String(propId); });
+      localStorage.setItem('aqari_props', JSON.stringify(props));
+      showToast('✅ تم حذف الإعلان');
+      setTimeout(function(){location.href='index.html';},1000);
+    }
+  }
+  </script>
+
 </body>
 </html>
