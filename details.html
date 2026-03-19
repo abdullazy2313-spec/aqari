@@ -52,7 +52,7 @@
 .contact-section{display:flex;gap:8px;}
 .btn-call,.btn-whatsapp,.btn-chat{flex:1;border:none;border-radius:12px;padding:12px 6px;font-family:var(--font);font-size:0.82rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;}
 .btn-call{background:linear-gradient(135deg,#27ae60,#2ecc71);color:white;box-shadow:0 4px 15px rgba(39,174,96,0.3);}
-/* whatsapp removed */
+
 .btn-chat{background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:white;}
 .similar-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;margin-bottom:10px;}
 .similar-scroll::-webkit-scrollbar{display:none;}
@@ -71,22 +71,18 @@
 #detMapWrap > div{position:relative;z-index:0;}
 .leaflet-container{z-index:0!important;}
 
-/* حوار تأكيد احترافي */
-.cust-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn 0.2s ease}
-.cust-modal{background:var(--card);border-radius:24px 24px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:520px;animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1)}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.cust-modal-handle{width:40px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 16px}
-.cust-modal-icon{width:56px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 12px}
-.cust-modal-title{font-size:1.05rem;font-weight:900;text-align:center;margin-bottom:6px}
-.cust-modal-msg{font-size:0.83rem;color:var(--gray);text-align:center;line-height:1.6;margin-bottom:20px}
-.cust-modal-btns{display:flex;gap:10px}
-.cust-btn-cancel{flex:1;padding:13px;border-radius:13px;background:var(--gray-light);border:1.5px solid var(--border);color:var(--text-secondary);font-family:var(--font);font-size:0.88rem;font-weight:700;cursor:pointer}
-.cust-btn-confirm{flex:1;padding:13px;border-radius:13px;border:none;color:white;font-family:var(--font);font-size:0.88rem;font-weight:800;cursor:pointer}
-/* صورة الناشر */
-.agent-pic{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0}
-.agent-pic-placeholder{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:white;font-size:1.3rem;flex-shrink:0}
-/* إخفاء الـ FAB في صفحة التفاصيل */
+.cm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:flex-end;justify-content:center;animation:cmFadeIn 0.2s ease}
+.cm-box{background:var(--card);border-radius:24px 24px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:480px;animation:cmUp 0.3s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes cmFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes cmUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.cm-handle{width:40px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 16px}
+.cm-icon{width:60px;height:60px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 12px}
+.cm-title{font-size:1rem;font-weight:900;text-align:center;margin-bottom:6px;color:var(--text)}
+.cm-msg{font-size:0.82rem;color:var(--gray);text-align:center;line-height:1.6;margin-bottom:20px}
+.cm-btns{display:flex;gap:10px}
+.cm-cancel{flex:1;padding:13px;border-radius:13px;background:var(--gray-light);border:1.5px solid var(--border);color:var(--text-secondary);font-family:var(--font);font-size:0.88rem;font-weight:700;cursor:pointer}
+.cm-ok{flex:1;padding:13px;border-radius:13px;border:none;color:white;font-family:var(--font);font-size:0.88rem;font-weight:800;cursor:pointer}
+.agent-pic-img{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);flex-shrink:0}
 .nav-fab-center{display:none!important}
 </style>
 </head>
@@ -114,90 +110,83 @@ if('serviceWorker' in navigator){
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
-/* ── حوار تأكيد احترافي ── */
-function customConfirm({title, message, confirmText, cancelText, icon, iconBg, confirmBg, onConfirm}) {
-  const overlay = document.createElement('div');
-  overlay.className = 'cust-modal-overlay';
-  overlay.innerHTML = `
-    <div class="cust-modal">
-      <div class="cust-modal-handle"></div>
-      <div class="cust-modal-icon" style="background:${iconBg||'rgba(231,76,60,0.12)'}">
-        <span>${icon||'🗑️'}</span>
-      </div>
-      <div class="cust-modal-title">${title||'تأكيد'}</div>
-      <div class="cust-modal-msg">${message||''}</div>
-      <div class="cust-modal-btns">
-        <button class="cust-btn-cancel" id="custCancel">${cancelText||'إلغاء'}</button>
-        <button class="cust-btn-confirm" style="background:${confirmBg||'linear-gradient(135deg,#e74c3c,#c0392b)'}" id="custConfirm">${confirmText||'تأكيد'}</button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
-  const close = () => overlay.remove();
-  overlay.querySelector('#custCancel').onclick = close;
-  overlay.querySelector('#custConfirm').onclick = () => { close(); onConfirm && onConfirm(); };
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+function customConfirm(opts) {
+  var ov = document.createElement('div');
+  ov.className = 'cm-overlay';
+  ov.innerHTML = '<div class="cm-box"><div class="cm-handle"></div>'
+    + '<div class="cm-icon" style="background:'+(opts.iconBg||'rgba(231,76,60,0.1)')+'">'+opts.icon+'</div>'
+    + '<div class="cm-title">'+(opts.title||'تأكيد')+'</div>'
+    + '<div class="cm-msg">'+(opts.msg||'')+'</div>'
+    + '<div class="cm-btns">'
+    + '<button class="cm-cancel" id="cmCancel">'+(opts.cancelText||'إلغاء')+'</button>'
+    + '<button class="cm-ok" style="background:'+(opts.okBg||'linear-gradient(135deg,#e74c3c,#c0392b)')+'" id="cmOk">'+(opts.okText||'تأكيد')+'</button>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  function close(){ov.remove();}
+  ov.querySelector('#cmCancel').onclick = close;
+  ov.querySelector('#cmOk').onclick = function(){close();opts.onOk&&opts.onOk();};
+  ov.addEventListener('click',function(e){if(e.target===ov)close();});
 }
+window.customConfirm = customConfirm;
 
-/* ── حذف الإعلان باستخدام الحوار الاحترافي ── */
 function deleteThisAd(propId) {
   customConfirm({
-    title: 'حذف الإعلان',
-    message: 'هل أنت متأكد من حذف هذا الإعلان نهائياً؟<br>لا يمكن التراجع عن هذه العملية.',
-    confirmText: 'نعم، احذف',
-    cancelText: 'إلغاء',
-    icon: '🗑️',
-    iconBg: 'rgba(231,76,60,0.1)',
-    confirmBg: 'linear-gradient(135deg,#e74c3c,#c0392b)',
-    onConfirm: () => {
+    icon:'🗑️', iconBg:'rgba(231,76,60,0.1)',
+    title:'حذف الإعلان',
+    msg:'هل أنت متأكد من حذف هذا الإعلان نهائياً؟<br>لا يمكن التراجع.',
+    okText:'نعم، احذف', cancelText:'إلغاء',
+    okBg:'linear-gradient(135deg,#e74c3c,#c0392b)',
+    onOk:function(){
       showToast('⏳ جاري الحذف...');
-      if (typeof fbDeleteProperty === 'function') {
-        fbDeleteProperty(String(propId)).then(ok => {
-          if (ok) { showToast('✅ تم حذف الإعلان'); setTimeout(()=>location.href='index.html', 1000); }
-          else showToast('❌ فشل الحذف، حاول مجدداً');
-        });
-      } else {
+      var doLocal = function(){
         var props = JSON.parse(localStorage.getItem('aqari_props')||'[]');
-        props = props.filter(p => String(p.id)!==String(propId) && String(p.firestoreId)!==String(propId));
-        localStorage.setItem('aqari_props', JSON.stringify(props));
+        props = props.filter(function(p){return String(p.id)!==String(propId)&&String(p.firestoreId)!==String(propId);});
+        localStorage.setItem('aqari_props',JSON.stringify(props));
         showToast('✅ تم حذف الإعلان');
-        setTimeout(()=>location.href='index.html', 1000);
-      }
+        setTimeout(function(){location.href='index.html';},1000);
+      };
+      if(typeof fbDeleteProperty==='function'){
+        fbDeleteProperty(String(propId)).then(function(ok){
+          if(ok){showToast('✅ تم حذف الإعلان');setTimeout(function(){location.href='index.html';},1000);}
+          else doLocal();
+        }).catch(doLocal);
+      } else doLocal();
     }
   });
 }
 window.deleteThisAd = deleteThisAd;
 
-/* ── صورة وبيانات الناشر ── */
-window.addEventListener('load', function() {
-  setTimeout(function() {
+window.addEventListener('load', function(){
+  setTimeout(function(){
     var id = parseInt(localStorage.getItem('aqari_selected'));
-    var props = window.allProperties || [];
-    var p = props.find(x => x.id == id);
-    if (!p) return;
+    var props = window.allProperties||[];
+    var p = props.find(function(x){return x.id==id;});
+    if(!p) return;
 
-    /* تحديث صورة الناشر */
-    var agentAvatar = document.querySelector('.agent-avatar');
-    if (agentAvatar) {
-      var photo = p.agentPhoto || (p.agentName === localStorage.getItem('userName') ? localStorage.getItem('userPhoto') : null);
-      if (photo) {
-        agentAvatar.innerHTML = '<img src="'+photo+'" class="agent-pic" alt="'+p.agentName+'" onerror="this.parentElement.innerHTML='<i class=\"fas fa-user\"></i>'">';
-        agentAvatar.style.background = 'transparent';
-        agentAvatar.style.padding = '0';
-      }
+    /* صورة الناشر */
+    var av = document.querySelector('.agent-avatar');
+    if(av && p.agentPhoto){
+      var img = document.createElement('img');
+      img.src = p.agentPhoto;
+      img.className = 'agent-pic-img';
+      img.onerror = function(){this.style.display='none';};
+      av.innerHTML = '';
+      av.appendChild(img);
+      av.style.background = 'transparent';
     }
 
-    /* زر الحذف للناشر فقط */
-    var myName = localStorage.getItem('userName') || '';
-    var isOwner = p.agentName === myName || (p.agentName === 'أنت') || p.isFirebase;
-    if (!isOwner) return;
-
-    var contact = document.querySelector('.contact-section');
-    if (!contact) return;
-    var delWrap = document.createElement('div');
-    delWrap.style.cssText = 'margin-top:10px';
-    delWrap.innerHTML = '<button onclick="deleteThisAd(''+( p.firestoreId || p.id )+'')" style="width:100%;padding:12px;background:rgba(231,76,60,0.08);border:1.5px solid rgba(231,76,60,0.3);color:#e74c3c;border-radius:12px;font-size:0.88rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;transition:all 0.2s" onmouseover="this.style.background='rgba(231,76,60,0.15)'" onmouseout="this.style.background='rgba(231,76,60,0.08)'"><i class="fas fa-trash-alt"></i> حذف إعلانك</button>';
-    contact.parentNode.insertBefore(delWrap, contact.nextSibling);
-  }, 700);
+    /* زر الحذف للناشر */
+    var myName = localStorage.getItem('userName')||'';
+    var isOwner = p.agentName===myName || p.agentName==='أنت' || p.isFirebase;
+    if(!isOwner) return;
+    var ct = document.querySelector('.contact-section');
+    if(!ct) return;
+    var dv = document.createElement('div');
+    dv.style.marginTop = '10px';
+    var pid = p.firestoreId||p.id;
+    dv.innerHTML = '<button onclick="deleteThisAd(''+pid+'')" style="width:100%;padding:12px;background:rgba(231,76,60,0.08);border:1.5px solid rgba(231,76,60,0.3);color:#e74c3c;border-radius:12px;font-size:0.88rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit"><i class=\"fas fa-trash-alt\"></i> حذف إعلانك</button>';
+    ct.parentNode.insertBefore(dv, ct.nextSibling);
+  }, 800);
 });
 </script>
 
