@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اختبار الصورة</title>
+<style>
+body{font-family:Arial;background:#1e293b;color:white;padding:20px;direction:rtl;text-align:center}
+.ring{width:100px;height:100px;border-radius:50%;border:3px solid #f97316;
+  overflow:hidden;background:#334155;display:flex;align-items:center;
+  justify-content:center;margin:0 auto 12px;cursor:pointer;font-size:2rem}
+.ring img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+#log{background:#0f172a;border-radius:10px;padding:14px;margin-top:14px;
+  font-size:0.78rem;line-height:2;text-align:right;min-height:60px;color:#94a3b8}
+#log .ok{color:#4ade80} #log .err{color:#f87171} #log .info{color:#fb923c}
+#CROP{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);
+  flex-direction:column;align-items:center;justify-content:center;padding:20px;z-index:999}
+#CROP.on{display:flex}
+#cCirc{position:relative;width:260px;height:260px;border-radius:50%;
+  overflow:hidden;border:3px solid #f97316;background:#111;touch-action:none;cursor:grab}
+#cImg{position:absolute;pointer-events:none;user-select:none}
+.cp-row{display:flex;gap:10px;margin-top:14px;width:260px}
+.cp-btn{flex:1;padding:12px;border-radius:12px;border:none;font-size:0.88rem;
+  font-weight:800;cursor:pointer;font-family:Arial}
+</style>
+</head>
+<body>
+
+<h2 style="color:#f97316;margin-bottom:16px">اختبار صورة البروفايل</h2>
+
+<!-- الدائرة -->
+<div class="ring" id="ring">📷</div>
+
+<!-- label مرتبط بالـ input -->
+<label for="fi" style="display:inline-block;padding:12px 24px;background:#f97316;
+  color:white;border-radius:12px;cursor:pointer;font-weight:800;font-size:0.9rem;margin-bottom:12px">
+  اختر صورة
+</label>
+
+<!-- input الملف -->
+<input type="file" id="fi" accept="image/*" style="display:none">
+
+<div id="log"><span class="info">جاهز — اضغط "اختر صورة"</span></div>
+
+<!-- المقص -->
+<div id="CROP">
+  <div style="color:white;font-weight:800;margin-bottom:14px;font-size:0.95rem">✂️ اضبط الصورة</div>
+  <div id="cCirc"><img id="cImg" alt=""></div>
+  <div style="color:rgba(255,255,255,0.4);font-size:0.72rem;margin-top:10px">اسحب · إصبعان للتكبير</div>
+  <div class="cp-row">
+    <button class="cp-btn" onclick="closeCrop()" style="background:#333;color:#aaa">إلغاء</button>
+    <button class="cp-btn" onclick="saveCrop()" id="saveBtn" style="background:linear-gradient(135deg,#f97316,#dc2626);color:white">حفظ الصورة</button>
+  </div>
+</div>
+
+<script>
+function log(msg, type) {
+  var el = document.getElementById('log');
+  var span = document.createElement('div');
+  span.className = type || 'info';
+  span.textContent = '► ' + msg;
+  el.appendChild(span);
+  el.scrollTop = el.scrollHeight;
+}
+
+/* متغيرات القص */
+var SZ=260, OUT=400, X=0, Y=0, S=1, S_MIN=1, S_MAX=8, NW=0, NH=0, SRC='';
+var drag=false, sx=0, sy=0, ox=0, oy=0, pd=0;
+
+function draw(){
+  var dw=NW*S, dh=NH*S;
+  if(X>0)X=0; if(Y>0)Y=0;
+  if(X<SZ-dw)X=SZ-dw;
+  if(Y<SZ-dh)Y=SZ-dh;
+  var img=document.getElementById('cImg');
+  img.style.left=X+'px'; img.style.top=Y+'px';
+  img.style.width=dw+'px'; img.style.height=dh+'px';
+}
+
+function zoomAt(ns, cx, cy){
+  ns=Math.min(S_MAX,Math.max(S_MIN,ns));
+  var r=ns/S; X=cx-(cx-X)*r; Y=cy-(cy-Y)*r; S=ns; draw();
+}
+
+function openCrop(src){
+  log('3. openCrop() تم استدعاؤها', 'ok');
+  SRC=src;
+  var loader=new Image();
+  loader.onload=function(){
+    NW=loader.naturalWidth; NH=loader.naturalHeight;
+    log('4. الصورة حُمّلت: '+NW+'×'+NH, 'ok');
+    S_MIN=Math.max(SZ/NW,SZ/NH)*1.001;
+    S_MAX=S_MIN*8; S=S_MIN;
+    X=(SZ-NW*S)/2; Y=(SZ-NH*S)/2;
+    var cImg=document.getElementById('cImg');
+    cImg.style.left=cImg.style.top=cImg.style.width=cImg.style.height='';
+    cImg.onload=function(){ draw(); log('5. الصورة ظهرت في المقص ✅', 'ok'); };
+    cImg.src=src;
+    if(cImg.complete&&cImg.naturalWidth>0){ draw(); log('5. الصورة جاهزة ✅','ok'); }
+    document.getElementById('CROP').classList.add('on');
+    document.body.style.overflow='hidden';
+    log('6. المقص مفتوح ✅', 'ok');
+  };
+  loader.onerror=function(){ log('خطأ في تحميل الصورة','err'); };
+  loader.src=src;
+}
+
+function closeCrop(){
+  document.getElementById('CROP').classList.remove('on');
+  document.body.style.overflow='';
+}
+
+function saveCrop(){
+  var btn=document.getElementById('saveBtn');
+  btn.textContent='⏳ جاري...'; btn.disabled=true;
+  var canvas=document.createElement('canvas');
+  canvas.width=canvas.height=OUT;
+  var ctx=canvas.getContext('2d');
+  ctx.beginPath(); ctx.arc(OUT/2,OUT/2,OUT/2,0,Math.PI*2); ctx.clip();
+  var ratio=OUT/SZ;
+  ctx.drawImage(document.getElementById('cImg'), X*ratio, Y*ratio, NW*S*ratio, NH*S*ratio);
+  var url=canvas.toDataURL('image/jpeg',0.92);
+  localStorage.setItem('userPhoto',url);
+  var ring=document.getElementById('ring');
+  ring.innerHTML='<img src="'+url+'">';
+  closeCrop();
+  log('الصورة حُفظت بنجاح ✅','ok');
+  btn.textContent='حفظ الصورة'; btn.disabled=false;
+}
+
+/* السحب */
+var cc=document.getElementById('cCirc');
+cc.addEventListener('mousedown',function(e){drag=true;sx=e.clientX;sy=e.clientY;ox=X;oy=Y;e.preventDefault();});
+window.addEventListener('mousemove',function(e){if(!drag)return;X=ox+(e.clientX-sx);Y=oy+(e.clientY-sy);draw();});
+window.addEventListener('mouseup',function(){drag=false;});
+cc.addEventListener('touchstart',function(e){
+  if(e.touches.length===1){drag=true;pd=0;sx=e.touches[0].clientX;sy=e.touches[0].clientY;ox=X;oy=Y;}
+  else if(e.touches.length===2){drag=false;pd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}
+  e.preventDefault();
+},{passive:false});
+window.addEventListener('touchmove',function(e){
+  if(!cc.contains(e.target)&&!drag)return;
+  if(e.touches.length===1&&drag){X=ox+(e.touches[0].clientX-sx);Y=oy+(e.touches[0].clientY-sy);draw();}
+  else if(e.touches.length===2&&pd>0){
+    var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    var rect=cc.getBoundingClientRect();
+    zoomAt(S*(d/pd),(e.touches[0].clientX+e.touches[1].clientX)/2-rect.left,(e.touches[0].clientY+e.touches[1].clientY)/2-rect.top);
+    pd=d;
+  }
+  e.preventDefault();
+},{passive:false});
+window.addEventListener('touchend',function(){drag=false;pd=0;});
+
+/* ══ الجزء المهم ══ */
+var fi = document.getElementById('fi');
+
+log('DOMContentLoaded — الإعداد');
+
+fi.addEventListener('change', function(e) {
+  log('1. change event أُطلق ✅', 'ok');
+  var file = this.files && this.files[0];
+  if (!file) { log('لا يوجد ملف', 'err'); return; }
+  log('2. الملف: ' + file.name + ' (' + Math.round(file.size/1024) + 'KB)', 'ok');
+  
+  if (!file.type.startsWith('image/')) {
+    log('ليس صورة: ' + file.type, 'err');
+    return;
+  }
+  
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    log('FileReader onload ✅', 'ok');
+    openCrop(ev.target.result);
+  };
+  reader.onerror = function(err) {
+    log('FileReader خطأ: ' + err, 'err');
+  };
+  reader.onprogress = function(e) {
+    if(e.loaded && e.total) log('تحميل: ' + Math.round(e.loaded/e.total*100) + '%');
+  };
+  reader.readAsDataURL(file);
+  this.value = '';
+});
+
+fi.addEventListener('click', function() {
+  log('input click ✅', 'info');
+});
+</script>
+</body>
+</html>
