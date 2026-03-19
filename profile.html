@@ -54,12 +54,6 @@
   touch-action:none;
 }
 .crop-hint{color:rgba(255,255,255,0.45);font-size:0.72rem;margin-top:10px;text-align:center;line-height:1.7}
-.zoom-row{display:flex;align-items:center;gap:12px;margin-top:14px;width:100%;max-width:280px}
-.zoom-btn{width:40px;height:40px;border-radius:50%;
-  background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);
-  color:white;font-size:1.1rem;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.zoom-btn:active{background:rgba(255,255,255,0.25)}
 .crop-actions{display:flex;gap:10px;margin-top:16px;width:100%;max-width:280px}
 .btn-cancel-crop{flex:1;padding:13px;border-radius:13px;
   background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);
@@ -162,18 +156,7 @@
   <div id="cropCircle">
     <img id="cropImage" alt="">
   </div>
-  <div class="crop-hint"><i class="fas fa-arrows-alt" style="margin-left:5px;opacity:0.6"></i>اسحب لتحريك الصورة</div>
-  <div class="zoom-row">
-    <button class="zoom-btn" id="zoomOutBtn" title="تصغير">
-      <i class="fas fa-minus"></i>
-    </button>
-    <span style="color:rgba(255,255,255,0.35);font-size:0.72rem;flex:1;text-align:center">
-      <i class="fas fa-hand-pointer" style="margin-left:4px"></i>إصبعان للتكبير
-    </span>
-    <button class="zoom-btn" id="zoomInBtn" title="تكبير">
-      <i class="fas fa-plus"></i>
-    </button>
-  </div>
+  <div class="crop-hint"><i class="fas fa-arrows-alt" style="margin-left:5px;opacity:0.5"></i>اسحب · إصبعان للتكبير</div>
   <div class="crop-actions">
     <button class="btn-cancel-crop" id="cancelCropBtn"><i class="fas fa-times" style="margin-left:6px"></i>إلغاء</button>
     <button class="btn-save-crop" id="saveCropBtn"><i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة</button>
@@ -201,19 +184,39 @@
     if (!ring) return;
     if (photo) {
       ring.innerHTML = '<img src="' + photo + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block">';
-      /* بعد الإضافة: أيقونة قلم للتعديل */
       if (cam) {
         cam.innerHTML = '<i class="fas fa-pen"></i>';
         cam.title = 'تعديل الصورة';
+        /* القلم: أعد فتح المقص بالصورة الموجودة */
+        cam.onclick = function(e) {
+          e.stopPropagation();
+          reopenCropperWithSavedPhoto();
+        };
       }
     } else {
       ring.innerHTML = '<i class="fas fa-user" style="font-size:2.4rem;color:var(--accent)"></i>';
-      /* بدون صورة: أيقونة كاميرا */
       if (cam) {
         cam.innerHTML = '<i class="fas fa-camera"></i>';
         cam.title = 'إضافة صورة';
+        cam.onclick = function(e) {
+          e.stopPropagation();
+          openFilePicker();
+        };
       }
     }
+  }
+
+  /* إعادة فتح المقص مع الصورة المحفوظة للتعديل */
+  function reopenCropperWithSavedPhoto() {
+    var photo = localStorage.getItem('userPhoto');
+    if (!photo) { openFilePicker(); return; }
+    var img = new Image();
+    img.onload = function() {
+      imgW = img.naturalWidth;
+      imgH = img.naturalHeight;
+      openCropModal(photo);
+    };
+    img.src = photo;
   }
 
   /* ══ فتح اختيار الملف ══ */
@@ -317,28 +320,38 @@
     var btn = document.getElementById('saveCropBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-left:6px"></i>جاري...';
-    try {
-      var canvas = document.createElement('canvas');
-      canvas.width = canvas.height = 400;
-      var ctx = canvas.getContext('2d');
-      ctx.beginPath();
-      ctx.arc(200, 200, 200, 0, Math.PI * 2);
-      ctx.clip();
-      var r = 400 / SZ;
-      ctx.drawImage(
-        document.getElementById('cropImage'),
-        -posX * r, -posY * r,
-        imgW * scale * r, imgH * scale * r
-      );
-      localStorage.setItem('userPhoto', canvas.toDataURL('image/jpeg', 0.9));
-      loadCurrentPic();
-      closeCrop();
-      if (typeof showToast === 'function') showToast('✅ تم حفظ الصورة');
-    } catch(err) {
-      alert('خطأ في الحفظ: ' + err.message);
-    }
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة';
+
+    /* استخدم صورة جديدة لضمان التحميل الكامل وتجنب مشكلة canvas السوداء */
+    var freshImg = new Image();
+    freshImg.onload = function() {
+      try {
+        var canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 400;
+        var ctx = canvas.getContext('2d');
+        ctx.beginPath();
+        ctx.arc(200, 200, 200, 0, Math.PI * 2);
+        ctx.clip();
+        var r = 400 / SZ;
+        ctx.drawImage(freshImg, -posX*r, -posY*r, imgW*scale*r, imgH*scale*r);
+        var url = canvas.toDataURL('image/jpeg', 0.92);
+        if (!url || url === 'data:,') throw new Error('canvas فارغ');
+        localStorage.setItem('userPhoto', url);
+        loadCurrentPic();
+        closeCrop();
+        if (typeof showToast === 'function') showToast('تم حفظ الصورة بنجاح');
+      } catch(err) {
+        if (typeof showToast === 'function') showToast('خطأ: ' + err.message);
+      }
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة';
+    };
+    freshImg.onerror = function() {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة';
+      if (typeof showToast === 'function') showToast('تعذر حفظ الصورة');
+    };
+    /* نفس src الموجودة في cropImage */
+    freshImg.src = document.getElementById('cropImage').src;
   }
 
   /* ══ أحداث السحب ══ */
@@ -419,14 +432,7 @@
       if (e.target === this) closeCrop();
     });
 
-    /* زووم + */
-    document.getElementById('zoomInBtn').addEventListener('click', function() {
-      changeScale(scale * 1.15);
-    });
-    /* زووم - */
-    document.getElementById('zoomOutBtn').addEventListener('click', function() {
-      changeScale(scale / 1.15);
-    });
+
 
 
     /* تحميل الصورة والبيانات */
