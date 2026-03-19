@@ -52,7 +52,7 @@
 .contact-section{display:flex;gap:8px;}
 .btn-call,.btn-whatsapp,.btn-chat{flex:1;border:none;border-radius:12px;padding:12px 6px;font-family:var(--font);font-size:0.82rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;}
 .btn-call{background:linear-gradient(135deg,#27ae60,#2ecc71);color:white;box-shadow:0 4px 15px rgba(39,174,96,0.3);}
-
+.btn-whatsapp{background:linear-gradient(135deg,#25D366,#128C7E);color:white;}
 .btn-chat{background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:white;}
 .similar-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;margin-bottom:10px;}
 .similar-scroll::-webkit-scrollbar{display:none;}
@@ -71,19 +71,21 @@
 #detMapWrap > div{position:relative;z-index:0;}
 .leaflet-container{z-index:0!important;}
 
-.cm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:flex-end;justify-content:center;animation:cmFadeIn 0.2s ease}
-.cm-box{background:var(--card);border-radius:24px 24px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:480px;animation:cmUp 0.3s cubic-bezier(0.34,1.56,0.64,1)}
-@keyframes cmFadeIn{from{opacity:0}to{opacity:1}}
+/* حوار تأكيد احترافي */
+.cmod-ov{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:flex-end;justify-content:center}
+.cmod-box{background:var(--card);border-radius:24px 24px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:480px;animation:cmUp 0.3s cubic-bezier(0.34,1.56,0.64,1)}
 @keyframes cmUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.cm-handle{width:40px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 16px}
-.cm-icon{width:60px;height:60px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 12px}
-.cm-title{font-size:1rem;font-weight:900;text-align:center;margin-bottom:6px;color:var(--text)}
-.cm-msg{font-size:0.82rem;color:var(--gray);text-align:center;line-height:1.6;margin-bottom:20px}
-.cm-btns{display:flex;gap:10px}
-.cm-cancel{flex:1;padding:13px;border-radius:13px;background:var(--gray-light);border:1.5px solid var(--border);color:var(--text-secondary);font-family:var(--font);font-size:0.88rem;font-weight:700;cursor:pointer}
-.cm-ok{flex:1;padding:13px;border-radius:13px;border:none;color:white;font-family:var(--font);font-size:0.88rem;font-weight:800;cursor:pointer}
-.agent-pic-img{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);flex-shrink:0}
-.nav-fab-center{display:none!important}
+.cmod-handle{width:40px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 16px}
+.cmod-ico{width:58px;height:58px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:1.7rem;margin:0 auto 12px}
+.cmod-title{font-size:1rem;font-weight:900;text-align:center;margin-bottom:6px;color:var(--text)}
+.cmod-msg{font-size:0.82rem;color:var(--gray);text-align:center;line-height:1.6;margin-bottom:20px}
+.cmod-btns{display:flex;gap:10px}
+.cmod-no{flex:1;padding:13px;border-radius:13px;background:var(--gray-light);border:1.5px solid var(--border);color:var(--text-secondary);font-family:var(--font);font-size:0.88rem;font-weight:700;cursor:pointer}
+.cmod-yes{flex:1;padding:13px;border-radius:13px;border:none;color:white;font-family:var(--font);font-size:0.88rem;font-weight:800;cursor:pointer}
+/* صورة الناشر */
+.agent-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+/* إخفاء FAB في التفاصيل */
+.nav-fab-center,.fab{display:none!important}
 </style>
 </head>
 <body>
@@ -96,6 +98,8 @@
 </nav>
 <div id="toast"></div>
 <script src="js/app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
 if('serviceWorker' in navigator){
@@ -107,88 +111,79 @@ if('serviceWorker' in navigator){
 }
 </script>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
-function customConfirm(opts) {
-  var ov = document.createElement('div');
-  ov.className = 'cm-overlay';
-  ov.innerHTML = '<div class="cm-box"><div class="cm-handle"></div>'
-    + '<div class="cm-icon" style="background:'+(opts.iconBg||'rgba(231,76,60,0.1)')+'">'+opts.icon+'</div>'
-    + '<div class="cm-title">'+(opts.title||'تأكيد')+'</div>'
-    + '<div class="cm-msg">'+(opts.msg||'')+'</div>'
-    + '<div class="cm-btns">'
-    + '<button class="cm-cancel" id="cmCancel">'+(opts.cancelText||'إلغاء')+'</button>'
-    + '<button class="cm-ok" style="background:'+(opts.okBg||'linear-gradient(135deg,#e74c3c,#c0392b)')+'" id="cmOk">'+(opts.okText||'تأكيد')+'</button>'
-    + '</div></div>';
+/* حوار تأكيد احترافي */
+function customConfirm(o){
+  var ov=document.createElement('div');
+  ov.className='cmod-ov';
+  ov.innerHTML='<div class="cmod-box"><div class="cmod-handle"></div>'
+    +'<div class="cmod-ico" style="background:'+(o.ibg||'rgba(231,76,60,0.1)')+'">'+o.icon+'</div>'
+    +'<div class="cmod-title">'+(o.title||'تأكيد')+'</div>'
+    +'<div class="cmod-msg">'+(o.msg||'')+'</div>'
+    +'<div class="cmod-btns">'
+    +'<button class="cmod-no" id="_no">'+(o.no||'إلغاء')+'</button>'
+    +'<button class="cmod-yes" style="background:'+(o.ybg||'linear-gradient(135deg,#e74c3c,#c0392b)')+'" id="_yes">'+(o.yes||'تأكيد')+'</button>'
+    +'</div></div>';
   document.body.appendChild(ov);
-  function close(){ov.remove();}
-  ov.querySelector('#cmCancel').onclick = close;
-  ov.querySelector('#cmOk').onclick = function(){close();opts.onOk&&opts.onOk();};
+  var close=function(){ov.remove();};
+  ov.querySelector('#_no').onclick=close;
+  ov.querySelector('#_yes').onclick=function(){close();o.onYes&&o.onYes();};
   ov.addEventListener('click',function(e){if(e.target===ov)close();});
 }
-window.customConfirm = customConfirm;
+window.customConfirm=customConfirm;
 
-function deleteThisAd(propId) {
+/* حذف الإعلان */
+function deleteAd(propId){
   customConfirm({
-    icon:'🗑️', iconBg:'rgba(231,76,60,0.1)',
+    icon:'🗑️',ibg:'rgba(231,76,60,0.1)',
     title:'حذف الإعلان',
-    msg:'هل أنت متأكد من حذف هذا الإعلان نهائياً؟<br>لا يمكن التراجع.',
-    okText:'نعم، احذف', cancelText:'إلغاء',
-    okBg:'linear-gradient(135deg,#e74c3c,#c0392b)',
-    onOk:function(){
+    msg:'هل أنت متأكد؟<br>لا يمكن التراجع.',
+    yes:'احذف نهائياً',no:'إلغاء',
+    ybg:'linear-gradient(135deg,#e74c3c,#c0392b)',
+    onYes:function(){
       showToast('⏳ جاري الحذف...');
-      var doLocal = function(){
-        var props = JSON.parse(localStorage.getItem('aqari_props')||'[]');
-        props = props.filter(function(p){return String(p.id)!==String(propId)&&String(p.firestoreId)!==String(propId);});
-        localStorage.setItem('aqari_props',JSON.stringify(props));
-        showToast('✅ تم حذف الإعلان');
-        setTimeout(function(){location.href='index.html';},1000);
-      };
+      function localDel(){
+        var ps=JSON.parse(localStorage.getItem('aqari_props')||'[]');
+        ps=ps.filter(function(p){return String(p.id)!==String(propId)&&String(p.firestoreId)!==String(propId);});
+        localStorage.setItem('aqari_props',JSON.stringify(ps));
+        showToast('✅ تم الحذف');
+        setTimeout(function(){location.href='index.html';},900);
+      }
       if(typeof fbDeleteProperty==='function'){
-        fbDeleteProperty(String(propId)).then(function(ok){
-          if(ok){showToast('✅ تم حذف الإعلان');setTimeout(function(){location.href='index.html';},1000);}
-          else doLocal();
-        }).catch(doLocal);
-      } else doLocal();
+        fbDeleteProperty(String(propId)).then(function(ok){ok?location.href='index.html':localDel();});
+      } else localDel();
     }
   });
 }
-window.deleteThisAd = deleteThisAd;
+window.deleteAd=deleteAd;
 
-window.addEventListener('load', function(){
+/* صورة الناشر + زر الحذف */
+window.addEventListener('load',function(){
   setTimeout(function(){
-    var id = parseInt(localStorage.getItem('aqari_selected'));
-    var props = window.allProperties||[];
-    var p = props.find(function(x){return x.id==id;});
-    if(!p) return;
-
-    /* صورة الناشر */
-    var av = document.querySelector('.agent-avatar');
-    if(av && p.agentPhoto){
-      var img = document.createElement('img');
-      img.src = p.agentPhoto;
-      img.className = 'agent-pic-img';
-      img.onerror = function(){this.style.display='none';};
-      av.innerHTML = '';
-      av.appendChild(img);
-      av.style.background = 'transparent';
+    var id=parseInt(localStorage.getItem('aqari_selected'));
+    var p=(window.allProperties||[]).find(function(x){return x.id==id;});
+    if(!p)return;
+    /* صورة */
+    if(p.agentPhoto){
+      var av=document.querySelector('.agent-avatar');
+      if(av){
+        av.innerHTML='<img src="'+p.agentPhoto+'" onerror="this.remove()" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+        av.style.background='transparent';
+      }
     }
-
-    /* زر الحذف للناشر */
-    var myName = localStorage.getItem('userName')||'';
-    var isOwner = p.agentName===myName || p.agentName==='أنت' || p.isFirebase;
-    if(!isOwner) return;
-    var ct = document.querySelector('.contact-section');
-    if(!ct) return;
-    var dv = document.createElement('div');
-    dv.style.marginTop = '10px';
-    var pid = p.firestoreId||p.id;
-    dv.innerHTML = '<button onclick="deleteThisAd(''+pid+'')" style="width:100%;padding:12px;background:rgba(231,76,60,0.08);border:1.5px solid rgba(231,76,60,0.3);color:#e74c3c;border-radius:12px;font-size:0.88rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit"><i class=\"fas fa-trash-alt\"></i> حذف إعلانك</button>';
-    ct.parentNode.insertBefore(dv, ct.nextSibling);
-  }, 800);
+    /* زر الحذف للناشر فقط */
+    var me=localStorage.getItem('userName')||'';
+    var isOwner=p.agentName===me||p.agentName==='أنت';
+    if(!isOwner)return;
+    var ct=document.querySelector('.contact-section');
+    if(!ct)return;
+    var pid=p.firestoreId||p.id;
+    var dv=document.createElement('div');
+    dv.style.marginTop='10px';
+    dv.innerHTML='<button onclick="deleteAd(''+pid+'')" style="width:100%;padding:12px;background:rgba(231,76,60,0.08);border:1.5px solid rgba(231,76,60,0.3);color:#e74c3c;border-radius:12px;font-size:0.88rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit"><i class="fas fa-trash-alt"></i> حذف إعلانك</button>';
+    ct.parentNode.insertBefore(dv,ct.nextSibling);
+  },700);
 });
 </script>
-
 </body>
 </html>
