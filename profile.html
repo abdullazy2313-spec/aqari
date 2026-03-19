@@ -143,31 +143,30 @@
 <div class="container">
   <div class="profile-header">
 
-    <!-- ✅ الحل الجذري: label + input مباشرة في HTML -->
+    <!-- صورة البروفايل -->
     <div class="pic-outer">
-
-      <!-- label يفتح المعرض مباشرة بدون JavaScript -->
-      <label class="pic-label" for="pic-file-input" id="pic-label">
-        <div class="pic-placeholder" id="pic-placeholder">
-          <i class="fas fa-user"></i>
-        </div>
-      </label>
-
-      <!-- أيقونة الكاميرا (تعديل: تتحول لقلم) -->
-      <label class="pic-badge" for="pic-file-input" id="pic-badge">
-        <i class="fas fa-camera" id="pic-badge-icon"></i>
-      </label>
-
-      <!-- input الملف — مخفي -->
+      <!-- الدائرة -->
+      <div class="pic-ring" id="PR"></div>
+      <!-- أيقونة الكاميرا/القلم -->
+      <div class="pic-cam" id="PC">
+        <i class="fas fa-camera" id="PC-icon"></i>
+      </div>
+      <!--
+        input مخفي بـ opacity:0 وليس display:none
+        وضعناه فوق الدائرة مباشرة بـ position:absolute
+        onchange inline = الأضمن على Android Chrome
+      -->
       <input
         type="file"
         id="pic-file-input"
-        accept="image/jpeg,image/png,image/webp,image/gif,image/*"
-        style="display:none"
+        accept="image/*"
+        onchange="handlePhotoChange(event)"
+        style="position:absolute;inset:0;width:100%;height:100%;
+               opacity:0;cursor:pointer;z-index:10;border-radius:50%"
       >
     </div>
 
-    <h3 id="profileName" style="margin-bottom:4px;font-size:1.2rem;font-weight:800">
+    <h3<h3 id="profileName" style="margin-bottom:4px;font-size:1.2rem;font-weight:800">
       مستخدم عقاري
     </h3>
     <p id="profileEmail" style="color:var(--gray);font-size:0.88rem"></p>
@@ -251,108 +250,154 @@
 <div id="toast"></div>
 
 <!-- ═══ Modal القص ═══ -->
-<div id="CROP">
-  <div class="crop-title">
-    <i class="fas fa-crop-alt"></i> اضبط الصورة
+<div id="CROP-MODAL" style="display:none;position:fixed;inset:0;z-index:99999;
+  background:rgba(0,0,0,0.97);flex-direction:column;align-items:center;
+  justify-content:center;padding:16px">
+  <div style="color:white;font-size:0.95rem;font-weight:800;margin-bottom:14px;
+    display:flex;align-items:center;gap:8px">
+    <i class="fas fa-crop-alt" style="color:var(--accent)"></i> اضبط الصورة
   </div>
-  <div id="crop-circle">
-    <img id="crop-img" alt="">
+  <div id="crop-circle" style="position:relative;border-radius:50%;overflow:hidden;
+    border:3px solid var(--accent);background:#111;cursor:grab;touch-action:none;
+    box-shadow:0 0 0 6px rgba(230,126,34,0.15),0 12px 48px rgba(0,0,0,0.7);flex-shrink:0">
+    <img id="crop-img" alt="" style="position:absolute;pointer-events:none;user-select:none;display:block">
   </div>
-  <div class="crop-hint">
-    <i class="fas fa-hand-pointer"></i> اسحب لتحريك
+  <div style="color:rgba(255,255,255,0.4);font-size:0.72rem;margin-top:10px;text-align:center">
+    <i class="fas fa-arrows-alt" style="margin-left:4px"></i>اسحب
     &nbsp;·&nbsp;
-    <i class="fas fa-search-plus"></i> إصبعان للتكبير
+    <i class="fas fa-search-plus" style="margin-left:4px"></i>إصبعان للتكبير
   </div>
-  <div class="crop-actions">
-    <button class="crop-btn-cancel" id="crop-cancel">
+  <div style="display:flex;gap:10px;margin-top:16px;width:100%;max-width:320px">
+    <button onclick="_closeCrop()" style="flex:1;padding:13px;border-radius:13px;
+      background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);
+      color:rgba(255,255,255,0.8);font-family:var(--font);font-size:0.88rem;font-weight:700;cursor:pointer">
       <i class="fas fa-times" style="margin-left:6px"></i>إلغاء
     </button>
-    <button class="crop-btn-save" id="crop-save">
+    <button id="crop-save-btn" onclick="_saveCrop()" style="flex:1.6;padding:13px;
+      border-radius:13px;border:none;
+      background:linear-gradient(135deg,var(--accent),var(--accent-hover));
+      color:white;font-family:var(--font);font-size:0.88rem;font-weight:800;cursor:pointer;
+      box-shadow:0 4px 16px rgba(230,126,34,0.4)">
       <i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة
     </button>
   </div>
 </div>
 
-<script src="js/app.js"></script>
+<script src="js/app.js"><script src="js/app.js"></script>
 <script>
-(function() {
-'use strict';
+/* ════════════════════════════════════════════════
+   handlePhotoChange — يُستدعى مباشرة من onchange
+   هذا أضمن من addEventListener على Android
+════════════════════════════════════════════════ */
 
-/* ═══════════════════════════════════════════════════════
-   متغيرات القص
-   الصورة في الدائرة (SZ × SZ):
-     left = X, top = Y, width = NW*S, height = NH*S
-   الحفظ في Canvas (OUT × OUT):
-     ratio = OUT/SZ
-     drawImage(img, X*ratio, Y*ratio, NW*S*ratio, NH*S*ratio)
-═══════════════════════════════════════════════════════ */
+/* متغيرات القص */
+var _SZ=280, _OUT=400, _X=0, _Y=0, _S=1, _SMIN=1, _SMAX=8;
+var _NW=0, _NH=0, _SRC='';
+var _drag=false, _sx=0, _sy=0, _ox=0, _oy=0, _pd=0;
 
-var SZ    = 280;   /* حجم دائرة القص */
-var OUT   = 400;   /* حجم الصورة المحفوظة */
-var X     = 0;     /* left */
-var Y     = 0;     /* top  */
-var S     = 1;     /* scale */
-var S_MIN = 1;
-var S_MAX = 8;
-var NW    = 0;     /* عرض الصورة الأصلية */
-var NH    = 0;     /* ارتفاع الصورة الأصلية */
-var SRC   = '';    /* مصدر الصورة */
-
-/* ── تطبيق الإحداثيات ── */
-function draw() {
-  var dw = NW * S;
-  var dh = NH * S;
-  /* قيود */
-  if (X > 0) X = 0;
-  if (Y > 0) Y = 0;
-  if (X < SZ - dw) X = SZ - dw;
-  if (Y < SZ - dh) Y = SZ - dh;
-
-  var img = document.getElementById('crop-img');
-  if (!img) return;
-  img.style.left   = X + 'px';
-  img.style.top    = Y + 'px';
-  img.style.width  = dw + 'px';
-  img.style.height = dh + 'px';
+/* ── فتح المعرض عند الضغط على القلم (للتعديل) ── */
+function openPicker() {
+  document.getElementById('pic-file-input').click();
 }
 
-/* ── تغيير التكبير من نقطة ── */
-function doZoom(newS, cx, cy) {
-  newS = Math.min(S_MAX, Math.max(S_MIN, newS));
-  var r = newS / S;
-  X = cx - (cx - X) * r;
-  Y = cy - (cy - Y) * r;
-  S = newS;
-  draw();
+/* ── معالج اختيار الصورة (inline onchange) ── */
+function handlePhotoChange(e) {
+  var input = e.target || e;
+  var file  = input.files && input.files[0];
+  if (!file) return;
+  
+  /* امسح الاختيار حتى يمكن اختيار نفس الصورة مرة أخرى */
+  setTimeout(function(){ input.value = ''; }, 100);
+
+  if (!file.type.startsWith('image/')) return;
+
+  var reader = new FileReader();
+  reader.onload = function(ev) { _openCrop(ev.target.result); };
+  reader.onerror = function() {
+    if (typeof showToast === 'function') showToast('تعذر قراءة الصورة');
+  };
+  reader.readAsDataURL(file);
+}
+window.handlePhotoChange = handlePhotoChange;
+
+/* ── القلم: يعيد فتح المقص بالصورة المحفوظة ── */
+function _penClick(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  var saved = localStorage.getItem('userPhoto');
+  if (saved) {
+    _openCrop(saved);
+  } else {
+    document.getElementById('pic-file-input').click();
+  }
 }
 
-/* ── فتح المقص بمصدر صورة ── */
-function openCrop(src) {
-  SRC = src;
+/* ── عرض الصورة في الحلقة ── */
+function _renderRing() {
+  var ring  = document.getElementById('PR');
+  var icon  = document.getElementById('PC-icon');
+  var input = document.getElementById('pic-file-input');
+  var pc    = document.getElementById('PC');
+  var photo = localStorage.getItem('userPhoto');
+
+  if (!ring) return;
+
+  if (photo) {
+    ring.innerHTML =
+      '<img src="' + photo + '" '
+      + 'style="width:100%;height:100%;object-fit:cover;'
+      + 'display:block;border-radius:50%;pointer-events:none" '
+      + 'onerror="this.parentElement.innerHTML='
+      + "'<i class=\'fas fa-user\' style=\'font-size:2.4rem;"
+      + "color:var(--accent)\'></i>'""
+      + '>';
+    if (icon) icon.className = 'fas fa-pen';
+    /* القلم يفتح المقص للتعديل — نخفي الـ input خلفه */
+    if (pc) {
+      pc.style.zIndex = '20';
+      pc.onclick = _penClick;
+      /* أخفِ input تحت القلم */
+      if (input) input.style.zIndex = '5';
+    }
+  } else {
+    ring.innerHTML = '<i class="fas fa-user" style="font-size:2.4rem;color:var(--accent);pointer-events:none"></i>';
+    if (icon) icon.className = 'fas fa-camera';
+    if (pc) { pc.style.zIndex = '5'; pc.onclick = null; }
+    if (input) input.style.zIndex = '10';
+  }
+}
+
+/* ── فتح المقص ── */
+function _openCrop(src) {
+  _SRC = src;
   var loader = new Image();
   loader.onload = function() {
-    NW = loader.naturalWidth;
-    NH = loader.naturalHeight;
+    _NW = loader.naturalWidth;
+    _NH = loader.naturalHeight;
+    _SZ = Math.min(300, window.innerWidth - 64);
 
-    SZ = Math.min(300, window.innerWidth - 64);
     var circle = document.getElementById('crop-circle');
-    circle.style.width  = SZ + 'px';
-    circle.style.height = SZ + 'px';
+    if (circle) { circle.style.width = _SZ+'px'; circle.style.height = _SZ+'px'; }
 
-    S_MIN = Math.max(SZ / NW, SZ / NH) * 1.001;
-    S_MAX = S_MIN * 8;
-    S     = S_MIN;
-    X     = (SZ - NW * S) / 2;
-    Y     = (SZ - NH * S) / 2;
+    _SMIN = Math.max(_SZ/_NW, _SZ/_NH) * 1.001;
+    _SMAX = _SMIN * 8;
+    _S    = _SMIN;
+    _X    = (_SZ - _NW*_S) / 2;
+    _Y    = (_SZ - _NH*_S) / 2;
 
     var img = document.getElementById('crop-img');
-    img.style.left = img.style.top = img.style.width = img.style.height = '';
-    img.onload = function() { draw(); };
-    img.src = src;
-    if (img.complete && img.naturalWidth > 0) draw();
+    if (img) {
+      img.style.cssText = '';
+      img.onload = function() { _draw(); };
+      img.src = src;
+      if (img.complete && img.naturalWidth > 0) _draw();
+    }
 
-    document.getElementById('CROP').classList.add('open');
-    document.body.style.overflow = 'hidden';
+    var modal = document.getElementById('CROP-MODAL');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
   };
   loader.onerror = function() {
     if (typeof showToast === 'function') showToast('تعذر فتح الصورة');
@@ -360,250 +405,161 @@ function openCrop(src) {
   loader.src = src;
 }
 
-/* ── إغلاق ── */
-function closeCrop() {
-  document.getElementById('CROP').classList.remove('open');
+/* ── رسم الصورة ── */
+function _draw() {
+  var dw = _NW * _S, dh = _NH * _S;
+  if (_X > 0) _X = 0;
+  if (_Y > 0) _Y = 0;
+  if (_X < _SZ - dw) _X = _SZ - dw;
+  if (_Y < _SZ - dh) _Y = _SZ - dh;
+  var img = document.getElementById('crop-img');
+  if (!img) return;
+  img.style.position = 'absolute';
+  img.style.left   = _X + 'px';
+  img.style.top    = _Y + 'px';
+  img.style.width  = dw + 'px';
+  img.style.height = dh + 'px';
+}
+
+/* ── تكبير ── */
+function _zoom(ns, cx, cy) {
+  ns = Math.min(_SMAX, Math.max(_SMIN, ns));
+  var r = ns / _S;
+  _X = cx - (cx - _X) * r;
+  _Y = cy - (cy - _Y) * r;
+  _S = ns;
+  _draw();
+}
+
+/* ── إغلاق المقص ── */
+function _closeCrop() {
+  var modal = document.getElementById('CROP-MODAL');
+  if (modal) modal.style.display = 'none';
   document.body.style.overflow = '';
 }
 
 /* ── حفظ الصورة ── */
-function saveCrop() {
-  var btn = document.getElementById('crop-save');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-left:6px"></i>جاري...';
+function _saveCrop() {
+  var btn = document.getElementById('crop-save-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-left:6px"></i>جاري...'; }
 
   var img = document.getElementById('crop-img');
-  var ratio = OUT / SZ;
+  var ratio = _OUT / _SZ;
 
-  function render(srcImg) {
+  function doRender(srcImg) {
     var canvas = document.createElement('canvas');
-    canvas.width = canvas.height = OUT;
+    canvas.width = canvas.height = _OUT;
     var ctx = canvas.getContext('2d');
-
-    /* قص دائري */
     ctx.save();
     ctx.beginPath();
-    ctx.arc(OUT / 2, OUT / 2, OUT / 2, 0, Math.PI * 2);
+    ctx.arc(_OUT/2, _OUT/2, _OUT/2, 0, Math.PI*2);
     ctx.clip();
-
-    /* رسم الصورة بنفس إحداثيات العرض × ratio */
-    ctx.drawImage(
-      srcImg,
-      X * ratio,
-      Y * ratio,
-      NW * S * ratio,
-      NH * S * ratio
-    );
+    ctx.drawImage(srcImg, _X*ratio, _Y*ratio, _NW*_S*ratio, _NH*_S*ratio);
     ctx.restore();
-
     var url = canvas.toDataURL('image/jpeg', 0.92);
     localStorage.setItem('userPhoto', url);
-    renderRing();
-    closeCrop();
+    _renderRing();
+    _closeCrop();
     if (typeof showToast === 'function') showToast('تم حفظ الصورة بنجاح');
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة';
+    if (btn) { btn.disabled=false; btn.innerHTML='<i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة'; }
   }
 
-  /* إذا الصورة محملة استخدمها مباشرة */
-  if (img.complete && img.naturalWidth > 0) {
-    render(img);
+  if (img && img.complete && img.naturalWidth > 0) {
+    doRender(img);
   } else {
-    /* وإلا حملها من جديد */
     var tmp = new Image();
-    tmp.onload  = function() { render(tmp); };
+    tmp.onload = function() { doRender(tmp); };
     tmp.onerror = function() {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة';
+      if (btn) { btn.disabled=false; btn.innerHTML='<i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة'; }
       if (typeof showToast === 'function') showToast('خطأ في الحفظ');
     };
-    tmp.src = SRC;
+    tmp.src = _SRC;
   }
 }
+window._saveCrop = _saveCrop;
+window._closeCrop = _closeCrop;
 
-/* ── عرض الصورة في دائرة البروفايل ── */
-function renderRing() {
-  var placeholder = document.getElementById('pic-placeholder');
-  var badgeIcon   = document.getElementById('pic-badge-icon');
-  var photo       = localStorage.getItem('userPhoto');
-
-  if (placeholder) {
-    if (photo) {
-      placeholder.innerHTML =
-        '<img src="' + photo + '" '
-        + 'onerror="this.parentElement.innerHTML='<i class=\'fas fa-user\' style=\'font-size:2.4rem;color:var(--accent)\'></i>'">';
-    } else {
-      placeholder.innerHTML = '<i class="fas fa-user" style="font-size:2.4rem;color:var(--accent)"></i>';
-    }
-  }
-
-  if (badgeIcon) {
-    badgeIcon.className = photo ? 'fas fa-pen' : 'fas fa-camera';
-  }
-
-  /* إذا الصورة موجودة — القلم يفتح المقص للتعديل بدل المعرض */
-  var badge = document.getElementById('pic-badge');
-  var label = document.getElementById('pic-label');
-  var input = document.getElementById('pic-file-input');
-
-  if (photo) {
-    /* ألغِ ربط label بالـ input */
-    if (badge) badge.removeAttribute('for');
-    if (label) label.removeAttribute('for');
-
-    /* القلم: أعد تعديل الصورة */
-    if (badge && !badge._editBound) {
-      badge._editBound = true;
-      badge.addEventListener('click', function(e) {
-        e.preventDefault();
-        openCrop(localStorage.getItem('userPhoto'));
-      });
-    }
-
-    /* دائرة الصورة: فتح معرض لاستبدال */
-    if (label && !label._clickBound) {
-      label._clickBound = true;
-      label.addEventListener('click', function(e) {
-        e.preventDefault();
-        input.click();
-      });
-    }
-  } else {
-    /* بدون صورة: label + for يفتح المعرض مباشرة */
-    if (badge) badge.setAttribute('for', 'pic-file-input');
-    if (label) label.setAttribute('for', 'pic-file-input');
-  }
-}
-
-/* ═══ أحداث السحب ═══ */
-var drag = false, sx = 0, sy = 0, ox = 0, oy = 0, pd = 0;
-
+/* ── السحب والتكبير ── */
 document.addEventListener('mousedown', function(e) {
   var c = document.getElementById('crop-circle');
   if (!c || !c.contains(e.target)) return;
-  drag = true; sx = e.clientX; sy = e.clientY; ox = X; oy = Y;
-  c.classList.add('grabbing');
+  _drag=true; _sx=e.clientX; _sy=e.clientY; _ox=_X; _oy=_Y;
   e.preventDefault();
 });
 document.addEventListener('mousemove', function(e) {
-  if (!drag) return;
-  X = ox + (e.clientX - sx);
-  Y = oy + (e.clientY - sy);
-  draw();
+  if (!_drag) return;
+  _X=_ox+(e.clientX-_sx); _Y=_oy+(e.clientY-_sy); _draw();
 });
-document.addEventListener('mouseup', function() {
-  drag = false;
-  var c = document.getElementById('crop-circle');
-  if (c) c.classList.remove('grabbing');
-});
+document.addEventListener('mouseup', function() { _drag=false; });
 
 document.addEventListener('touchstart', function(e) {
   var c = document.getElementById('crop-circle');
   if (!c || !c.contains(e.target)) return;
-  if (e.touches.length === 1) {
-    drag = true; pd = 0;
-    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
-    ox = X; oy = Y;
-    c.classList.add('grabbing');
-  } else if (e.touches.length === 2) {
-    drag = false;
-    c.classList.remove('grabbing');
-    pd = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
+  if (e.touches.length===1) {
+    _drag=true; _pd=0;
+    _sx=e.touches[0].clientX; _sy=e.touches[0].clientY; _ox=_X; _oy=_Y;
+  } else if (e.touches.length===2) {
+    _drag=false;
+    _pd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,
+                   e.touches[0].clientY-e.touches[1].clientY);
   }
   e.preventDefault();
-}, { passive: false });
+},{passive:false});
 
 document.addEventListener('touchmove', function(e) {
   var c = document.getElementById('crop-circle');
   if (!c) return;
-  if (e.touches.length === 1 && drag) {
-    X = ox + (e.touches[0].clientX - sx);
-    Y = oy + (e.touches[0].clientY - sy);
-    draw();
-  } else if (e.touches.length === 2 && pd > 0) {
-    var d = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
-    var rect = c.getBoundingClientRect();
-    var cx = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
-    var cy = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
-    doZoom(S * (d / pd), cx, cy);
-    pd = d;
+  if (e.touches.length===1 && _drag) {
+    _X=_ox+(e.touches[0].clientX-_sx); _Y=_oy+(e.touches[0].clientY-_sy); _draw();
+  } else if (e.touches.length===2 && _pd>0) {
+    var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,
+                     e.touches[0].clientY-e.touches[1].clientY);
+    var rect=c.getBoundingClientRect();
+    _zoom(_S*(d/_pd),
+      (e.touches[0].clientX+e.touches[1].clientX)/2-rect.left,
+      (e.touches[0].clientY+e.touches[1].clientY)/2-rect.top);
+    _pd=d;
   }
-  if (c.contains(e.target) || drag) e.preventDefault();
-}, { passive: false });
+  if (c.contains(e.target)||_drag) e.preventDefault();
+},{passive:false});
 
-document.addEventListener('touchend', function() {
-  drag = false; pd = 0;
-  var c = document.getElementById('crop-circle');
-  if (c) c.classList.remove('grabbing');
-});
+document.addEventListener('touchend', function() { _drag=false; _pd=0; });
 
-/* ═══ تهيئة عند تحميل الصفحة ═══ */
+/* ── تهيئة ── */
 document.addEventListener('DOMContentLoaded', function() {
+  _renderRing();
+  var n  = document.getElementById('profileName');
+  var em = document.getElementById('profileEmail');
+  if (n)  n.textContent  = localStorage.getItem('userName')  || 'مستخدم عقاري';
+  if (em) em.textContent = localStorage.getItem('userEmail') || '';
 
-  /* 1. قراءة الملف المختار */
-  var input = document.getElementById('pic-file-input');
-  input.addEventListener('change', function() {
-    var file = this.files && this.files[0];
-    this.value = ''; /* مسح للسماح بإعادة الاختيار */
-    if (!file || !file.type.startsWith('image/')) return;
-    var reader = new FileReader();
-    reader.onload = function(ev) {
-      openCrop(ev.target.result);
-    };
-    reader.readAsDataURL(file);
-  });
-
-  /* 2. إغلاق المقص */
-  document.getElementById('crop-cancel').addEventListener('click', closeCrop);
-  document.getElementById('crop-save').addEventListener('click', saveCrop);
-  document.getElementById('CROP').addEventListener('click', function(e) {
-    if (e.target === this) closeCrop();
-  });
-
-  /* 3. تحميل البيانات */
-  renderRing();
-  document.getElementById('profileName').textContent  = localStorage.getItem('userName')  || 'مستخدم عقاري';
-  document.getElementById('profileEmail').textContent = localStorage.getItem('userEmail') || '';
-
-  /* 4. إحصاءات */
   setTimeout(function() {
     var ads  = window.myProperties || [];
     var favs = window.favorites    || [];
-    document.getElementById('myAdsCount').textContent      = ads.length;
-    document.getElementById('myAdsCountBadge').textContent = ads.length;
-    document.getElementById('favsCount').textContent       = favs.length;
-    document.getElementById('viewsCount').textContent      =
-      ads.reduce(function(a, p) { return a + (p.views || 0); }, 0).toLocaleString();
-
+    var ac = document.getElementById('myAdsCount');
+    var ab = document.getElementById('myAdsCountBadge');
+    var fc = document.getElementById('favsCount');
+    var vc = document.getElementById('viewsCount');
+    if (ac) ac.textContent = ads.length;
+    if (ab) ab.textContent = ads.length;
+    if (fc) fc.textContent = favs.length;
+    if (vc) vc.textContent = ads.reduce(function(a,p){return a+(p.views||0);},0).toLocaleString();
     var sec = document.getElementById('myAdsSection');
     if (ads.length && sec) {
-      sec.innerHTML = ads.slice(0, 5).map(function(p) {
+      sec.innerHTML = ads.slice(0,5).map(function(p){
         var imgs = window.getPropImages ? window.getPropImages(p) : [];
         var img  = imgs[0] || '';
-        return '<div onclick="gotoDetails(' + p.id + ')" '
-          + 'style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">'
-          + '<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;'
-          + 'background:var(--gray-light);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--gray)">'
-          + (img ? '<img src="' + img + '" style="width:100%;height:100%;object-fit:cover">'
-                 : '<i class="fas fa-building"></i>')
-          + '</div><div style="flex:1;overflow:hidden">'
-          + '<div style="font-weight:700;font-size:0.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
-          + p.title + '</div>'
-          + '<div style="font-size:0.77rem;color:var(--accent);font-weight:700;margin-top:2px">$'
-          + (p.price || 0).toLocaleString('en-US') + ' USD</div>'
-          + '</div></div>';
+        return '<div onclick="gotoDetails('+p.id+')" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">'
+          +'<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;background:var(--gray-light);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--gray)">'
+          +(img?'<img src="'+img+'" style="width:100%;height:100%;object-fit:cover">':'<i class="fas fa-building"></i>')
+          +'</div><div style="flex:1;overflow:hidden">'
+          +'<div style="font-weight:700;font-size:0.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.title+'</div>'
+          +'<div style="font-size:0.77rem;color:var(--accent);font-weight:700;margin-top:2px">$'+(p.price||0).toLocaleString('en-US')+' USD</div>'
+          +'</div></div>';
       }).join('');
     }
   }, 350);
 });
-
-})();
 </script>
 <script>
 if ('serviceWorker' in navigator) {
