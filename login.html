@@ -216,8 +216,8 @@ function fbErr(code) {
     'auth/user-not-found':            '⚠️ هذا البريد غير مسجل — أنشئ حساباً جديداً',
     'auth/wrong-password':            '❌ كلمة المرور غير صحيحة',
     'auth/invalid-credential':        '❌ البريد أو كلمة المرور غير صحيحة',
-    'auth/invalid-login-credentials': '❌ البريد أو كلمة المرور غير صحيحة — تأكد من البيانات أو أنشئ حساباً جديداً',
-    'auth/email-already-in-use':      '⚠️ هذا البريد مسجل مسبقاً — اضغط "دخول"',
+    'auth/invalid-login-credentials': '❌ كلمة المرور غير صحيحة — إذا سجّلت بـ Google استخدم زر Google للدخول',
+    'auth/email-already-in-use':      '⚠️ هذا البريد مسجل بحساب Google — استخدم زر "المتابعة عبر Google" للدخول',
     'auth/weak-password':             '⚠️ كلمة المرور قصيرة — 6 أحرف على الأقل',
     'auth/invalid-email':             '⚠️ صيغة البريد الإلكتروني غير صحيحة',
     'auth/too-many-requests':         '⏳ كثير من المحاولات — انتظر دقيقة ثم أعد المحاولة',
@@ -276,13 +276,23 @@ async function doLogin() {
     showToast('✅ مرحباً بك!');
     gotoHome();
   } catch(e) {
-    let hint = null;
-    if (e.code === 'auth/invalid-login-credentials' || e.code === 'auth/user-not-found') {
-      hint = '💡 لا تملك حساباً؟ اضغط على "تسجيل جديد" لإنشاء حساب';
-    }
-    showErr(fbErr(e.code), hint);
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-sign-in-alt" style="margin-left:8px"></i> دخول';
+
+    /* تحقق إذا البريد مسجّل بـ Google */
+    if (e.code === 'auth/invalid-login-credentials' ||
+        e.code === 'auth/wrong-password' ||
+        e.code === 'auth/user-not-found') {
+      try {
+        const methods = await auth.fetchSignInMethodsForEmail(email);
+        if (methods.includes('google.com') && !methods.includes('password')) {
+          /* مسجّل بـ Google فقط — عرض خيار إضافة كلمة مرور */
+          showGoogleOnlyDialog(email);
+          return;
+        }
+      } catch(_) {}
+    }
+    showErr(fbErr(e.code));
   }
 }
 
@@ -312,7 +322,11 @@ async function doRegister() {
     showToast('🎉 تم إنشاء حسابك بنجاح!');
     gotoHome();
   } catch(e) {
-    showErr(fbErr(e.code));
+    if (e.code === 'auth/email-already-in-use') {
+      showErr('⚠️ هذا البريد مسجل مسبقاً', '💡 إذا سجّلت بـ Google من قبل — استخدم زر "المتابعة عبر Google"');
+    } else {
+      showErr(fbErr(e.code));
+    }
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-user-plus" style="margin-left:8px"></i> إنشاء حساب';
   }
@@ -373,6 +387,93 @@ function switchTab(tab) {
     el.style.boxShadow   = on ? 'var(--shadow-sm)' : 'none';
   });
 }
+
+
+/* حوار: الحساب Google فقط — إضافة كلمة مرور */
+async function showGoogleOnlyDialog(email) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:var(--card,#fff);border-radius:24px 24px 0 0;padding:22px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px;animation:slideUp .3s cubic-bezier(.34,1.56,.64,1)">
+      <style>@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>
+      <div style="width:40px;height:4px;background:#e2e8f0;border-radius:99px;margin:0 auto 18px"></div>
+      <div style="width:64px;height:64px;border-radius:18px;background:rgba(66,133,244,0.1);display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 14px">🔑</div>
+      <div style="font-size:1rem;font-weight:900;text-align:center;color:var(--text,#1e293b);margin-bottom:8px">حسابك مرتبط بـ Google</div>
+      <div style="font-size:0.82rem;color:#64748b;text-align:center;line-height:1.7;margin-bottom:20px">
+        بريدك <strong style="color:var(--text)">${email}</strong> مسجّل بـ Google.<br>
+        اختر طريقة الدخول:
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button id="_gBtn" style="padding:13px;border-radius:13px;border:1.5px solid #dadce0;background:white;cursor:pointer;font-family:var(--font,'Cairo',sans-serif);font-size:0.88rem;font-weight:700;color:#3c4043;display:flex;align-items:center;justify-content:center;gap:10px">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">
+          ادخل بـ Google الآن
+        </button>
+        <button id="_pBtn" style="padding:13px;border-radius:13px;border:none;background:linear-gradient(135deg,#f97316,#dc2626);color:white;cursor:pointer;font-family:var(--font,'Cairo',sans-serif);font-size:0.88rem;font-weight:800">
+          📧 أرسل لي رابط تعيين كلمة مرور
+        </button>
+        <button id="_cBtn" style="padding:11px;border-radius:13px;border:none;background:transparent;color:#94a3b8;cursor:pointer;font-family:var(--font,'Cairo',sans-serif);font-size:0.84rem">
+          إلغاء
+        </button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+
+  overlay.querySelector('#_cBtn').onclick = close;
+  overlay.addEventListener('click', e => { if(e.target===overlay) close(); });
+
+  /* دخول بـ Google */
+  overlay.querySelector('#_gBtn').onclick = async () => {
+    close();
+    await doGoogle();
+  };
+
+  /* إرسال رابط كلمة مرور */
+  overlay.querySelector('#_pBtn').onclick = async () => {
+    const btn = overlay.querySelector('#_pBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ جاري الإرسال...';
+    try {
+      await auth.sendPasswordResetEmail(email);
+      close();
+      /* رسالة نجاح مع تعليمات */
+      showSuccessDialog(email);
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = '📧 أرسل لي رابط تعيين كلمة مرور';
+      showErr(fbErr(e.code));
+    }
+  };
+}
+
+/* حوار نجاح إرسال البريد */
+function showSuccessDialog(email) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:var(--card,#fff);border-radius:24px 24px 0 0;padding:22px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px;animation:slideUp .3s cubic-bezier(.34,1.56,.64,1)">
+      <style>@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>
+      <div style="width:40px;height:4px;background:#e2e8f0;border-radius:99px;margin:0 auto 18px"></div>
+      <div style="width:64px;height:64px;border-radius:18px;background:rgba(74,222,128,0.1);display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 14px">📬</div>
+      <div style="font-size:1rem;font-weight:900;text-align:center;color:var(--text,#1e293b);margin-bottom:8px">تم إرسال الرابط!</div>
+      <div style="font-size:0.82rem;color:#64748b;text-align:center;line-height:1.8;margin-bottom:20px">
+        أرسلنا رابطاً لـ <strong style="color:var(--text)">${email}</strong><br><br>
+        <strong style="color:var(--text)">الخطوات:</strong><br>
+        1️⃣ افتح بريدك وابحث عن رسالة من Firebase<br>
+        2️⃣ اضغط الرابط في الرسالة<br>
+        3️⃣ اختر كلمة مرور جديدة<br>
+        4️⃣ ارجع للتطبيق وادخل بالبريد وكلمة المرور الجديدة ✅
+      </div>
+      <button onclick="this.closest('[style]').remove()" style="width:100%;padding:13px;border-radius:13px;border:none;background:linear-gradient(135deg,#4ade80,#22c55e);color:white;cursor:pointer;font-family:var(--font,'Cairo',sans-serif);font-size:0.9rem;font-weight:800">
+        ✅ فهمت — سأتحقق من بريدي
+      </button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+}
+window.showGoogleOnlyDialog = showGoogleOnlyDialog;
 
 /* ── Enter للدخول ── */
 document.addEventListener('keydown', e => {
