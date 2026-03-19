@@ -2,235 +2,392 @@
 <html lang="ar" dir="rtl" data-theme="light">
 <head>
     <meta charset="UTF-8">
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#e67e22">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="عقاري">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#e67e22">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="عقاري">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>تسجيل الدخول - عقاري</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+<style>
+.google-btn {
+  width: 100%;
+  padding: 13px;
+  border: 1.5px solid #dadce0;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #3c4043;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.google-btn:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+.google-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.google-btn img { width: 20px; height: 20px; flex-shrink: 0; }
+
+.auth-error {
+  background: rgba(231,76,60,0.08);
+  border: 1px solid rgba(231,76,60,0.3);
+  border-radius: 10px;
+  padding: 10px 13px;
+  font-size: 0.8rem;
+  color: #e74c3c;
+  margin-bottom: 14px;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+.auth-error.show { display: flex; }
+
+[data-theme="dark"] .google-btn {
+  background: #2d3748;
+  color: #e2e8f0;
+  border-color: #4a5568;
+}
+</style>
 </head>
 <body style="padding-bottom:0">
 
-    <!-- Splash Screen -->
-    <div id="splash-screen">
-        <div class="splash-logo"><i class="fas fa-building"></i></div>
-        <div class="splash-text">عقـ<span>ـاري</span></div>
-        <div style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:8px">منصة العقارات الأولى في سوريا</div>
-    </div>
+<!-- Splash Screen -->
+<div id="splash-screen">
+    <div class="splash-logo"><i class="fas fa-building"></i></div>
+    <div class="splash-text">عقـ<span>ـاري</span></div>
+    <div style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:8px">منصة العقارات الأولى في سوريا</div>
+</div>
 
-    <div class="container login-wrapper">
-        <div class="login-icon"><i class="fas fa-building"></i></div>
-        <h2 style="margin-bottom:6px;font-size:1.7rem;font-weight:900;">مرحباً بك في عقاري</h2>
-        <p style="color:var(--gray);margin-bottom:32px;font-size:0.88rem;">ابحث عن عقار أحلامك بكل سهولة</p>
+<div class="container login-wrapper">
+    <div class="login-icon"><i class="fas fa-building"></i></div>
+    <h2 style="margin-bottom:6px;font-size:1.7rem;font-weight:900;">مرحباً بك في عقاري</h2>
+    <p style="color:var(--gray);margin-bottom:28px;font-size:0.88rem;">ابحث عن عقار أحلامك بكل سهولة</p>
 
-        <div style="width:100%;max-width:340px">
-            <!-- Tabs -->
-            <div style="display:flex;gap:0;background:var(--gray-light);border-radius:12px;padding:4px;margin-bottom:24px">
-                <button id="loginTab" onclick="switchTab('login')" 
-                        style="flex:1;padding:9px;border:none;border-radius:9px;background:var(--card);font-family:var(--font);font-size:0.88rem;font-weight:700;cursor:pointer;color:var(--text);box-shadow:var(--shadow-sm);transition:all 0.2s">
-                    دخول
-                </button>
-                <button id="registerTab" onclick="switchTab('register')"
-                        style="flex:1;padding:9px;border:none;border-radius:9px;background:transparent;font-family:var(--font);font-size:0.88rem;font-weight:600;cursor:pointer;color:var(--gray);transition:all 0.2s">
-                    تسجيل جديد
-                </button>
-            </div>
+    <div style="width:100%;max-width:340px">
 
-            <!-- Login Form -->
-            <div id="loginForm">
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-envelope" style="color:var(--accent);margin-left:6px"></i>البريد الإلكتروني
-                    </label>
-                    <input type="email" id="emailInput" class="form-input" placeholder="example@mail.com" 
-                           value="user@example.com" autocomplete="email">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-lock" style="color:var(--accent);margin-left:6px"></i>كلمة المرور
-                    </label>
-                    <div style="position:relative">
-                        <input type="password" id="passInput" class="form-input" placeholder="••••••••" 
-                               value="123456" autocomplete="current-password">
-                        <button onclick="togglePass()" type="button"
-                                style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gray);cursor:pointer;padding:6px;">
-                            <i class="fas fa-eye" id="eyeIcon"></i>
-                        </button>
-                    </div>
-                </div>
-                <div style="text-align:left;margin-bottom:20px">
-                    <a href="#" style="font-size:0.8rem;color:var(--accent);text-decoration:none;font-weight:600">نسيت كلمة المرور؟</a>
-                </div>
-                <button class="btn-primary btn-accent" onclick="handleLogin()" id="loginBtn">
-                    <i class="fas fa-sign-in-alt" style="margin-left:8px"></i> دخول
-                </button>
-            </div>
-
-            <!-- Register Form -->
-            <div id="registerForm" style="display:none">
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-user" style="color:var(--accent);margin-left:6px"></i>الاسم الكامل
-                    </label>
-                    <input type="text" class="form-input" id="regName" placeholder="محمد العبدالله">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-phone" style="color:var(--accent);margin-left:6px"></i>رقم الجوال
-                    </label>
-                    <input type="tel" class="form-input" id="regPhone" placeholder="05XXXXXXXX">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-envelope" style="color:var(--accent);margin-left:6px"></i>البريد الإلكتروني
-                    </label>
-                    <input type="email" class="form-input" id="regEmail" placeholder="example@mail.com">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-lock" style="color:var(--accent);margin-left:6px"></i>كلمة المرور
-                    </label>
-                    <input type="password" class="form-input" id="regPass" placeholder="6 أحرف على الأقل">
-                </div>
-                <button class="btn-primary btn-accent" onclick="handleRegister()">
-                    <i class="fas fa-user-plus" style="margin-left:8px"></i> إنشاء حساب
-                </button>
-            </div>
-
-            <p style="margin-top:16px;font-size:0.78rem;color:var(--gray);text-align:center;">
-                <i class="fas fa-info-circle"></i> أي بيانات تعمل للتجربة
-            </p>
-
-            <!-- Social Login -->
-            <div style="margin-top:20px;text-align:center">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-                    <div style="flex:1;height:1px;background:var(--border)"></div>
-                    <span style="font-size:0.78rem;color:var(--gray)">أو سجّل بـ</span>
-                    <div style="flex:1;height:1px;background:var(--border)"></div>
-                </div>
-                <div style="display:flex;gap:10px">
-                    <button onclick="socialLogin('Google')" 
-                            style="flex:1;padding:11px;border:1.5px solid var(--border);border-radius:10px;background:var(--card);cursor:pointer;font-family:var(--font);font-size:0.85rem;font-weight:600;color:var(--text);display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s">
-                        <img src="https://www.google.com/favicon.ico" width="16" height="16" alt="Google">
-                        Google
-                    </button>
-                    <button onclick="socialLogin('Apple')"
-                            style="flex:1;padding:11px;border:1.5px solid var(--border);border-radius:10px;background:var(--card);cursor:pointer;font-family:var(--font);font-size:0.85rem;font-weight:600;color:var(--text);display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s">
-                        <i class="fab fa-apple" style="font-size:1rem"></i>
-                        Apple
-                    </button>
-                </div>
-            </div>
+        <!-- Tabs -->
+        <div style="display:flex;gap:0;background:var(--gray-light);border-radius:12px;padding:4px;margin-bottom:20px">
+            <button id="loginTab" onclick="switchTab('login')"
+                style="flex:1;padding:9px;border:none;border-radius:9px;background:var(--card);
+                font-family:var(--font);font-size:0.88rem;font-weight:700;cursor:pointer;
+                color:var(--text);box-shadow:var(--shadow-sm);transition:all 0.2s">
+                دخول
+            </button>
+            <button id="registerTab" onclick="switchTab('register')"
+                style="flex:1;padding:9px;border:none;border-radius:9px;background:transparent;
+                font-family:var(--font);font-size:0.88rem;font-weight:600;cursor:pointer;
+                color:var(--gray);transition:all 0.2s">
+                تسجيل جديد
+            </button>
         </div>
+
+        <!-- رسالة الخطأ -->
+        <div class="auth-error" id="authError">
+            <i class="fas fa-exclamation-circle"></i>
+            <span id="authErrorMsg"></span>
+        </div>
+
+        <!-- نموذج الدخول -->
+        <div id="loginForm">
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-envelope" style="color:var(--accent);margin-left:6px"></i>البريد الإلكتروني
+                </label>
+                <input type="email" id="emailInput" class="form-input"
+                    placeholder="example@mail.com" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-lock" style="color:var(--accent);margin-left:6px"></i>كلمة المرور
+                </label>
+                <div style="position:relative">
+                    <input type="password" id="passInput" class="form-input"
+                        placeholder="••••••••" autocomplete="current-password">
+                    <button onclick="togglePass('passInput','eyeIcon1')" type="button"
+                        style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
+                        background:none;border:none;color:var(--gray);cursor:pointer;padding:6px">
+                        <i class="fas fa-eye" id="eyeIcon1"></i>
+                    </button>
+                </div>
+            </div>
+            <div style="text-align:left;margin-bottom:20px">
+                <a href="#" onclick="forgotPassword()" style="font-size:0.8rem;color:var(--accent);text-decoration:none;font-weight:600">
+                    نسيت كلمة المرور؟
+                </a>
+            </div>
+            <button class="btn-primary btn-accent" onclick="doLogin()" id="loginBtn">
+                <i class="fas fa-sign-in-alt" style="margin-left:8px"></i> دخول
+            </button>
+        </div>
+
+        <!-- نموذج التسجيل -->
+        <div id="registerForm" style="display:none">
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-user" style="color:var(--accent);margin-left:6px"></i>الاسم الكامل
+                </label>
+                <input type="text" class="form-input" id="regName" placeholder="محمد العبدالله">
+            </div>
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-phone" style="color:var(--accent);margin-left:6px"></i>رقم الجوال
+                </label>
+                <input type="tel" class="form-input" id="regPhone" placeholder="963XXXXXXXXX">
+            </div>
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-envelope" style="color:var(--accent);margin-left:6px"></i>البريد الإلكتروني
+                </label>
+                <input type="email" class="form-input" id="regEmail" placeholder="example@mail.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-lock" style="color:var(--accent);margin-left:6px"></i>كلمة المرور
+                </label>
+                <div style="position:relative">
+                    <input type="password" class="form-input" id="regPass"
+                        placeholder="6 أحرف على الأقل" autocomplete="new-password">
+                    <button onclick="togglePass('regPass','eyeIcon2')" type="button"
+                        style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
+                        background:none;border:none;color:var(--gray);cursor:pointer;padding:6px">
+                        <i class="fas fa-eye" id="eyeIcon2"></i>
+                    </button>
+                </div>
+            </div>
+            <button class="btn-primary btn-accent" onclick="doRegister()" id="registerBtn">
+                <i class="fas fa-user-plus" style="margin-left:8px"></i> إنشاء حساب
+            </button>
+        </div>
+
+        <!-- Google -->
+        <div style="margin-top:20px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+                <div style="flex:1;height:1px;background:var(--border)"></div>
+                <span style="font-size:0.78rem;color:var(--gray)">أو</span>
+                <div style="flex:1;height:1px;background:var(--border)"></div>
+            </div>
+            <button class="google-btn" id="googleBtn" onclick="doGoogle()">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                <span>المتابعة عبر Google</span>
+            </button>
+        </div>
+
     </div>
+</div>
 
-    <script src="js/app.js"></script>
-    <script>
-        function switchTab(tab) {
-            const loginForm = document.getElementById('loginForm');
-            const registerForm = document.getElementById('registerForm');
-            const loginTab = document.getElementById('loginTab');
-            const registerTab = document.getElementById('registerTab');
+<div id="toast"></div>
+<script src="js/app.js"></script>
 
-            if (tab === 'login') {
-                loginForm.style.display = 'block';
-                registerForm.style.display = 'none';
-                loginTab.style.background = 'var(--card)';
-                loginTab.style.color = 'var(--text)';
-                loginTab.style.boxShadow = 'var(--shadow-sm)';
-                registerTab.style.background = 'transparent';
-                registerTab.style.color = 'var(--gray)';
-                registerTab.style.boxShadow = 'none';
-            } else {
-                loginForm.style.display = 'none';
-                registerForm.style.display = 'block';
-                registerTab.style.background = 'var(--card)';
-                registerTab.style.color = 'var(--text)';
-                registerTab.style.boxShadow = 'var(--shadow-sm)';
-                loginTab.style.background = 'transparent';
-                loginTab.style.color = 'var(--gray)';
-                loginTab.style.boxShadow = 'none';
-            }
-        }
-
-        function handleLogin() {
-            const email = document.getElementById('emailInput').value.trim();
-            const pass = document.getElementById('passInput').value.trim();
-            const btn = document.getElementById('loginBtn');
-
-            if (!email || !pass) {
-                showToast('⚠️ يرجى إدخال البريد وكلمة المرور');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-left:8px"></i> جاري الدخول...';
-
-            setTimeout(() => {
-                localStorage.setItem('isLoggedIn', 'true');
-                localStorage.setItem('userEmail', email);
-                window.location.href = 'index.html';
-            }, 900);
-        }
-
-        function handleRegister() {
-            const name = document.getElementById('regName').value.trim();
-            const phone = document.getElementById('regPhone').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
-            const pass = document.getElementById('regPass').value.trim();
-
-            if (!name || !phone || !email || !pass) {
-                showToast('⚠️ يرجى ملء جميع الحقول');
-                return;
-            }
-
-            showToast('⏳ جاري إنشاء الحساب...');
-            setTimeout(() => {
-                localStorage.setItem('isLoggedIn', 'true');
-                localStorage.setItem('userEmail', email);
-                localStorage.setItem('userName', name);
-                window.location.href = 'index.html';
-            }, 1200);
-        }
-
-        function socialLogin(provider) {
-            showToast(`⏳ جاري الدخول عبر ${provider}...`);
-            setTimeout(() => {
-                localStorage.setItem('isLoggedIn', 'true');
-                localStorage.setItem('userEmail', `user@${provider.toLowerCase()}.com`);
-                window.location.href = 'index.html';
-            }, 1200);
-        }
-
-        function togglePass() {
-            const input = document.getElementById('passInput');
-            const icon = document.getElementById('eyeIcon');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.className = 'fas fa-eye-slash';
-            } else {
-                input.type = 'password';
-                icon.className = 'fas fa-eye';
-            }
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') handleLogin();
-        });
-    </script>
+<!-- Firebase Auth -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
 <script>
-if('serviceWorker' in navigator){
-  window.addEventListener('load',function(){
-    navigator.serviceWorker.register('sw.js')
-      .then(function(reg){console.log('[عقاري] SW مُفعّل');})
-      .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
+/* ── Firebase init ── */
+const FB = {
+  apiKey:            "AIzaSyCvVYtCsC7UR52bGLYvHebQqOumtat7poU",
+  authDomain:        "aqari-app-7c43f.firebaseapp.com",
+  projectId:         "aqari-app-7c43f",
+  storageBucket:     "aqari-app-7c43f.firebasestorage.app",
+  messagingSenderId: "61607617094",
+  appId:             "1:61607617094:web:6939a1e6ef47c7885b2047"
+};
+
+let auth;
+try {
+  if (!firebase.apps.length) firebase.initializeApp(FB);
+  auth = firebase.auth();
+  auth.languageCode = 'ar';
+} catch(e) {
+  console.warn('Firebase init:', e);
+}
+
+/* ── ترجمة أخطاء Firebase ── */
+function fbErr(code) {
+  const msgs = {
+    'auth/user-not-found':       'البريد الإلكتروني غير مسجل',
+    'auth/wrong-password':       'كلمة المرور غير صحيحة',
+    'auth/invalid-credential':   'البريد أو كلمة المرور غير صحيحة',
+    'auth/email-already-in-use': 'هذا البريد مسجل مسبقاً، جرب تسجيل الدخول',
+    'auth/weak-password':        'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+    'auth/invalid-email':        'صيغة البريد الإلكتروني غير صحيحة',
+    'auth/too-many-requests':    'كثير من المحاولات، انتظر قليلاً ثم أعد المحاولة',
+    'auth/network-request-failed': 'تحقق من اتصالك بالإنترنت',
+    'auth/popup-blocked':        'المتصفح حجب النافذة المنبثقة — اضغط مرة أخرى',
+    'auth/popup-closed-by-user': 'تم إغلاق نافذة Google',
+    'auth/unauthorized-domain':  'الدومين غير مسموح — تحقق من Firebase Console',
+    'auth/operation-not-allowed':'فعّل Google في Firebase Authentication',
+  };
+  return msgs[code] || 'حدث خطأ، حاول مجدداً (' + code + ')';
+}
+
+function showErr(msg) {
+  const el = document.getElementById('authError');
+  document.getElementById('authErrorMsg').textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+function hideErr() {
+  document.getElementById('authError').classList.remove('show');
+}
+
+/* ── حفظ بيانات المستخدم ── */
+function saveUser(user, extraName) {
+  localStorage.setItem('isLoggedIn', 'true');
+  localStorage.setItem('userEmail', user.email || '');
+  const name = extraName || user.displayName || user.email?.split('@')[0] || 'مستخدم عقاري';
+  localStorage.setItem('userName', name);
+  if (user.photoURL) localStorage.setItem('userPhoto', user.photoURL);
+  localStorage.setItem('userId', user.uid);
+}
+
+function gotoHome() {
+  setTimeout(() => { location.href = 'index.html'; }, 300);
+}
+
+/* ── تسجيل دخول بالبريد ── */
+async function doLogin() {
+  hideErr();
+  const email = document.getElementById('emailInput').value.trim();
+  const pass  = document.getElementById('passInput').value;
+  if (!email || !pass) { showErr('يرجى إدخال البريد وكلمة المرور'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-left:8px"></i> جاري الدخول...';
+
+  try {
+    const cred = await auth.signInWithEmailAndPassword(email, pass);
+    saveUser(cred.user);
+    showToast('✅ مرحباً بك!');
+    gotoHome();
+  } catch(e) {
+    showErr(fbErr(e.code));
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-sign-in-alt" style="margin-left:8px"></i> دخول';
+  }
+}
+
+/* ── إنشاء حساب جديد ── */
+async function doRegister() {
+  hideErr();
+  const name  = document.getElementById('regName').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPass').value;
+
+  if (!name)  { showErr('يرجى إدخال الاسم الكامل'); return; }
+  if (!phone) { showErr('يرجى إدخال رقم الجوال'); return; }
+  if (!email) { showErr('يرجى إدخال البريد الإلكتروني'); return; }
+  if (!pass || pass.length < 6) { showErr('كلمة المرور يجب أن تكون 6 أحرف على الأقل'); return; }
+
+  const btn = document.getElementById('registerBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-left:8px"></i> جاري إنشاء الحساب...';
+
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    /* حفظ الاسم في Firebase */
+    await cred.user.updateProfile({ displayName: name });
+    saveUser(cred.user, name);
+    localStorage.setItem('userPhone', phone);
+    showToast('🎉 تم إنشاء حسابك بنجاح!');
+    gotoHome();
+  } catch(e) {
+    showErr(fbErr(e.code));
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-user-plus" style="margin-left:8px"></i> إنشاء حساب';
+  }
+}
+
+/* ── تسجيل دخول Google ── */
+async function doGoogle() {
+  hideErr();
+  const btn = document.getElementById('googleBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري الدخول...</span>';
+
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const result = await auth.signInWithPopup(provider);
+    saveUser(result.user);
+    showToast('✅ مرحباً ' + result.user.displayName);
+    gotoHome();
+  } catch(e) {
+    showErr(fbErr(e.code));
+    btn.disabled = false;
+    btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20" alt="Google"> <span>المتابعة عبر Google</span>';
+  }
+}
+
+/* ── نسيت كلمة المرور ── */
+async function forgotPassword() {
+  const email = document.getElementById('emailInput').value.trim();
+  if (!email) { showErr('أدخل بريدك الإلكتروني أولاً ثم اضغط نسيت كلمة المرور'); return; }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    showToast('📧 تم إرسال رابط إعادة التعيين لبريدك');
+  } catch(e) {
+    showErr(fbErr(e.code));
+  }
+}
+
+/* ── مساعد إظهار/إخفاء كلمة المرور ── */
+function togglePass(inputId, iconId) {
+  const inp = document.getElementById(inputId);
+  const ico = document.getElementById(iconId);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  ico.className = inp.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+}
+
+/* ── تبديل التبويبات ── */
+function switchTab(tab) {
+  document.getElementById('loginForm').style.display    = tab === 'login'    ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+  hideErr();
+  ['loginTab', 'registerTab'].forEach(id => {
+    const el = document.getElementById(id);
+    const on = id === tab + 'Tab';
+    el.style.background = on ? 'var(--card)' : 'transparent';
+    el.style.fontWeight  = on ? '700' : '600';
+    el.style.color       = on ? 'var(--text)' : 'var(--gray)';
+    el.style.boxShadow   = on ? 'var(--shadow-sm)' : 'none';
+  });
+}
+
+/* ── Enter للدخول ── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (document.getElementById('loginForm').style.display !== 'none') doLogin();
+    else doRegister();
+  }
+});
+
+/* ── تحقق إذا مسجل دخول مسبقاً ── */
+if (auth) {
+  auth.onAuthStateChanged(user => {
+    if (user && localStorage.getItem('isLoggedIn')) {
+      /* مسجل دخول — انتقل مباشرة */
+      gotoHome();
+    }
+  });
+}
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
   });
 }
 </script>
