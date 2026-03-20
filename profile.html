@@ -442,11 +442,17 @@ window.addEventListener('DOMContentLoaded', function () {
   if (inp) {
     inp.addEventListener('change', function (e) {
       var file = e.target.files && e.target.files[0];
-      /* أعد تعيين القيمة */
-      e.target.value = '';
-      if (!file || !file.type.startsWith('image/')) return;
+      if (!file) return;
+      /* اقرأ الملف أولاً ثم امسح القيمة */
       var reader = new FileReader();
-      reader.onload = function (ev) { openCrop(ev.target.result); };
+      reader.onload = function (ev) {
+        /* امسح القيمة بعد القراءة حتى يمكن اختيار نفس الصورة مجدداً */
+        try { inp.value = ''; } catch(x) {}
+        openCrop(ev.target.result);
+      };
+      reader.onerror = function () {
+        if (typeof showToast==='function') showToast('تعذر قراءة الصورة');
+      };
       reader.readAsDataURL(file);
     });
   }
