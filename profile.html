@@ -3,66 +3,82 @@
 <head>
 <meta charset="UTF-8">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#e67e22">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="عقاري">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <title>حسابي - عقاري</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="css/style.css">
 <style>
-.pic-outer{position:relative;width:96px;height:96px;margin:0 auto 14px}
-.pic-ring{width:96px;height:96px;border-radius:50%;border:3.5px solid var(--accent);
-  overflow:hidden;background:var(--gray-light);display:flex;align-items:center;
-  justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(230,126,34,0.25)}
-.pic-ring i{font-size:2.4rem;color:var(--accent)}
-.pic-cam{position:absolute;bottom:2px;left:2px;width:30px;height:30px;border-radius:50%;
-  background:var(--accent);color:white;border:2.5px solid var(--card);
-  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.72rem;
-  box-shadow:0 2px 10px rgba(230,126,34,0.5)}
+.av-wrap{position:relative;width:90px;height:90px;margin:0 auto 14px}
 
-/* Modal */
-#cropOverlay{
+/* الدائرة — لا تتغير هيكلها أبداً */
+.av-circle{
+  width:90px;height:90px;border-radius:50%;
+  border:3px solid var(--accent);overflow:hidden;
+  background:var(--gray-light);
+  box-shadow:0 4px 18px rgba(230,126,34,0.22);
+  position:relative;cursor:pointer;
+}
+/* صورة البروفايل داخل الدائرة */
+#avImg{
+  position:absolute;inset:0;
+  width:100%;height:100%;object-fit:cover;
+  display:none;border-radius:50%;
+}
+/* أيقونة المستخدم */
+#avIcon{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:2.2rem;color:var(--accent);
+}
+/* label شفاف فوق الدائرة — يفتح المعرض */
+#avLabel{
+  position:absolute;inset:0;border-radius:50%;
+  cursor:pointer;z-index:2;
+}
+.av-badge{
+  position:absolute;bottom:0;left:0;width:28px;height:28px;
+  border-radius:50%;background:var(--accent);color:white;
+  border:2.5px solid var(--card);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.7rem;z-index:3;
+  box-shadow:0 2px 8px rgba(230,126,34,0.4);
+  pointer-events:none;
+}
+/* input — ثابت في مكانه لا يُحذف أبداً */
+#avInput{
+  position:fixed;
+  top:-9999px;left:-9999px;
+  width:1px;height:1px;
+  font-size:16px;
+}
+
+/* Modal القص */
+#cropModal{
   position:fixed;inset:0;z-index:99999;
   background:rgba(0,0,0,0.96);
-  display:none;
-  flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:20px;
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:20px;
 }
-#cropOverlay.active{display:flex}
-.crop-title{color:white;font-size:1rem;font-weight:800;margin-bottom:16px;text-align:center}
+#cropModal.show{display:flex}
 #cropCircle{
-  position:relative;
-  border-radius:50%;
-  overflow:hidden;
-  border:3px solid var(--accent);
-  background:#111;
-  cursor:grab;
-  box-shadow:0 0 0 5px rgba(230,126,34,0.2),0 8px 40px rgba(0,0,0,0.6);
-  touch-action:none;
-  flex-shrink:0;
+  position:relative;border-radius:50%;overflow:hidden;
+  border:3px solid var(--accent);background:#111;
+  touch-action:none;cursor:grab;flex-shrink:0;
+  box-shadow:0 0 0 5px rgba(230,126,34,0.15),0 12px 40px rgba(0,0,0,0.7);
 }
-#cropCircle.grabbing{cursor:grabbing}
-#cropImage{
-  position:absolute;
-  pointer-events:none;
-  user-select:none;
-  touch-action:none;
-}
-.crop-hint{color:rgba(255,255,255,0.45);font-size:0.72rem;margin-top:10px;text-align:center;line-height:1.7}
-.crop-actions{display:flex;gap:10px;margin-top:16px;width:100%;max-width:280px}
-.btn-cancel-crop{flex:1;padding:13px;border-radius:13px;
-  background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);
-  color:rgba(255,255,255,0.8);font-family:var(--font);font-size:0.88rem;font-weight:700;cursor:pointer}
-.btn-save-crop{flex:1.5;padding:13px;border-radius:13px;border:none;
-  background:linear-gradient(135deg,var(--accent),var(--accent-hover));
-  color:white;font-family:var(--font);font-size:0.88rem;font-weight:800;cursor:pointer;
-  box-shadow:0 4px 16px rgba(230,126,34,0.4)}
-.btn-save-crop:disabled{opacity:0.5;cursor:not-allowed}
+#cropImg{position:absolute;display:block;pointer-events:none;user-select:none}
+.cp-hint{color:rgba(255,255,255,0.4);font-size:0.72rem;margin-top:10px;text-align:center}
+.cp-row{display:flex;gap:10px;margin-top:16px;width:100%;max-width:300px}
+.cp-no{flex:1;padding:13px;border-radius:13px;background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.14);color:rgba(255,255,255,0.8);
+  font-family:var(--font);font-size:0.88rem;font-weight:700;cursor:pointer}
+.cp-yes{flex:1.5;padding:13px;border-radius:13px;border:none;
+  background:linear-gradient(135deg,#f97316,#dc2626);color:white;
+  font-family:var(--font);font-size:0.88rem;font-weight:800;cursor:pointer;
+  box-shadow:0 4px 14px rgba(249,115,22,0.4)}
+.cp-yes:disabled{opacity:0.5;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -74,27 +90,34 @@
 
 <div class="container">
   <div class="profile-header">
-    <!-- الصورة -->
-    <div class="pic-outer">
-      <div class="pic-ring" id="picRing">
-        <i class="fas fa-user" id="picIcon"></i>
+
+    <div class="av-wrap">
+      <!-- الدائرة — هيكلها ثابت لا يتغير -->
+      <div class="av-circle">
+        <img  id="avImg"  src="" alt="">
+        <div  id="avIcon"><i class="fas fa-user"></i></div>
+        <label id="avLabel" for="avInput"></label>
       </div>
-      <div class="pic-cam" id="picCamBtn">
+      <div class="av-badge" id="avBadge">
         <i class="fas fa-camera"></i>
       </div>
     </div>
-    <!-- input مخفي -->
-    <input type="file" id="picFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none">
+
+    <!--
+      input خارج الدائرة — ثابت في مكانه لا يُحذف أبداً
+      label فوق الدائرة تشير إليه بـ for="avInput"
+    -->
+    <input type="file" id="avInput" accept="image/*">
 
     <h3 id="profileName" style="margin-bottom:4px;font-size:1.2rem;font-weight:800">مستخدم عقاري</h3>
-    <p id="profileEmail" style="color:var(--gray);font-size:0.88rem"></p>
-    <div style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;background:rgba(39,174,96,0.1);padding:4px 14px;border-radius:20px;font-size:0.78rem;color:var(--success);border:1px solid rgba(39,174,96,0.2)">
+    <p id="profileEmail" style="color:var(--gray);font-size:0.88rem;margin-bottom:10px"></p>
+    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(39,174,96,0.1);padding:4px 14px;border-radius:20px;font-size:0.78rem;color:var(--success);border:1px solid rgba(39,174,96,0.2)">
       <i class="fas fa-shield-alt"></i> حساب موثق
     </div>
   </div>
 
   <div class="stat-box" style="margin-bottom:20px">
-    <div class="stat"><span class="stat-num" id="myAdsCount">0</span><span class="stat-label">إعلاناتي</span></div>
+    <div class="stat"><span class="stat-num" id="adsCount">0</span><span class="stat-label">إعلاناتي</span></div>
     <div class="stat"><span class="stat-num" id="favsCount">0</span><span class="stat-label">مفضلة</span></div>
     <div class="stat"><span class="stat-num" id="viewsCount">0</span><span class="stat-label">مشاهدات</span></div>
   </div>
@@ -111,9 +134,9 @@
   <div style="background:var(--card);border-radius:var(--radius-md);border:1px solid var(--border);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow-sm)">
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
       <span style="font-weight:800;font-size:0.9rem"><i class="fas fa-clipboard-list" style="color:var(--accent);margin-left:8px"></i>إعلاناتي</span>
-      <span id="myAdsCountBadge" style="background:var(--accent-light);color:var(--accent);padding:2px 10px;border-radius:99px;font-size:0.75rem;font-weight:700">0</span>
+      <span id="adsBadge" style="background:var(--accent-light);color:var(--accent);padding:2px 10px;border-radius:99px;font-size:0.75rem;font-weight:700">0</span>
     </div>
-    <div id="myAdsSection" style="padding:16px">
+    <div id="adsSection" style="padding:16px">
       <div class="empty-state" style="padding:16px 0">
         <i class="fas fa-plus-square" style="font-size:1.8rem;opacity:0.4;margin-bottom:10px"></i>
         <p style="font-size:0.85rem;font-weight:600;margin-bottom:6px">لم تنشر أي إعلانات بعد</p>
@@ -130,349 +153,208 @@
     <a href="notifications.html" class="menu-item">
       <span><i class="fas fa-bell" style="margin-left:10px;color:var(--gray)"></i>الإشعارات</span>
     </a>
-    <a href="#" class="menu-item" onclick="showToast&&showToast('⭐ شكراً!')">
-      <span><i class="fas fa-star" style="margin-left:10px;color:var(--warning)"></i>قيّم التطبيق</span>
-      <i class="fas fa-chevron-left" style="font-size:0.75rem;color:var(--gray)"></i>
-    </a>
-    <li class="menu-item danger" onclick="handleLogout&&handleLogout()">
+    <li class="menu-item danger" onclick="if(typeof handleLogout==='function')handleLogout()">
       <span><i class="fas fa-sign-out-alt" style="margin-left:10px"></i>تسجيل الخروج</span>
     </li>
   </ul>
-  <p style="text-align:center;color:var(--gray);font-size:0.72rem;margin-top:24px;margin-bottom:8px">عقاري v3.0 © 2025</p>
+  <p style="text-align:center;color:var(--gray);font-size:0.72rem;margin:20px 0 8px">عقاري v3.0 © 2025</p>
 </div>
 
 <nav class="bottom-nav">
-  <a href="index.html" class="nav-item" data-page="index"><i class="fas fa-home"></i><span>الرئيسية</span></a>
-  <a href="favorites.html" class="nav-item" data-page="favorites"><i class="fas fa-heart"></i><span>المفضلة</span></a>
-  <a href="messages.html" class="nav-item" data-page="messages"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
-  <a href="profile.html" class="nav-item active" data-page="profile"><i class="fas fa-user"></i><span>حسابي</span></a>
+  <a href="index.html"     class="nav-item"><i class="fas fa-home"></i><span>الرئيسية</span></a>
+  <a href="favorites.html" class="nav-item"><i class="fas fa-heart"></i><span>المفضلة</span></a>
+  <a href="messages.html"  class="nav-item"><i class="fas fa-comment-dots"></i><span>الرسائل</span></a>
+  <a href="profile.html"   class="nav-item active"><i class="fas fa-user"></i><span>حسابي</span></a>
 </nav>
-
 <div id="toast"></div>
 
-<!-- ══ Modal القص ══ -->
-<div id="cropOverlay">
-  <div class="crop-title"><i class="fas fa-crop-alt" style="margin-left:8px;color:var(--accent)"></i>اضبط الصورة</div>
-  <div id="cropCircle">
-    <img id="cropImage" alt="">
+<!-- Modal القص -->
+<div id="cropModal">
+  <div style="color:white;font-size:0.95rem;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+    <i class="fas fa-crop-alt" style="color:var(--accent)"></i> اضبط الصورة
   </div>
-  <div class="crop-hint"><i class="fas fa-arrows-alt" style="margin-left:5px;opacity:0.5"></i>اسحب · إصبعان للتكبير</div>
-  <div class="crop-actions">
-    <button class="btn-cancel-crop" id="cancelCropBtn"><i class="fas fa-times" style="margin-left:6px"></i>إلغاء</button>
-    <button class="btn-save-crop" id="saveCropBtn"><i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة</button>
+  <div id="cropCircle"><img id="cropImg" src="" alt=""></div>
+  <div class="cp-hint">
+    <i class="fas fa-hand-pointer" style="margin-left:3px"></i>اسحب &nbsp;·&nbsp;
+    <i class="fas fa-search-plus"  style="margin-left:3px"></i>إصبعان للتكبير
+  </div>
+  <div class="cp-row">
+    <button class="cp-no"  onclick="closeCrop()"><i class="fas fa-times" style="margin-left:5px"></i>إلغاء</button>
+    <button class="cp-yes" id="saveBtn" onclick="saveCrop()"><i class="fas fa-check" style="margin-left:5px"></i>حفظ</button>
   </div>
 </div>
 
 <script src="js/app.js"></script>
 <script>
-(function() {
-  'use strict';
+var _sz=280,_out=400,_x=0,_y=0,_s=1,_smin=1,_smax=8,_nw=0,_nh=0;
+var _drag=false,_sx=0,_sy=0,_ox=0,_oy=0,_pd=0;
 
-  /* ══ متغيرات ══ */
-  var imgW = 0, imgH = 0;   /* أبعاد الصورة الأصلية */
-  var posX = 0, posY = 0;   /* موضع الصورة */
-  var scale = 1;             /* التكبير الحالي */
-  var minScale = 1;          /* أقل تكبير */
-  var maxScale = 5;          /* أقصى تكبير */
-  var SZ = 0;                /* حجم الدائرة */
-
-  /* ══ تحميل الصورة الحالية ══ */
-  function loadCurrentPic() {
-    var ring  = document.getElementById('picRing');
-    var cam   = document.getElementById('picCamBtn');
-    var photo = localStorage.getItem('userPhoto');
-    if (!ring) return;
-    if (photo) {
-      ring.innerHTML = '<img src="' + photo + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block">';
-      if (cam) {
-        cam.innerHTML = '<i class="fas fa-pen"></i>';
-        cam.title = 'تعديل الصورة';
-        /* القلم: أعد فتح المقص بالصورة الموجودة */
-        cam.onclick = function(e) {
-          e.stopPropagation();
-          reopenCropperWithSavedPhoto();
-        };
-      }
-    } else {
-      ring.innerHTML = '<i class="fas fa-user" style="font-size:2.4rem;color:var(--accent)"></i>';
-      if (cam) {
-        cam.innerHTML = '<i class="fas fa-camera"></i>';
-        cam.title = 'إضافة صورة';
-        cam.onclick = function(e) {
-          e.stopPropagation();
-          openFilePicker();
-        };
-      }
-    }
+/* ── عرض الصورة — لا يمس الـ input أبداً ── */
+function showPhoto() {
+  var ph = localStorage.getItem('userPhoto');
+  var img  = document.getElementById('avImg');
+  var icon = document.getElementById('avIcon');
+  var bdg  = document.getElementById('avBadge');
+  if (ph) {
+    img.src = ph;
+    img.style.display = 'block';
+    icon.style.display = 'none';
+    bdg.innerHTML = '<i class="fas fa-pen"></i>';
+  } else {
+    img.style.display = 'none';
+    icon.style.display = 'flex';
+    bdg.innerHTML = '<i class="fas fa-camera"></i>';
   }
+}
 
-  /* إعادة فتح المقص مع الصورة المحفوظة للتعديل */
-  function reopenCropperWithSavedPhoto() {
-    var photo = localStorage.getItem('userPhoto');
-    if (!photo) { openFilePicker(); return; }
-    var img = new Image();
-    img.onload = function() {
-      imgW = img.naturalWidth;
-      imgH = img.naturalHeight;
-      openCropModal(photo);
-    };
-    img.src = photo;
-  }
+/* ── اختيار الصورة ── */
+function pickPhoto(inp) {
+  var file = inp.files && inp.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    inp.value = '';
+    openCrop(ev.target.result);
+  };
+  reader.readAsDataURL(file);
+}
 
-  /* ══ فتح اختيار الملف ══ */
-  function openFilePicker() {
-    var input = document.getElementById('picFileInput');
-    if (input) input.click();
-  }
-
-  /* ══ معالجة الملف المختار ══ */
-  function handleFileSelected(e) {
-    var file = e.target.files && e.target.files[0];
-    e.target.value = ''; /* مسح للسماح بإعادة اختيار نفس الملف */
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      alert('يرجى اختيار صورة');
-      return;
-    }
-
-    var reader = new FileReader();
-    reader.onload = function(ev) {
-      var src = ev.target.result;
-      var img = new Image();
-      img.onload = function() {
-        imgW = img.naturalWidth;
-        imgH = img.naturalHeight;
-        openCropModal(src);
-      };
-      img.onerror = function() { alert('تعذر فتح الصورة'); };
-      img.src = src;
-    };
-    reader.onerror = function() { alert('تعذر قراءة الملف'); };
-    reader.readAsDataURL(file);
-  }
-
-  /* ══ فتح نافذة القص ══ */
-  function openCropModal(src) {
-    /* حجم الدائرة حسب الشاشة */
-    SZ = Math.min(280, window.innerWidth - 56);
-    var circle = document.getElementById('cropCircle');
-    circle.style.width  = SZ + 'px';
-    circle.style.height = SZ + 'px';
-
-    /* حساب الزووم الأدنى */
-    minScale = Math.max(SZ / imgW, SZ / imgH) + 0.001;
-    maxScale = minScale * 6;
-    scale    = minScale;
-
-    /* توسيط */
-    posX = (SZ - imgW * scale) / 2;
-    posY = (SZ - imgH * scale) / 2;
-
-    /* شريط الزووم: نستخدم 0-100 للتبسيط */
-
-    /* ضع الصورة */
-    var cImg = document.getElementById('cropImage');
-    cImg.src = src;
-    applyTransform();
-
-    /* أظهر الـ modal */
-    var overlay = document.getElementById('cropOverlay');
-    overlay.classList.add('active');
+/* ── فتح المقص ── */
+function openCrop(src) {
+  var tmp = new Image();
+  tmp.onload = function() {
+    _nw = tmp.naturalWidth; _nh = tmp.naturalHeight;
+    _sz = Math.min(290, window.innerWidth - 60);
+    _smin = Math.max(_sz/_nw, _sz/_nh) * 1.001;
+    _smax = _smin * 7; _s = _smin;
+    _x = (_sz - _nw*_s) / 2; _y = (_sz - _nh*_s) / 2;
+    var c = document.getElementById('cropCircle');
+    c.style.width = c.style.height = _sz + 'px';
+    var img = document.getElementById('cropImg');
+    img.style.cssText = 'position:absolute;display:block;pointer-events:none;user-select:none';
+    img.onload = drawCrop;
+    img.src = src;
+    if (img.complete && img.naturalWidth) drawCrop();
+    document.getElementById('cropModal').classList.add('show');
     document.body.style.overflow = 'hidden';
+  };
+  tmp.src = src;
+}
+
+function drawCrop() {
+  var dw=_nw*_s, dh=_nh*_s;
+  if(_x>0)_x=0; if(_y>0)_y=0;
+  if(_x<_sz-dw)_x=_sz-dw; if(_y<_sz-dh)_y=_sz-dh;
+  var img=document.getElementById('cropImg');
+  img.style.left=_x+'px'; img.style.top=_y+'px';
+  img.style.width=dw+'px'; img.style.height=dh+'px';
+}
+
+function zoomCrop(ns,cx,cy) {
+  ns=Math.min(_smax,Math.max(_smin,ns));
+  var r=ns/_s; _x=cx-(cx-_x)*r; _y=cy-(cy-_y)*r; _s=ns; drawCrop();
+}
+
+function closeCrop() {
+  document.getElementById('cropModal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function saveCrop() {
+  var btn=document.getElementById('saveBtn');
+  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+  var r=_out/_sz, cv=document.createElement('canvas');
+  cv.width=cv.height=_out;
+  var ctx=cv.getContext('2d');
+  ctx.beginPath(); ctx.arc(_out/2,_out/2,_out/2,0,Math.PI*2); ctx.clip();
+  ctx.drawImage(document.getElementById('cropImg'),_x*r,_y*r,_nw*_s*r,_nh*_s*r);
+  localStorage.setItem('userPhoto', cv.toDataURL('image/jpeg',0.92));
+  showPhoto(); closeCrop();
+  if(typeof showToast==='function') showToast('تم حفظ الصورة');
+  btn.disabled=false; btn.innerHTML='<i class="fas fa-check" style="margin-left:5px"></i>حفظ';
+}
+
+/* ── أحداث السحب ── */
+document.addEventListener('mousedown',function(e){
+  var c=document.getElementById('cropCircle');
+  if(!c||!c.contains(e.target))return;
+  _drag=true;_sx=e.clientX;_sy=e.clientY;_ox=_x;_oy=_y;e.preventDefault();
+});
+document.addEventListener('mousemove',function(e){
+  if(!_drag)return; _x=_ox+(e.clientX-_sx);_y=_oy+(e.clientY-_sy);drawCrop();
+});
+document.addEventListener('mouseup',function(){_drag=false;});
+
+document.addEventListener('touchstart',function(e){
+  var c=document.getElementById('cropCircle');
+  if(!c||!c.contains(e.target))return;
+  if(e.touches.length===1){_drag=true;_pd=0;_sx=e.touches[0].clientX;_sy=e.touches[0].clientY;_ox=_x;_oy=_y;}
+  else if(e.touches.length===2){_drag=false;_pd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}
+  e.preventDefault();
+},{passive:false});
+
+document.addEventListener('touchmove',function(e){
+  var c=document.getElementById('cropCircle');
+  if(!c)return;
+  if(e.touches.length===1&&_drag){_x=_ox+(e.touches[0].clientX-_sx);_y=_oy+(e.touches[0].clientY-_sy);drawCrop();}
+  else if(e.touches.length===2&&_pd>0){
+    var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    var rect=c.getBoundingClientRect();
+    zoomCrop(_s*(d/_pd),(e.touches[0].clientX+e.touches[1].clientX)/2-rect.left,(e.touches[0].clientY+e.touches[1].clientY)/2-rect.top);
+    _pd=d;
   }
+  e.preventDefault();
+},{passive:false});
 
-  /* ══ تطبيق الإحداثيات ══ */
-  function applyTransform() {
-    /* منع الخروج */
-    var maxX = 0,        minX = SZ - imgW * scale;
-    var maxY = 0,        minY = SZ - imgH * scale;
-    posX = Math.min(maxX, Math.max(minX, posX));
-    posY = Math.min(maxY, Math.max(minY, posY));
+document.addEventListener('touchend',function(){_drag=false;_pd=0;});
+document.getElementById('cropModal').addEventListener('click',function(e){if(e.target===this)closeCrop();});
 
-    var img = document.getElementById('cropImage');
-    img.style.left   = posX + 'px';
-    img.style.top    = posY + 'px';
-    img.style.width  = (imgW * scale) + 'px';
-    img.style.height = (imgH * scale) + 'px';
-  }
-
-  /* ══ تغيير الزووم من المركز ══ */
-  function changeScale(newScale) {
-    newScale = Math.min(maxScale, Math.max(minScale, newScale));
-    var ratio = newScale / scale;
-    var cx = SZ / 2, cy = SZ / 2;
-    posX = cx - (cx - posX) * ratio;
-    posY = cy - (cy - posY) * ratio;
-    scale = newScale;
-    applyTransform();
-    /* مزامنة الشريط */
-    var pct = (scale - minScale) / (maxScale - minScale) * 100;
-  }
-
-  /* ══ إغلاق ══ */
-  function closeCrop() {
-    document.getElementById('cropOverlay').classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  /* ══ حفظ ══ */
-  function saveCrop() {
-    var btn = document.getElementById('saveCropBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-left:6px"></i>جاري...';
-
-    /* استخدم صورة جديدة لضمان التحميل الكامل وتجنب مشكلة canvas السوداء */
-    var freshImg = new Image();
-    freshImg.onload = function() {
-      try {
-        var canvas = document.createElement('canvas');
-        canvas.width = canvas.height = 400;
-        var ctx = canvas.getContext('2d');
-        ctx.beginPath();
-        ctx.arc(200, 200, 200, 0, Math.PI * 2);
-        ctx.clip();
-        var r = 400 / SZ;
-        ctx.drawImage(freshImg, -posX*r, -posY*r, imgW*scale*r, imgH*scale*r);
-        var url = canvas.toDataURL('image/jpeg', 0.92);
-        if (!url || url === 'data:,') throw new Error('canvas فارغ');
-        localStorage.setItem('userPhoto', url);
-        loadCurrentPic();
-        closeCrop();
-        if (typeof showToast === 'function') showToast('تم حفظ الصورة بنجاح');
-      } catch(err) {
-        if (typeof showToast === 'function') showToast('خطأ: ' + err.message);
-      }
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة';
-    };
-    freshImg.onerror = function() {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-check" style="margin-left:6px"></i>حفظ الصورة';
-      if (typeof showToast === 'function') showToast('تعذر حفظ الصورة');
-    };
-    /* نفس src الموجودة في cropImage */
-    freshImg.src = document.getElementById('cropImage').src;
-  }
-
-  /* ══ أحداث السحب ══ */
-  var dragging = false, sx = 0, sy = 0, spx = 0, spy = 0;
-  var pinchDist = 0;
-
-  function getCircle() { return document.getElementById('cropCircle'); }
-
-  /* Mouse */
-  document.addEventListener('mousedown', function(e) {
-    if (!getCircle().contains(e.target)) return;
-    dragging = true; sx = e.clientX; sy = e.clientY;
-    spx = posX; spy = posY;
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', function(e) {
-    if (!dragging) return;
-    posX = spx + (e.clientX - sx);
-    posY = spy + (e.clientY - sy);
-    applyTransform();
-  });
-  document.addEventListener('mouseup', function() { dragging = false; });
-
-  /* Touch */
-  document.addEventListener('touchstart', function(e) {
-    if (!getCircle().contains(e.target)) return;
-    if (e.touches.length === 1) {
-      dragging = true;
-      sx = e.touches[0].clientX; sy = e.touches[0].clientY;
-      spx = posX; spy = posY;
-    } else if (e.touches.length === 2) {
-      dragging = false;
-      pinchDist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-    }
-    e.preventDefault();
-  }, {passive: false});
-
-  document.addEventListener('touchmove', function(e) {
-    if (!getCircle().contains(e.target) && !dragging) return;
-    if (e.touches.length === 1 && dragging) {
-      posX = spx + (e.touches[0].clientX - sx);
-      posY = spy + (e.touches[0].clientY - sy);
-      applyTransform();
-    } else if (e.touches.length === 2 && pinchDist > 0) {
-      var d = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      changeScale(scale * d / pinchDist);
-      pinchDist = d;
-    }
-    e.preventDefault();
-  }, {passive: false});
-
-  document.addEventListener('touchend', function() {
-    dragging = false; pinchDist = 0;
-  });
-
-  /* ══ ربط الأزرار بعد تحميل الصفحة ══ */
-  window.addEventListener('DOMContentLoaded', function() {
-
-    /* زر الكاميرا والدائرة */
-    document.getElementById('picRing').addEventListener('click', openFilePicker);
-    document.getElementById('picCamBtn').addEventListener('click', openFilePicker);
-
-    /* input الملف */
-    document.getElementById('picFileInput').addEventListener('change', handleFileSelected);
-
-    /* أزرار القص */
-    document.getElementById('cancelCropBtn').addEventListener('click', closeCrop);
-    document.getElementById('saveCropBtn').addEventListener('click', saveCrop);
-
-    /* زر الإغلاق بالنقر خارج الدائرة */
-    document.getElementById('cropOverlay').addEventListener('click', function(e) {
-      if (e.target === this) closeCrop();
+/* ── تهيئة الصفحة ── */
+window.addEventListener('load', function() {
+  /* 1. ربط الـ input بـ addEventListener — أضمن من onchange inline */
+  var inp = document.getElementById('avInput');
+  if (inp) {
+    inp.addEventListener('change', function() {
+      pickPhoto(this);
     });
+  }
 
+  /* 2. عرض الصورة */
+  showPhoto();
 
+  /* 3. البيانات */
+  var n=document.getElementById('profileName');
+  var m=document.getElementById('profileEmail');
+  if(n)n.textContent=localStorage.getItem('userName')||'مستخدم عقاري';
+  if(m)m.textContent=localStorage.getItem('userEmail')||'';
 
-
-    /* تحميل الصورة والبيانات */
-    loadCurrentPic();
-    document.getElementById('profileName').textContent  = localStorage.getItem('userName')  || 'مستخدم عقاري';
-    document.getElementById('profileEmail').textContent = localStorage.getItem('userEmail') || '';
-
-    setTimeout(function() {
-      var ads  = window.myProperties || [];
-      var favs = window.favorites    || [];
-      document.getElementById('myAdsCount').textContent      = ads.length;
-      document.getElementById('myAdsCountBadge').textContent = ads.length;
-      document.getElementById('favsCount').textContent       = favs.length;
-      document.getElementById('viewsCount').textContent      = ads.reduce(function(a,p){return a+(p.views||0);},0).toLocaleString();
-      var sec = document.getElementById('myAdsSection');
-      if (ads.length && sec) {
-        sec.innerHTML = ads.slice(0,5).map(function(p) {
-          var imgs = window.getPropImages ? window.getPropImages(p) : [];
-          var img  = imgs[0] || '';
-          return '<div onclick="gotoDetails('+p.id+')" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">'
-            +'<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;background:var(--gray-light);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--gray)">'
-            +(img?'<img src="'+img+'" style="width:100%;height:100%;object-fit:cover">':'<i class="fas fa-building"></i>')
-            +'</div><div style="flex:1;overflow:hidden">'
-            +'<div style="font-weight:700;font-size:0.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.title+'</div>'
-            +'<div style="font-size:0.77rem;color:var(--accent);font-weight:700;margin-top:2px">$'+(p.price||0).toLocaleString('en-US')+' USD</div>'
-            +'</div></div>';
-        }).join('');
-      }
-    }, 400);
-  });
-
-})();
+  setTimeout(function(){
+    var ads=window.myProperties||[],favs=window.favorites||[];
+    function set(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+    set('adsCount',ads.length);set('adsBadge',ads.length);
+    set('favsCount',favs.length);
+    set('viewsCount',ads.reduce(function(a,p){return a+(p.views||0);},0).toLocaleString());
+    var sec=document.getElementById('adsSection');
+    if(ads.length&&sec){
+      sec.innerHTML=ads.slice(0,5).map(function(p){
+        var img=(window.getPropImages?window.getPropImages(p):[])[0]||'';
+        return '<div onclick="gotoDetails('+p.id+')" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer">'
+          +'<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;background:var(--gray-light);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--gray)">'
+          +(img?'<img src="'+img+'" style="width:100%;height:100%;object-fit:cover">':'<i class="fas fa-building"></i>')
+          +'</div><div style="flex:1;overflow:hidden">'
+          +'<div style="font-weight:700;font-size:0.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.title+'</div>'
+          +'<div style="font-size:0.77rem;color:var(--accent);font-weight:700;margin-top:2px">$'+(p.price||0).toLocaleString('en-US')+'</div>'
+          +'</div></div>';
+      }).join('');
+    }
+  },300);
+});
 </script>
-
 <script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
+if('serviceWorker' in navigator)
+  window.addEventListener('load',function(){
     navigator.serviceWorker.register('sw.js').catch(function(){});
   });
-}
 </script>
 </body>
 </html>
