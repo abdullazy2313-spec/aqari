@@ -117,8 +117,10 @@
   border:3px solid var(--accent);background:#111;
   touch-action:none;cursor:grab;flex-shrink:0;
   box-shadow:0 0 0 5px rgba(230,126,34,0.15),0 12px 40px rgba(0,0,0,0.7);
+  transform:translateZ(0);will-change:transform;
 }
-#cropImg{position:absolute;display:block;pointer-events:none;user-select:none}
+#cropImg{position:absolute;display:block;pointer-events:none;user-select:none;
+  will-change:left,top,width,height;image-rendering:auto;transform:translateZ(0)}
 .cp-hint{color:rgba(255,255,255,0.4);font-size:0.72rem;margin-top:10px;text-align:center}
 .cp-row{display:flex;gap:10px;margin-top:16px;width:100%;max-width:300px}
 .cp-no{flex:1;padding:13px;border-radius:13px;background:rgba(255,255,255,0.08);
@@ -397,13 +399,19 @@ function openCrop(src) {
   tmp.src = src;
 }
 
+var _rafId = null;
 function drawCrop() {
   var dw=_nw*_s, dh=_nh*_s;
   if(_x>0)_x=0; if(_y>0)_y=0;
   if(_x<_sz-dw)_x=_sz-dw; if(_y<_sz-dh)_y=_sz-dh;
-  var img=document.getElementById('cropImg');
-  img.style.left=_x+'px'; img.style.top=_y+'px';
-  img.style.width=dw+'px'; img.style.height=dh+'px';
+  if (_rafId) return; /* منع الإفراط في الرسم */
+  _rafId = requestAnimationFrame(function(){
+    _rafId = null;
+    var img=document.getElementById('cropImg');
+    if(!img) return;
+    img.style.left=_x+'px'; img.style.top=_y+'px';
+    img.style.width=dw+'px'; img.style.height=dh+'px';
+  });
 }
 
 function zoomCrop(ns,cx,cy) {
@@ -452,8 +460,10 @@ document.addEventListener('touchstart',function(e){
 },{passive:false});
 
 document.addEventListener('touchmove',function(e){
+  /* preventDefault فقط عند السحب في المقص — لا نمنع سكرول الصفحة */
+  if (!_drag && _pd === 0) return;
   var c=document.getElementById('cropCircle');
-  if(!c)return;
+  if(!c||!c.contains(e.target)) return;
   if(e.touches.length===1&&_drag){_x=_ox+(e.touches[0].clientX-_sx);_y=_oy+(e.touches[0].clientY-_sy);drawCrop();}
   else if(e.touches.length===2&&_pd>0){
     var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
