@@ -147,6 +147,7 @@
         accept="image/*"
         class="avatar-file-input"
         id="avatarInput"
+        onchange="onAvatarChange(this)"
       >
     </div>
 
@@ -516,6 +517,19 @@ window.addEventListener('DOMContentLoaded', function () {
     }
   }, 300);
 });
+
+
+  /* دالة عالمية يستدعيها onchange inline */
+  window.onAvatarChange = function(inp) {
+    var file = inp.files && inp.files[0];
+    if (!file) return;
+    var r = new FileReader();
+    r.onload = function(e) {
+      setTimeout(function(){ try{inp.value='';}catch(x){} }, 150);
+      openCrop(e.target.result);
+    };
+    r.readAsDataURL(file);
+  };
 
 })();
 </script>
