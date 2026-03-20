@@ -57,6 +57,53 @@
   font-size:16px;
 }
 
+/* نافذة خيارات الصورة */
+#photoSheet {
+  position: fixed; inset: 0; z-index: 99998;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+  display: none; align-items: flex-end; justify-content: center;
+}
+#photoSheet.show { display: flex; }
+.ps-box {
+  background: var(--card);
+  border-radius: 24px 24px 0 0;
+  padding: 16px 16px calc(20px + env(safe-area-inset-bottom));
+  width: 100%; max-width: 480px;
+  animation: psUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes psUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.ps-handle {
+  width: 40px; height: 4px; background: var(--border);
+  border-radius: 99px; margin: 0 auto 16px;
+}
+.ps-title {
+  font-size: 0.82rem; color: var(--gray);
+  text-align: center; margin-bottom: 14px; font-weight: 600;
+}
+.ps-options { display: flex; flex-direction: column; gap: 10px; }
+.ps-option {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; border-radius: 14px;
+  background: var(--gray-light); border: 1.5px solid var(--border);
+  cursor: pointer; transition: all 0.15s;
+}
+.ps-option:active { transform: scale(0.98); }
+.ps-icon {
+  width: 46px; height: 46px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; flex-shrink: 0;
+}
+.ps-option-text { flex: 1; }
+.ps-option-title { font-weight: 800; font-size: 0.9rem; color: var(--text); }
+.ps-option-sub { font-size: 0.74rem; color: var(--gray); margin-top: 2px; }
+.ps-cancel {
+  margin-top: 10px; width: 100%; padding: 13px; border-radius: 13px;
+  background: var(--gray-light); border: 1.5px solid var(--border);
+  color: var(--text-secondary); font-family: var(--font);
+  font-size: 0.88rem; font-weight: 700; cursor: pointer;
+}
+
 /* Modal القص */
 #cropModal{
   position:fixed;inset:0;z-index:99999;
@@ -171,6 +218,54 @@
 </nav>
 <div id="toast"></div>
 
+<!-- نافذة خيارات الصورة -->
+<div id="photoSheet">
+  <div class="ps-box">
+    <div class="ps-handle"></div>
+    <div class="ps-title">تعديل صورة البروفايل</div>
+    <div class="ps-options">
+
+      <!-- خيار 1: تعديل القص -->
+      <div class="ps-option" onclick="editCrop()">
+        <div class="ps-icon" style="background:rgba(249,115,22,0.1)">
+          <i class="fas fa-crop-alt" style="color:#f97316"></i>
+        </div>
+        <div class="ps-option-text">
+          <div class="ps-option-title">تعديل القص</div>
+          <div class="ps-option-sub">عدّل الصورة الحالية وأعد قصها</div>
+        </div>
+        <i class="fas fa-chevron-left" style="color:var(--gray);font-size:0.75rem"></i>
+      </div>
+
+      <!-- خيار 2: صورة جديدة -->
+      <div class="ps-option" onclick="newPhoto()">
+        <div class="ps-icon" style="background:rgba(99,102,241,0.1)">
+          <i class="fas fa-image" style="color:#6366f1"></i>
+        </div>
+        <div class="ps-option-text">
+          <div class="ps-option-title">اختر صورة جديدة</div>
+          <div class="ps-option-sub">استبدل الصورة من معرض الصور</div>
+        </div>
+        <i class="fas fa-chevron-left" style="color:var(--gray);font-size:0.75rem"></i>
+      </div>
+
+      <!-- خيار 3: حذف الصورة -->
+      <div class="ps-option" onclick="removePhoto()">
+        <div class="ps-icon" style="background:rgba(231,76,60,0.1)">
+          <i class="fas fa-trash-alt" style="color:#e74c3c"></i>
+        </div>
+        <div class="ps-option-text">
+          <div class="ps-option-title">حذف الصورة</div>
+          <div class="ps-option-sub">العودة للصورة الافتراضية</div>
+        </div>
+        <i class="fas fa-chevron-left" style="color:var(--gray);font-size:0.75rem"></i>
+      </div>
+
+    </div>
+    <button class="ps-cancel" onclick="closeSheet()">إلغاء</button>
+  </div>
+</div>
+
 <!-- Modal القص -->
 <div id="cropModal">
   <div style="color:white;font-size:0.95rem;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px">
@@ -193,6 +288,32 @@ var _sz=280,_out=400,_x=0,_y=0,_s=1,_smin=1,_smax=8,_nw=0,_nh=0;
 var _drag=false,_sx=0,_sy=0,_ox=0,_oy=0,_pd=0;
 
 /* ── عرض الصورة — لا يمس الـ input أبداً ── */
+/* ── نافذة خيارات الصورة ── */
+function openSheet() {
+  document.getElementById('photoSheet').classList.add('show');
+}
+function closeSheet() {
+  document.getElementById('photoSheet').classList.remove('show');
+}
+function editCrop() {
+  closeSheet();
+  var orig = localStorage.getItem('userPhotoOriginal');
+  var ph   = localStorage.getItem('userPhoto');
+  openCrop(orig || ph);
+}
+function newPhoto() {
+  closeSheet();
+  document.getElementById('avInput').click();
+}
+function removePhoto() {
+  closeSheet();
+  localStorage.removeItem('userPhoto');
+  localStorage.removeItem('userPhotoOriginal');
+  localStorage.removeItem('cropState');
+  showPhoto();
+  if(typeof showToast==='function') showToast('تم حذف الصورة');
+}
+
 function showPhoto() {
   var ph   = localStorage.getItem('userPhoto');
   var img  = document.getElementById('avImg');
@@ -204,13 +325,12 @@ function showPhoto() {
     img.style.display = 'block';
     icon.style.display = 'none';
     bdg.innerHTML = '<i class="fas fa-pen"></i>';
-    /* القلم: يفتح الصورة الأصلية قبل القص */
+    /* القلم: يفتح نافذة الخيارات */
     if (lbl) {
       lbl.removeAttribute('for');
       lbl.onclick = function(e) {
         e.preventDefault();
-        var orig = localStorage.getItem('userPhotoOriginal') || ph;
-        openCrop(orig);
+        openSheet();
       };
     }
   } else {
@@ -239,8 +359,11 @@ function pickPhoto(inp) {
 
 /* ── فتح المقص ── */
 function openCrop(src) {
-  /* احفظ الصورة الأصلية (قبل القص) حتى يستخدمها القلم */
-  localStorage.setItem('userPhotoOriginal', src);
+  /* احفظ الصورة الأصلية دائماً */
+  var existing = localStorage.getItem('userPhotoOriginal');
+  if (!existing || src !== localStorage.getItem('userPhoto')) {
+    localStorage.setItem('userPhotoOriginal', src);
+  }
   var tmp = new Image();
   tmp.onload = function() {
     _nw = tmp.naturalWidth; _nh = tmp.naturalHeight;
@@ -257,6 +380,19 @@ function openCrop(src) {
     if (img.complete && img.naturalWidth) drawCrop();
     document.getElementById('cropModal').classList.add('show');
     document.body.style.overflow = 'hidden';
+
+    /* استعادة حالة القص إن وجدت */
+    if (src === localStorage.getItem('userPhotoOriginal')) {
+      try {
+        var st = JSON.parse(localStorage.getItem('cropState') || 'null');
+        if (st && st.nw === _nw && st.nh === _nh) {
+          _x=st.x; _y=st.y; _s=st.s;
+          /* تحقق أن القيم ضمن الحدود */
+          _s = Math.min(_smax, Math.max(_smin, _s));
+          drawCrop();
+        }
+      } catch(e) {}
+    }
   };
   tmp.src = src;
 }
@@ -289,6 +425,8 @@ function saveCrop() {
   ctx.beginPath(); ctx.arc(_out/2,_out/2,_out/2,0,Math.PI*2); ctx.clip();
   ctx.drawImage(document.getElementById('cropImg'),_x*r,_y*r,_nw*_s*r,_nh*_s*r);
   localStorage.setItem('userPhoto', cv.toDataURL('image/jpeg',0.92));
+  /* احفظ حالة القص للتعديل لاحقاً */
+  localStorage.setItem('cropState', JSON.stringify({x:_x,y:_y,s:_s,sz:_sz,nw:_nw,nh:_nh}));
   showPhoto(); closeCrop();
   if(typeof showToast==='function') showToast('تم حفظ الصورة');
   btn.disabled=false; btn.innerHTML='<i class="fas fa-check" style="margin-left:5px"></i>حفظ';
@@ -328,6 +466,7 @@ document.addEventListener('touchmove',function(e){
 
 document.addEventListener('touchend',function(){_drag=false;_pd=0;});
 document.getElementById('cropModal').addEventListener('click',function(e){if(e.target===this)closeCrop();});
+document.getElementById('photoSheet').addEventListener('click',function(e){if(e.target===this)closeSheet();});
 
 /* ── تهيئة الصفحة ── */
 window.addEventListener('load', function() {
