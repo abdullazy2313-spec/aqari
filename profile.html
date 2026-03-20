@@ -153,9 +153,13 @@
       <div class="pic-circle" id="picCircle">
         <i class="fas fa-user pic-icon"></i>
       </div>
-      <div class="pic-edit-btn" id="picEditBtn">
-        <i class="fas fa-camera" id="picEditIcon"></i>
+      <div class="pic-edit-btn" id="picEditBtn" style="display:none">
+        <i class="fas fa-pen"></i>
       </div>
+      <!-- input شفاف يغطي الدائرة — المستخدم يضغطه مباشرة -->
+      <input type="file" accept="image/*" id="photoInput"
+        style="position:absolute;inset:0;width:100%;height:100%;
+               opacity:0;cursor:pointer;z-index:5;border-radius:50%">
     </div>
 
     <h3 id="profileName" style="margin-bottom:4px;font-size:1.2rem;font-weight:800">
@@ -405,48 +409,23 @@
 
   /* ─── عرض الصورة في الدائرة ─── */
   function renderPhoto() {
-    var circle = document.getElementById('picCircle');
-    var icon   = document.getElementById('picEditIcon');
-    var photo  = localStorage.getItem('userPhoto');
+    var circle  = document.getElementById('picCircle');
+    var editBtn = document.getElementById('picEditBtn');
+    var photo   = localStorage.getItem('userPhoto');
     if (!circle) return;
-
     if (photo) {
       circle.innerHTML =
-        '<img src="' + photo + '" '
+        '<img src="' + photo + '" style="width:100%;height:100%;object-fit:cover;display:block" '
         + 'onerror="this.parentElement.innerHTML='<i class=\"fas fa-user pic-icon\"></i>'">';
-      if (icon) icon.className = 'fas fa-pen';
+      /* اظهر القلم واخفِ الـ input لأن القلم يفتح المقص مباشرة */
+      if (editBtn) editBtn.style.display = 'flex';
     } else {
       circle.innerHTML = '<i class="fas fa-user pic-icon"></i>';
-      if (icon) icon.className = 'fas fa-camera';
+      if (editBtn) editBtn.style.display = 'none';
     }
   }
 
-  /* ─── فتح الملف ─── */
-  function pickFile() {
-    /* أنشئ input جديد في كل مرة لضمان عمل change */
-    var old = document.getElementById('_tmpFileInput');
-    if (old) old.remove();
-
-    var inp = document.createElement('input');
-    inp.type    = 'file';
-    inp.id      = '_tmpFileInput';
-    inp.accept  = 'image/*';
-    inp.style.cssText = 'position:fixed;top:-999px;left:-999px;opacity:0';
-
-    inp.addEventListener('change', function () {
-      var file = inp.files && inp.files[0];
-      inp.remove();
-      if (!file || !file.type.startsWith('image/')) return;
-      var reader = new FileReader();
-      reader.onload = function (e) { openCropper(e.target.result); };
-      reader.readAsDataURL(file);
-    });
-
-    document.body.appendChild(inp);
-
-    /* تأخير قصير قبل الـ click لضمان إضافته للـ DOM */
-    setTimeout(function () { inp.click(); }, 50);
-  }
+  /* pickFile: يستخدم input مباشر في HTML */
 
   /* ─── السحب ─── */
   var cc = null;
@@ -519,31 +498,27 @@
   /* ─── ربط الأزرار ─── */
   document.addEventListener('DOMContentLoaded', function () {
 
-    /* دائرة الصورة */
-    var circle = document.getElementById('picCircle');
-    if (circle) {
-      circle.style.cursor = 'pointer';
-      circle.addEventListener('click', function () {
-        var photo = localStorage.getItem('userPhoto');
-        if (photo) {
-          openCropper(photo); /* تعديل الصورة المحفوظة */
-        } else {
-          pickFile();
-        }
+    /* input الصورة — يُستدعى مباشرة من المستخدم */
+    var photoInput = document.getElementById('photoInput');
+    if (photoInput) {
+      photoInput.addEventListener('change', function () {
+        var file = this.files && this.files[0];
+        this.value = '';
+        if (!file || !file.type.startsWith('image/')) return;
+        var reader = new FileReader();
+        reader.onload = function (ev) { openCropper(ev.target.result); };
+        reader.readAsDataURL(file);
       });
     }
 
-    /* زر القلم/الكاميرا */
+    /* زر القلم — يعيد تعديل الصورة */
     var editBtn = document.getElementById('picEditBtn');
     if (editBtn) {
       editBtn.addEventListener('click', function (e) {
         e.stopPropagation();
+        e.preventDefault();
         var photo = localStorage.getItem('userPhoto');
-        if (photo) {
-          openCropper(photo);
-        } else {
-          pickFile();
-        }
+        if (photo) openCropper(photo);
       });
     }
 
@@ -594,9 +569,6 @@
       }
     }, 400);
   });
-
-  /* اجعل pickFile متاحة عالمياً */
-  window._pickProfilePhoto = pickFile;
 
 })();
 </script>
