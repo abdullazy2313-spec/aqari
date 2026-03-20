@@ -13,6 +13,9 @@
 .av-wrap{position:relative;width:90px;height:90px;margin:0 auto 14px}
 
 /* الدائرة — لا تتغير هيكلها أبداً */
+/* إصلاح السكرول — padding للـ container فوق bottom-nav */
+.container { padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important; }
+
 .av-circle{
   width:90px;height:90px;border-radius:50%;
   border:3px solid var(--accent);overflow:hidden;
@@ -191,19 +194,34 @@ var _drag=false,_sx=0,_sy=0,_ox=0,_oy=0,_pd=0;
 
 /* ── عرض الصورة — لا يمس الـ input أبداً ── */
 function showPhoto() {
-  var ph = localStorage.getItem('userPhoto');
+  var ph   = localStorage.getItem('userPhoto');
   var img  = document.getElementById('avImg');
   var icon = document.getElementById('avIcon');
   var bdg  = document.getElementById('avBadge');
+  var lbl  = document.getElementById('avLabel');
   if (ph) {
     img.src = ph;
     img.style.display = 'block';
     icon.style.display = 'none';
     bdg.innerHTML = '<i class="fas fa-pen"></i>';
+    /* القلم: يفتح الصورة الأصلية قبل القص */
+    if (lbl) {
+      lbl.removeAttribute('for');
+      lbl.onclick = function(e) {
+        e.preventDefault();
+        var orig = localStorage.getItem('userPhotoOriginal') || ph;
+        openCrop(orig);
+      };
+    }
   } else {
     img.style.display = 'none';
     icon.style.display = 'flex';
     bdg.innerHTML = '<i class="fas fa-camera"></i>';
+    /* الكاميرا: تفتح المعرض عادي */
+    if (lbl) {
+      lbl.setAttribute('for', 'avInput');
+      lbl.onclick = null;
+    }
   }
 }
 
@@ -221,6 +239,8 @@ function pickPhoto(inp) {
 
 /* ── فتح المقص ── */
 function openCrop(src) {
+  /* احفظ الصورة الأصلية (قبل القص) حتى يستخدمها القلم */
+  localStorage.setItem('userPhotoOriginal', src);
   var tmp = new Image();
   tmp.onload = function() {
     _nw = tmp.naturalWidth; _nh = tmp.naturalHeight;
