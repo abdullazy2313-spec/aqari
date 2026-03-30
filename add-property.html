@@ -308,13 +308,36 @@
       <div><div class="il"><i class="fas fa-road"></i>العنوان التفصيلي (اختياري)</div>
         <input type="text" class="if" id="propLocation" placeholder="الشارع، رقم المبنى...">
       </div>
-      <!-- Map -->
+      <!-- Map Picker محسّن -->
       <div style="margin-top:12px">
-        <div style="font-size:0.76rem;font-weight:700;color:var(--text-secondary);margin-bottom:5px;display:flex;align-items:center;gap:5px">
+        <!-- أزرار أعلى الخريطة -->
+        <div style="display:flex;gap:7px;margin-bottom:8px">
+          <button type="button" onclick="useMyGPS()" id="gpsBtn"
+            style="display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#27ae60,#2ecc71);color:white;border:none;border-radius:10px;padding:8px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:var(--font);flex:1">
+            <i class="fas fa-location-arrow"></i> موقعي الحالي
+          </button>
+          <button type="button" onclick="searchAddress()" id="searchBtn"
+            style="display:flex;align-items:center;gap:6px;background:var(--gray-light);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:var(--font);flex:1">
+            <i class="fas fa-search" style="color:var(--accent)"></i> ابحث عن عنوان
+          </button>
+        </div>
+        <!-- صندوق البحث -->
+        <div id="searchBox" style="display:none;margin-bottom:8px;position:relative">
+          <input type="text" id="addrSearch" placeholder="مثال: المزة فيلات غربية، دمشق"
+            style="width:100%;padding:10px 14px;border:1.5px solid var(--accent);border-radius:10px;font-family:var(--font);font-size:0.85rem;background:var(--card);color:var(--text);outline:none"
+            onkeypress="if(event.key==='Enter')doAddrSearch()">
+          <button type="button" onclick="doAddrSearch()"
+            style="position:absolute;left:6px;top:50%;transform:translateY(-50%);background:var(--accent);color:white;border:none;border-radius:7px;padding:5px 10px;cursor:pointer;font-size:0.8rem">
+            <i class="fas fa-search"></i>
+          </button>
+          <div id="searchResults" style="position:absolute;top:100%;right:0;left:0;background:var(--card);border:1px solid var(--border);border-radius:10px;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,0.12);max-height:200px;overflow-y:auto;display:none"></div>
+        </div>
+        <!-- تعليمة -->
+        <div style="font-size:0.74rem;color:var(--gray);margin-bottom:6px;display:flex;align-items:center;gap:5px">
           <i class="fas fa-hand-pointer" style="color:var(--accent)"></i>
           اضغط على الخريطة أو اسحب العلامة لتحديد الموقع الدقيق
         </div>
-        <div id="mapPicker"></div>
+        <div id="mapPicker" style="border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1)"></div>
         <div class="map-coord-pill" id="coordPill"><i class="fas fa-check-circle"></i><span id="coordText">تم التحديد</span></div>
       </div>
     </div>
@@ -324,7 +347,22 @@
   <div class="fc">
     <div class="fc-head"><div class="fc-icon" style="background:rgba(41,128,185,0.12)"><i class="fas fa-align-right" style="color:#2980b9"></i></div><div class="fc-title">وصف العقار</div></div>
     <div class="fc-body">
-      <textarea class="if" id="propDescription" rows="4" placeholder="اكتب وصفاً تفصيلياً يساعد المشترين..." style="resize:vertical;min-height:90px" maxlength="600" oninput="document.getElementById('dCount').textContent=this.value.length+'/600'"></textarea>
+      <!-- زر توليد الوصف بالذكاء الاصطناعي -->
+      <button type="button" id="aiDescBtn" onclick="generateAIDesc()"
+        style="width:100%;margin-bottom:8px;padding:10px 14px;
+               background:linear-gradient(135deg,#6366f1,#8b5cf6);
+               color:white;border:none;border-radius:11px;
+               font-family:var(--font);font-size:0.82rem;font-weight:800;
+               cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+               box-shadow:0 4px 14px rgba(99,102,241,0.35)">
+        <i class="fas fa-magic"></i>
+        توليد وصف بالذكاء الاصطناعي
+      </button>
+      <div id="aiDescStatus" style="display:none;text-align:center;padding:8px;font-size:0.78rem;color:var(--gray)">
+        <i class="fas fa-spinner fa-spin" style="color:#6366f1;margin-left:6px"></i>
+        جاري توليد الوصف...
+      </div>
+      <textarea class="if" id="propDescription" rows="4" placeholder="اكتب وصفاً تفصيلياً أو استخدم الذكاء الاصطناعي أعلاه..." style="resize:vertical;min-height:90px" maxlength="600" oninput="document.getElementById('dCount').textContent=this.value.length+'/600'"></textarea>
       <div style="font-size:0.7rem;color:var(--gray);text-align:left;margin-top:3px" id="dCount">0/600</div>
     </div>
   </div>
@@ -614,6 +652,163 @@ if('serviceWorker' in navigator){
       .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
   });
 }
+
+
+/* ══ GPS ══ */
+function useMyGPS() {
+  if (!navigator.geolocation) { showToast('المتصفح لا يدعم GPS'); return; }
+  var btn = document.getElementById('gpsBtn');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديد...';
+  btn.disabled = true;
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      var lat = pos.coords.latitude, lng = pos.coords.longitude;
+      btn.innerHTML = '<i class="fas fa-check"></i> تم التحديد';
+      btn.style.background = 'linear-gradient(135deg,#27ae60,#2ecc71)';
+      setTimeout(function(){ btn.innerHTML='<i class="fas fa-location-arrow"></i> موقعي الحالي'; btn.disabled=false; }, 2000);
+      if (pickerMap) {
+        pickerMap.flyTo([lat,lng], 17, {duration:0.8});
+        placeMarker(lat, lng);
+        showToast('تم تحديد موقعك الحالي');
+      } else {
+        initPickerMap(lat, lng, true);
+        showToast('تم تحديد موقعك الحالي');
+      }
+    },
+    function(err) {
+      btn.innerHTML = '<i class="fas fa-location-arrow"></i> موقعي الحالي';
+      btn.disabled = false;
+      showToast('تعذر الوصول للموقع — تأكد من الإذن');
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+/* ══ بحث العنوان ══ */
+function searchAddress() {
+  var box = document.getElementById('searchBox');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  if (box.style.display === 'block') document.getElementById('addrSearch').focus();
+}
+
+function doAddrSearch() {
+  var q = document.getElementById('addrSearch').value.trim();
+  if (!q) return;
+  var city = document.getElementById('propCity').value;
+  var query = q + (city ? ', ' + city + ', سوريا' : ', سوريا');
+  var resultsEl = document.getElementById('searchResults');
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = '<div style="padding:10px;text-align:center;color:var(--gray);font-size:0.8rem"><i class="fas fa-spinner fa-spin"></i> جاري البحث...</div>';
+
+  fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(query) + '&format=json&limit=5&accept-language=ar')
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      if (!data.length) {
+        resultsEl.innerHTML = '<div style="padding:10px;text-align:center;color:var(--gray);font-size:0.8rem">لا توجد نتائج</div>';
+        return;
+      }
+      resultsEl.innerHTML = data.map(function(item, i) {
+        return '<div onclick="selectAddr(' + item.lat + ',' + item.lon + ','' + item.display_name.replace(/'/g,"\'").substring(0,60) + '')" '
+          + 'style="padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;font-size:0.8rem;line-height:1.4" '
+          + 'onmouseover="this.style.background='var(--gray-light)'" onmouseout="this.style.background=''">'
+          + '<i class="fas fa-map-marker-alt" style="color:var(--accent);margin-left:6px"></i>'
+          + item.display_name.substring(0, 80) + (item.display_name.length > 80 ? '...' : '')
+          + '</div>';
+      }).join('');
+    })
+    .catch(function() {
+      resultsEl.innerHTML = '<div style="padding:10px;text-align:center;color:var(--gray);font-size:0.8rem">خطأ في البحث</div>';
+    });
+}
+
+function selectAddr(lat, lng, name) {
+  lat = parseFloat(lat); lng = parseFloat(lng);
+  if (pickerMap) {
+    pickerMap.flyTo([lat,lng], 17, {duration:0.7});
+    placeMarker(lat, lng);
+  } else {
+    initPickerMap(lat, lng, true);
+  }
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('searchBox').style.display = 'none';
+  document.getElementById('addrSearch').value = '';
+  showToast('تم تحديد: ' + name);
+}
+
+/* أغلق نتائج البحث بالنقر خارجها */
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#searchBox')) {
+    var r = document.getElementById('searchResults');
+    if (r) r.style.display = 'none';
+  }
+});
+
+/* ══ توليد وصف بالذكاء الاصطناعي ══ */
+async function generateAIDesc() {
+  var btn    = document.getElementById('aiDescBtn');
+  var status = document.getElementById('aiDescStatus');
+  var area   = document.getElementById('propDescription');
+
+  /* جمع بيانات العقار */
+  var type     = document.getElementById('propType').value === 'sale' ? 'للبيع' : 'للإيجار';
+  var catEl    = document.querySelector('.cat-opt.selected');
+  var cat      = catEl ? catEl.getAttribute('data-cat') || catEl.textContent.trim() : 'شقة';
+  var city     = document.getElementById('propCity').value     || '';
+  var nbhd     = document.getElementById('propNeighborhood').value || '';
+  var price    = document.getElementById('propPrice').value    || '';
+  var size     = document.getElementById('propArea').value     || '';
+  var rooms    = document.getElementById('propRooms')?.value   || '';
+  var baths    = document.getElementById('propBathrooms')?.value || '';
+  var floor    = document.getElementById('propFloor')?.value   || '';
+  var amenList = [...document.querySelectorAll('.amn-item.selected')].map(function(e){return e.getAttribute('data-name');});
+
+  if (!city && !size && !price) {
+    showToast('أدخل بيانات العقار أولاً');
+    return;
+  }
+
+  btn.style.display = 'none';
+  status.style.display = 'block';
+
+  var prompt = 'اكتب وصفاً احترافياً وجذاباً لعقار بالعربية (3-4 جمل فقط، بدون عنوان، مباشر ومقنع):' +
+    '\nالنوع: ' + cat + ' ' + type +
+    (city  ? '\nالمدينة: ' + city  : '') +
+    (nbhd  ? '، ' + nbhd             : '') +
+    (price ? '\nالسعر: ' + Number(price).toLocaleString('ar') + ' دولار' : '') +
+    (size  ? '\nالمساحة: ' + size + ' م²' : '') +
+    (rooms ? '\nغرف النوم: ' + rooms : '') +
+    (baths ? '\nالحمامات: ' + baths  : '') +
+    (floor ? '\nالطابق: ' + floor    : '') +
+    (amenList.length ? '\nالمميزات: ' + amenList.join('، ') : '') +
+    '\n\nاجعل الوصف يبرز أهم المزايا بأسلوب تسويقي مقنع.';
+
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 400,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    var data = await resp.json();
+    var text = data.content && data.content[0] && data.content[0].text;
+    if (text) {
+      area.value = text.trim();
+      document.getElementById('dCount').textContent = text.trim().length + '/600';
+      showToast('تم توليد الوصف بالذكاء الاصطناعي');
+    } else {
+      showToast('تعذر توليد الوصف — حاول مجدداً');
+    }
+  } catch(e) {
+    showToast('خطأ في الاتصال — حاول مجدداً');
+  }
+
+  btn.style.display = 'flex';
+  status.style.display = 'none';
+}
+
 </script>
 </body>
 </html>
