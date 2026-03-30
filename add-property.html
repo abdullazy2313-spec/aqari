@@ -642,16 +642,6 @@ function openPayModal(){
 }
 
 document.getElementById('paymentModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
-</script>
-
-<script>
-if('serviceWorker' in navigator){
-  window.addEventListener('load',function(){
-    navigator.serviceWorker.register('sw.js')
-      .then(function(reg){console.log('[عقاري] SW مُفعّل');})
-      .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
-  });
-}
 
 
 /* ══ GPS ══ */
@@ -663,19 +653,17 @@ function useMyGPS() {
   navigator.geolocation.getCurrentPosition(
     function(pos) {
       var lat = pos.coords.latitude, lng = pos.coords.longitude;
-      btn.innerHTML = '<i class="fas fa-check"></i> تم التحديد';
-      btn.style.background = 'linear-gradient(135deg,#27ae60,#2ecc71)';
-      setTimeout(function(){ btn.innerHTML='<i class="fas fa-location-arrow"></i> موقعي الحالي'; btn.disabled=false; }, 2000);
+      btn.innerHTML = '<i class="fas fa-location-arrow"></i> موقعي الحالي';
+      btn.disabled = false;
       if (pickerMap) {
         pickerMap.flyTo([lat,lng], 17, {duration:0.8});
         placeMarker(lat, lng);
-        showToast('تم تحديد موقعك الحالي');
       } else {
         initPickerMap(lat, lng, true);
-        showToast('تم تحديد موقعك الحالي');
       }
+      showToast('تم تحديد موقعك الحالي');
     },
-    function(err) {
+    function() {
       btn.innerHTML = '<i class="fas fa-location-arrow"></i> موقعي الحالي';
       btn.disabled = false;
       showToast('تعذر الوصول للموقع — تأكد من الإذن');
@@ -698,30 +686,29 @@ function doAddrSearch() {
   var query = q + (city ? ', ' + city + ', سوريا' : ', سوريا');
   var resultsEl = document.getElementById('searchResults');
   resultsEl.style.display = 'block';
-  resultsEl.innerHTML = '<div style="padding:10px;text-align:center;color:var(--gray);font-size:0.8rem"><i class="fas fa-spinner fa-spin"></i> جاري البحث...</div>';
-
+  resultsEl.innerHTML = '<div style="padding:10px;text-align:center;color:#888;font-size:0.8rem"><i class="fas fa-spinner fa-spin"></i> جاري البحث...</div>';
   fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(query) + '&format=json&limit=5&accept-language=ar')
     .then(function(r){ return r.json(); })
     .then(function(data) {
       if (!data.length) {
-        resultsEl.innerHTML = '<div style="padding:10px;text-align:center;color:var(--gray);font-size:0.8rem">لا توجد نتائج</div>';
+        resultsEl.innerHTML = '<div style="padding:10px;text-align:center;color:#888;font-size:0.8rem">لا توجد نتائج</div>';
         return;
       }
-      resultsEl.innerHTML = data.map(function(item, i) {
-        return '<div onclick="selectAddr(' + item.lat + ',' + item.lon + ','' + item.display_name.replace(/'/g,"\'").substring(0,60) + '')" '
-          + 'style="padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;font-size:0.8rem;line-height:1.4" '
-          + 'onmouseover="this.style.background='var(--gray-light)'" onmouseout="this.style.background=''">'
-          + '<i class="fas fa-map-marker-alt" style="color:var(--accent);margin-left:6px"></i>'
-          + item.display_name.substring(0, 80) + (item.display_name.length > 80 ? '...' : '')
+      resultsEl.innerHTML = data.map(function(item) {
+        var name = item.display_name.substring(0, 70);
+        return '<div onclick="selectAddr(' + item.lat + ',' + item.lon + ')" '
+          + 'style="padding:10px 12px;border-bottom:1px solid #eee;cursor:pointer;font-size:0.8rem;line-height:1.4">'
+          + '<i class="fas fa-map-marker-alt" style="color:#e74c3c;margin-left:6px"></i>'
+          + name + (item.display_name.length > 70 ? '...' : '')
           + '</div>';
       }).join('');
     })
     .catch(function() {
-      resultsEl.innerHTML = '<div style="padding:10px;text-align:center;color:var(--gray);font-size:0.8rem">خطأ في البحث</div>';
+      resultsEl.innerHTML = '<div style="padding:10px;text-align:center;color:#888;font-size:0.8rem">خطأ في البحث</div>';
     });
 }
 
-function selectAddr(lat, lng, name) {
+function selectAddr(lat, lng) {
   lat = parseFloat(lat); lng = parseFloat(lng);
   if (pickerMap) {
     pickerMap.flyTo([lat,lng], 17, {duration:0.7});
@@ -732,10 +719,9 @@ function selectAddr(lat, lng, name) {
   document.getElementById('searchResults').style.display = 'none';
   document.getElementById('searchBox').style.display = 'none';
   document.getElementById('addrSearch').value = '';
-  showToast('تم تحديد: ' + name);
+  showToast('تم تحديد الموقع');
 }
 
-/* أغلق نتائج البحث بالنقر خارجها */
 document.addEventListener('click', function(e) {
   if (!e.target.closest('#searchBox')) {
     var r = document.getElementById('searchResults');
@@ -743,72 +729,74 @@ document.addEventListener('click', function(e) {
   }
 });
 
-/* ══ توليد وصف بالذكاء الاصطناعي ══ */
-async function generateAIDesc() {
+/* ══ AI وصف ══ */
+function generateAIDesc() {
   var btn    = document.getElementById('aiDescBtn');
   var status = document.getElementById('aiDescStatus');
   var area   = document.getElementById('propDescription');
+  var type   = document.getElementById('propType').value === 'sale' ? 'للبيع' : 'للإيجار';
+  var catEl  = document.querySelector('.cat-opt.selected');
+  var cat    = catEl ? catEl.textContent.trim() : 'شقة';
+  var city   = document.getElementById('propCity').value || '';
+  var nbhd   = document.getElementById('propNeighborhood').value || '';
+  var price  = document.getElementById('propPrice').value || '';
+  var size   = document.getElementById('propArea').value || '';
+  var rooms  = document.getElementById('propRooms') ? document.getElementById('propRooms').value : '';
+  var baths  = document.getElementById('propBathrooms') ? document.getElementById('propBathrooms').value : '';
+  var amenList = [];
+  document.querySelectorAll('.amn-item.selected').forEach(function(e){ amenList.push(e.getAttribute('data-name')); });
 
-  /* جمع بيانات العقار */
-  var type     = document.getElementById('propType').value === 'sale' ? 'للبيع' : 'للإيجار';
-  var catEl    = document.querySelector('.cat-opt.selected');
-  var cat      = catEl ? catEl.getAttribute('data-cat') || catEl.textContent.trim() : 'شقة';
-  var city     = document.getElementById('propCity').value     || '';
-  var nbhd     = document.getElementById('propNeighborhood').value || '';
-  var price    = document.getElementById('propPrice').value    || '';
-  var size     = document.getElementById('propArea').value     || '';
-  var rooms    = document.getElementById('propRooms')?.value   || '';
-  var baths    = document.getElementById('propBathrooms')?.value || '';
-  var floor    = document.getElementById('propFloor')?.value   || '';
-  var amenList = [...document.querySelectorAll('.amn-item.selected')].map(function(e){return e.getAttribute('data-name');});
-
-  if (!city && !size && !price) {
-    showToast('أدخل بيانات العقار أولاً');
-    return;
-  }
+  if (!city && !size && !price) { showToast('أدخل بيانات العقار أولاً'); return; }
 
   btn.style.display = 'none';
   status.style.display = 'block';
 
-  var prompt = 'اكتب وصفاً احترافياً وجذاباً لعقار بالعربية (3-4 جمل فقط، بدون عنوان، مباشر ومقنع):' +
-    '\nالنوع: ' + cat + ' ' + type +
-    (city  ? '\nالمدينة: ' + city  : '') +
-    (nbhd  ? '، ' + nbhd             : '') +
-    (price ? '\nالسعر: ' + Number(price).toLocaleString('ar') + ' دولار' : '') +
-    (size  ? '\nالمساحة: ' + size + ' م²' : '') +
-    (rooms ? '\nغرف النوم: ' + rooms : '') +
-    (baths ? '\nالحمامات: ' + baths  : '') +
-    (floor ? '\nالطابق: ' + floor    : '') +
-    (amenList.length ? '\nالمميزات: ' + amenList.join('، ') : '') +
-    '\n\nاجعل الوصف يبرز أهم المزايا بأسلوب تسويقي مقنع.';
+  var prompt = 'اكتب وصفاً احترافياً وجذاباً لعقار عقاري بالعربية (3-4 جمل، بدون عنوان، مباشر ومقنع):\n'
+    + 'النوع: ' + cat + ' ' + type
+    + (city  ? '\nالمدينة: ' + city  : '')
+    + (nbhd  ? '، ' + nbhd : '')
+    + (price ? '\nالسعر: ' + Number(price).toLocaleString() + ' دولار' : '')
+    + (size  ? '\nالمساحة: ' + size + ' م²' : '')
+    + (rooms ? '\nغرف النوم: ' + rooms : '')
+    + (baths ? '\nالحمامات: ' + baths : '')
+    + (amenList.length ? '\nالمميزات: ' + amenList.join('، ') : '')
+    + '\n\nاجعل الوصف يبرز أهم المزايا بأسلوب تسويقي مقنع.';
 
-  try {
-    var resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 400,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    var data = await resp.json();
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 400,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
     var text = data.content && data.content[0] && data.content[0].text;
     if (text) {
-      area.value = text.trim();
-      document.getElementById('dCount').textContent = text.trim().length + '/600';
-      showToast('تم توليد الوصف بالذكاء الاصطناعي');
+      area.value = text.trim().substring(0, 600);
+      document.getElementById('dCount').textContent = area.value.length + '/600';
+      showToast('تم توليد الوصف');
     } else {
-      showToast('تعذر توليد الوصف — حاول مجدداً');
+      showToast('تعذر توليد الوصف');
     }
-  } catch(e) {
-    showToast('خطأ في الاتصال — حاول مجدداً');
-  }
-
-  btn.style.display = 'flex';
-  status.style.display = 'none';
+  })
+  .catch(function() { showToast('خطأ في الاتصال'); })
+  .finally(function() {
+    btn.style.display = 'flex';
+    status.style.display = 'none';
+  });
 }
 
 </script>
-</body>
-</html>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js')
+      .then(function(reg){console.log('[عقاري] SW مُفعّل');})
+      .catch(function(e){console.warn('[عقاري] SW خطأ:',e);});
+  });
+}
+</script>
