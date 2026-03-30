@@ -818,12 +818,15 @@ function buildMap(p) {
   const cc = CITY_COORDS[p.city] || CITY_COORDS['دمشق'];
   const lat = p.lat || cc.lat, lng = p.lng || cc.lng;
   const propId = p.id;
+  const hasExact = !!(p.lat && p.lng);
+
+  /* HTML الحاوية */
   box.innerHTML = `
   <div style="border-radius:14px;overflow:hidden;box-shadow:var(--shadow-md);position:relative;margin-bottom:4px">
-    <iframe src="https://www.openstreetmap.org/export/embed.html?bbox=${lng - .012}%2C${lat - .012}%2C${lng + .012}%2C${lat + .012}&layer=mapnik&marker=${lat}%2C${lng}"
-      style="width:100%;height:210px;border:none;display:block" loading="lazy"></iframe>
-    <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.75),transparent);padding:8px;display:flex;gap:6px">
-      <button onclick="localStorage.setItem('aqari_map_prop','${propId}');localStorage.setItem('aqari_selected','${propId}');location.href='map.html'" style="flex:1;background:var(--accent);color:white;border:none;border-radius:8px;padding:8px;font-size:0.74rem;font-weight:700;cursor:pointer;font-family:var(--font)">
+    <div id="detLeafMap" style="width:100%;height:220px;background:#e8e0d8"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.75),transparent);padding:8px;display:flex;gap:6px;z-index:1">
+      <button onclick="localStorage.setItem('aqari_map_prop','${propId}');localStorage.setItem('aqari_selected','${propId}');location.href='map.html'"
+        style="flex:1;background:var(--accent);color:white;border:none;border-radius:8px;padding:8px;font-size:0.74rem;font-weight:700;cursor:pointer;font-family:var(--font)">
         <i class="fas fa-expand-alt"></i> الخريطة الكاملة
       </button>
       <a href="https://maps.google.com/maps?q=${lat},${lng}" target="_blank"
@@ -832,6 +835,71 @@ function buildMap(p) {
       </a>
     </div>
   </div>`;
+
+  /* تحميل Leaflet إن لم يكن محملاً */
+  function initDetMap() {
+    if (!window.L) {
+      /* حمّل Leaflet CSS */
+      if (!document.querySelector('link[href*="leaflet"]')) {
+        var lc = document.createElement('link');
+        lc.rel = 'stylesheet';
+        lc.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+        document.head.appendChild(lc);
+      }
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+      s.onload = function() { renderDetMap(lat, lng, hasExact, propId); };
+      document.head.appendChild(s);
+    } else {
+      renderDetMap(lat, lng, hasExact, propId);
+    }
+  }
+
+  /* انتظر حتى يظهر العنصر في DOM */
+  requestAnimationFrame(function() { setTimeout(initDetMap, 50); });
+}
+
+function renderDetMap(lat, lng, hasExact, propId) {
+  var el = document.getElementById('detLeafMap');
+  if (!el || !window.L) return;
+
+  /* أنشئ الخريطة وانتقل مباشرة للموقع */
+  var zoom = hasExact ? 16 : 13;
+  var m = L.map(el, {
+    center: [lat, lng],
+    zoom: zoom,
+    zoomControl: false,
+    attributionControl: false
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(m);
+
+  /* أيقونة العقار */
+  var icon = L.divIcon({
+    className: '',
+    html: '<div style="background:#e74c3c;width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 16px rgba(231,76,60,0.6);display:flex;align-items:center;justify-content:center"><i class=\'fas fa-home\' style=\'transform:rotate(45deg);color:white;font-size:0.9rem\'></i></div>',
+    iconSize: [36, 36],
+    iconAnchor: [18, 36]
+  });
+
+  L.marker([lat, lng], { icon: icon }).addTo(m);
+
+  /* دائرة نطاق تقريبي إذا لم يكن الموقع دقيقاً */
+  if (!hasExact) {
+    L.circle([lat, lng], {
+      radius: 500,
+      color: '#e74c3c',
+      fillColor: '#e74c3c',
+      fillOpacity: 0.08,
+      weight: 1.5,
+      dashArray: '6,4'
+    }).addTo(m);
+  }
+
+  /* تأكد من العرض الصحيح */
+  setTimeout(function() { m.invalidateSize(); }, 100);
 }
 function shareProp() {
   if (navigator.share) navigator.share({ title: document.title, url: location.href });
