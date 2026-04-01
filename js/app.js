@@ -684,6 +684,7 @@ let detIdx = 0, detTotal = 0;
 function renderDetails() {
   const id = parseInt(localStorage.getItem('aqari_selected'));
   const p = allProperties.find(x => x.id === id);
+  const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
   const box = document.querySelector('.details-container');
   if (!box) return;
   if (!p) {
@@ -773,6 +774,14 @@ function renderDetails() {
       <a href="https://wa.me/${p.phone || ''}?text=${encodeURIComponent('مرحباً، رأيت إعلانك: ' + p.title)}" class="btn-whatsapp" target="_blank"><i class="fab fa-whatsapp"></i> واتساب</a>
       <button class="btn-chat" onclick="startChatWith('${(p.agentName || 'المعلن').replace(/'/g, "\\'")}','${p.id}','${p.title.replace(/'/g, "\\'")}')"><i class="fas fa-comment-dots"></i></button>
     </div>
+    ${currentUser && p.ownerUID && currentUser.uid === p.ownerUID ? `
+    <button onclick="deleteMyProp('${p.firestoreId || p.id}','${p.title.replace(/'/g,\"\\'\")}')"
+      style="width:100%;margin-top:12px;padding:13px;border-radius:12px;border:1.5px solid var(--danger);
+             background:rgba(231,76,60,0.06);color:var(--danger);font-family:var(--font);
+             font-size:0.85rem;font-weight:800;cursor:pointer;display:flex;align-items:center;
+             justify-content:center;gap:8px">
+      <i class="fas fa-trash-alt"></i> حذف إعلاني
+    </button>` : ''}
     ${nearby.length ? `
     <div class="section-title" style="margin-top:20px"><i class="fas fa-th-large"></i>قريبة في ${p.city}</div>
     <div class="similar-scroll">
@@ -839,7 +848,6 @@ function buildMap(p) {
   /* تحميل Leaflet إن لم يكن محملاً */
   function initDetMap() {
     if (!window.L) {
-      /* حمّل Leaflet CSS */
       if (!document.querySelector('link[href*="leaflet"]')) {
         var lc = document.createElement('link');
         lc.rel = 'stylesheet';
@@ -848,10 +856,10 @@ function buildMap(p) {
       }
       var s = document.createElement('script');
       s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
-      s.onload = function() { renderDetMap(lat, lng, hasExact, propId); };
+      s.onload = function() { renderDetMap(lat, lng, hasExact, propId, p.title, p.price); };
       document.head.appendChild(s);
     } else {
-      renderDetMap(lat, lng, hasExact, propId);
+      renderDetMap(lat, lng, hasExact, propId, p.title, p.price);
     }
   }
 
@@ -859,48 +867,89 @@ function buildMap(p) {
   requestAnimationFrame(function() { setTimeout(initDetMap, 50); });
 }
 
-function renderDetMap(lat, lng, hasExact, propId) {
+function renderDetMap(lat, lng, hasExact, propId, title, price) {
   var el = document.getElementById('detLeafMap');
   if (!el || !window.L) return;
 
-  /* أنشئ الخريطة وانتقل مباشرة للموقع */
   var zoom = hasExact ? 16 : 13;
   var m = L.map(el, {
     center: [lat, lng],
     zoom: zoom,
-    zoomControl: false,
+    zoomControl: true,
     attributionControl: false
   });
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(m);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(m);
 
   /* أيقونة العقار */
   var icon = L.divIcon({
     className: '',
-    html: '<div style="background:#e74c3c;width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 16px rgba(231,76,60,0.6);display:flex;align-items:center;justify-content:center"><i class=\'fas fa-home\' style=\'transform:rotate(45deg);color:white;font-size:0.9rem\'></i></div>',
-    iconSize: [36, 36],
-    iconAnchor: [18, 36]
+    html: '<div style="position:relative">'
+      + '<div style="background:linear-gradient(135deg,#e74c3c,#c0392b);width:44px;height:44px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 20px rgba(231,76,60,0.7);display:flex;align-items:center;justify-content:center">'
+      + '<i class=\'fas fa-home\' style=\'transform:rotate(45deg);color:white;font-size:1rem\'></i>'
+      + '</div>'
+      + '<div style="position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(0,0,0,0.75);color:white;font-size:0.68rem;font-weight:700;padding:3px 7px;border-radius:5px;backdrop-filter:blur(4px)">'
+      + (price ? '$' + Number(price).toLocaleString('en') : 'عقار')
+      + '</div>'
+      + '</div>',
+    iconSize: [44, 60],
+    iconAnchor: [22, 44]
   });
 
-  L.marker([lat, lng], { icon: icon }).addTo(m);
+  var marker = L.marker([lat, lng], {icon: icon}).addTo(m);
 
-  /* دائرة نطاق تقريبي إذا لم يكن الموقع دقيقاً */
+  /* popup مع اسم العقار */
+  if (title) {
+    marker.bindPopup(
+      '<div style="text-align:center;font-family:'Segoe UI',Arial;direction:rtl;min-width:120px">'
+      + '<div style="font-weight:800;font-size:0.85rem;color:#1a1a2e;margin-bottom:4px">' + title + '</div>'
+      + (price ? '<div style="font-weight:700;font-size:0.82rem;color:#e74c3c">$' + Number(price).toLocaleString('en') + '</div>' : '')
+      + '</div>',
+      {offset: [0, -40], closeButton: false}
+    ).openPopup();
+  }
+
+  /* دائرة للمواقع التقريبية */
   if (!hasExact) {
     L.circle([lat, lng], {
-      radius: 500,
+      radius: 400,
       color: '#e74c3c',
       fillColor: '#e74c3c',
-      fillOpacity: 0.08,
+      fillOpacity: 0.06,
       weight: 1.5,
       dashArray: '6,4'
     }).addTo(m);
   }
 
-  /* تأكد من العرض الصحيح */
-  setTimeout(function() { m.invalidateSize(); }, 100);
+  setTimeout(function() { m.invalidateSize(); }, 150);
 }
+
+function deleteMyProp(propId, title) {
+  showDialog({
+    icon: 'fas fa-trash-alt',
+    iconBg: 'rgba(231,76,60,0.12)',
+    title: 'حذف الإعلان',
+    msg: 'هل تريد حذف إعلان "' + title + '"؟ لا يمكن التراجع.',
+    okText: 'حذف الإعلان',
+    okBg: 'linear-gradient(135deg,var(--danger),#c0392b)',
+    cancelText: 'إلغاء',
+    onOk: function() {
+      if (typeof fbDeleteProperty === 'function') {
+        fbDeleteProperty(propId).then(function(res) {
+          if (res.success) {
+            showToast('تم حذف الإعلان');
+            setTimeout(function(){ history.back(); }, 1200);
+          } else {
+            showToast('تعذر الحذف — حاول مجدداً');
+          }
+        });
+      } else {
+        showToast('خدمة الحذف غير متاحة');
+      }
+    }
+  });
+}
+
 function shareProp() {
   if (navigator.share) navigator.share({ title: document.title, url: location.href });
   else { navigator.clipboard?.writeText(location.href); showToast('تم نسخ الرابط'); }
