@@ -308,39 +308,21 @@
       <div><div class="il"><i class="fas fa-road"></i>العنوان التفصيلي (اختياري)</div>
         <input type="text" class="if" id="propLocation" placeholder="الشارع، رقم المبنى...">
       </div>
-      <!-- Map Picker محسّن -->
+            <!-- محدد الموقع — يفتح كاملاً -->
       <div style="margin-top:12px">
-        <!-- أزرار أعلى الخريطة -->
-        <div style="display:flex;gap:7px;margin-bottom:8px">
-          <button type="button" onclick="useMyGPS()" id="gpsBtn"
-            style="display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#27ae60,#2ecc71);color:white;border:none;border-radius:10px;padding:8px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:var(--font);flex:1">
-            <i class="fas fa-location-arrow"></i> موقعي الحالي
-          </button>
-          <button type="button" onclick="searchAddress()" id="searchBtn"
-            style="display:flex;align-items:center;gap:6px;background:var(--gray-light);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:var(--font);flex:1">
-            <i class="fas fa-search" style="color:var(--accent)"></i> ابحث عن عنوان
-          </button>
+        <div id="coordPill" class="map-coord-pill" style="display:none;margin-bottom:8px">
+          <i class="fas fa-check-circle"></i>
+          <span id="coordText">تم التحديد</span>
         </div>
-        <!-- صندوق البحث -->
-        <div id="searchBox" style="display:none;margin-bottom:8px;position:relative">
-          <input type="text" id="addrSearch" placeholder="مثال: المزة فيلات غربية، دمشق"
-            style="width:100%;padding:10px 14px;border:1.5px solid var(--accent);border-radius:10px;font-family:var(--font);font-size:0.85rem;background:var(--card);color:var(--text);outline:none"
-            onkeypress="if(event.key==='Enter')doAddrSearch()">
-          <button type="button" onclick="doAddrSearch()"
-            style="position:absolute;left:6px;top:50%;transform:translateY(-50%);background:var(--accent);color:white;border:none;border-radius:7px;padding:5px 10px;cursor:pointer;font-size:0.8rem">
-            <i class="fas fa-search"></i>
-          </button>
-          <div id="searchResults" style="position:absolute;top:100%;right:0;left:0;background:var(--card);border:1px solid var(--border);border-radius:10px;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,0.12);max-height:200px;overflow-y:auto;display:none"></div>
-        </div>
-        <!-- تعليمة -->
-        <div style="font-size:0.74rem;color:var(--gray);margin-bottom:6px;display:flex;align-items:center;gap:5px">
-          <i class="fas fa-hand-pointer" style="color:var(--accent)"></i>
-          اضغط على الخريطة أو اسحب العلامة لتحديد الموقع الدقيق
-        </div>
-        <div id="mapPicker" style="border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1)"></div>
-        <div class="map-coord-pill" id="coordPill"><i class="fas fa-check-circle"></i><span id="coordText">تم التحديد</span></div>
+        <button type="button" onclick="openMapModal()"
+          style="width:100%;padding:14px;border-radius:12px;border:2px dashed var(--accent);
+                 background:var(--accent-light);color:var(--accent);font-family:var(--font);
+                 font-size:0.88rem;font-weight:800;cursor:pointer;display:flex;align-items:center;
+                 justify-content:center;gap:10px" id="mapOpenBtn">
+          <i class="fas fa-map-marked-alt fa-lg"></i>
+          تحديد موقع العقار على الخريطة
+        </button>
       </div>
-    </div>
   </div>
 
   <!-- الوصف -->
@@ -800,3 +782,188 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
+
+<!-- ══════ Modal خريطة تحديد الموقع ══════ -->
+<div id="mapModal" style="position:fixed;inset:0;z-index:99998;display:none;flex-direction:column;background:var(--bg)">
+  <div style="padding:12px 14px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0">
+    <button onclick="closeMapModal()" style="background:none;border:none;font-size:1.1rem;color:var(--text);cursor:pointer;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:50%"><i class="fas fa-times"></i></button>
+    <div style="font-weight:800;font-size:0.95rem;flex:1">تحديد موقع العقار</div>
+    <button onclick="confirmMapLocation()" id="confirmLocBtn" disabled
+      style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 16px;font-family:var(--font);font-size:0.85rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:6px;opacity:0.4" >
+      <i class="fas fa-check"></i> تأكيد
+    </button>
+  </div>
+  <div style="padding:10px 12px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;position:relative">
+    <div style="position:relative">
+      <i class="fas fa-search" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray);pointer-events:none;z-index:1"></i>
+      <input type="text" id="mapSearchInput" placeholder="ابحث عن حي أو شارع أو مبنى..."
+        style="width:100%;padding:10px 38px 10px 80px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:0.85rem;background:var(--gray-light);color:var(--text);outline:none"
+        oninput="onMapSearchInput(this.value)" onkeypress="if(event.key==='Enter')runMapSearch()">
+      <button onclick="useGPSModal()" id="gpsModalBtn"
+        style="position:absolute;left:6px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#27ae60,#2ecc71);color:white;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:0.78rem;font-weight:700;display:flex;align-items:center;gap:4px">
+        <i class="fas fa-location-arrow"></i>
+      </button>
+    </div>
+    <div id="mapSearchResults" style="position:absolute;right:12px;left:12px;top:calc(100% - 2px);background:var(--card);border:1px solid var(--border);border-radius:0 0 12px 12px;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,0.15);max-height:230px;overflow-y:auto;display:none"></div>
+  </div>
+  <div id="locInfoBar" style="display:none;padding:8px 14px;background:rgba(39,174,96,0.08);border-bottom:1px solid rgba(39,174,96,0.2);font-size:0.78rem;font-weight:700;flex-shrink:0;align-items:center;gap:8px">
+    <i class="fas fa-check-circle" style="color:#27ae60"></i>
+    <span id="locInfoText" style="color:#27ae60;flex:1">تم تحديد الموقع</span>
+    <span id="locCoordText" style="color:var(--gray);font-weight:400;font-size:0.72rem"></span>
+  </div>
+  <div id="mapModalMap" style="flex:1"></div>
+  <div style="padding:8px 14px;background:var(--card);border-top:1px solid var(--border);font-size:0.74rem;color:var(--gray);text-align:center;flex-shrink:0">
+    <i class="fas fa-hand-pointer" style="color:var(--accent);margin-left:4px"></i>اضغط على الخريطة أو اسحب العلامة للتحديد الدقيق
+  </div>
+</div>
+
+<script>
+var modalMap=null, modalMarker=null, modalLat=null, modalLng=null, _sTimer=null;
+
+function openMapModal(){
+  var m=document.getElementById('mapModal');
+  m.style.display='flex';
+  document.body.style.overflow='hidden';
+  setTimeout(function(){
+    if(!modalMap){
+      var city=document.getElementById('propCity').value;
+      var cc=(city&&CMAP[city])?CMAP[city]:{lat:33.5138,lng:36.2765};
+      _initModalMap(cc.lat,cc.lng,city?13:7);
+    } else { modalMap.invalidateSize(); }
+  },120);
+}
+
+function closeMapModal(){
+  document.getElementById('mapModal').style.display='none';
+  document.body.style.overflow='';
+}
+
+function _initModalMap(lat,lng,zoom){
+  var el=document.getElementById('mapModalMap');
+  if(!el)return;
+  if(modalMap){modalMap.remove();modalMap=null;}
+  modalMap=L.map(el,{center:[lat,lng],zoom:zoom||13,zoomControl:true,attributionControl:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(modalMap);
+  if(selLat&&selLng){_placeModalMark(selLat,selLng);modalMap.setView([selLat,selLng],16);}
+  modalMap.on('click',function(e){
+    _placeModalMark(e.latlng.lat,e.latlng.lng);
+    _reverseGeo(e.latlng.lat,e.latlng.lng);
+  });
+}
+
+var _homeIcon=null;
+function _getIcon(){
+  if(!_homeIcon) _homeIcon=L.divIcon({className:'',html:'<div style="background:#e74c3c;width:38px;height:38px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 4px 16px rgba(231,76,60,0.6);display:flex;align-items:center;justify-content:center"><i class="fas fa-home" style="transform:rotate(45deg);color:white;font-size:0.92rem"></i></div>',iconSize:[38,38],iconAnchor:[19,38]});
+  return _homeIcon;
+}
+
+function _placeModalMark(lat,lng){
+  modalLat=lat; modalLng=lng;
+  if(modalMarker) modalMap.removeLayer(modalMarker);
+  modalMarker=L.marker([lat,lng],{icon:_getIcon(),draggable:true}).addTo(modalMap);
+  modalMarker.on('dragend',function(e){
+    var p=e.target.getLatLng();
+    modalLat=p.lat; modalLng=p.lng;
+    _reverseGeo(p.lat,p.lng);
+    _showLocBar(p.lat,p.lng,'');
+    _enableConfirm();
+  });
+  _showLocBar(lat,lng,'');
+  _enableConfirm();
+}
+
+function _enableConfirm(){
+  var btn=document.getElementById('confirmLocBtn');
+  btn.disabled=false; btn.style.opacity='1';
+}
+
+function _showLocBar(lat,lng,name){
+  var bar=document.getElementById('locInfoBar');
+  bar.style.display='flex';
+  document.getElementById('locInfoText').textContent=name||'تم تحديد الموقع';
+  document.getElementById('locCoordText').textContent=lat.toFixed(5)+', '+lng.toFixed(5);
+}
+
+function _reverseGeo(lat,lng){
+  fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json&accept-language=ar')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var a=d.address||{};
+      var parts=[a.road||a.pedestrian||a.footway||'',a.suburb||a.neighbourhood||a.quarter||'',a.city||a.town||a.village||''].filter(Boolean);
+      _showLocBar(lat,lng,parts.join('، ')||'موقع محدد');
+    }).catch(function(){});
+}
+
+function useGPSModal(){
+  if(!navigator.geolocation){alert('المتصفح لا يدعم GPS');return;}
+  var btn=document.getElementById('gpsModalBtn');
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      btn.innerHTML='<i class="fas fa-location-arrow"></i>';
+      var lat=pos.coords.latitude,lng=pos.coords.longitude;
+      if(modalMap){modalMap.flyTo([lat,lng],17,{duration:0.8});_placeModalMark(lat,lng);_reverseGeo(lat,lng);}
+    },
+    function(){btn.innerHTML='<i class="fas fa-location-arrow"></i>';alert('تعذر الحصول على الموقع');},
+    {enableHighAccuracy:true,timeout:10000}
+  );
+}
+
+function onMapSearchInput(val){
+  clearTimeout(_sTimer);
+  if(!val||val.length<2){document.getElementById('mapSearchResults').style.display='none';return;}
+  _sTimer=setTimeout(runMapSearch,600);
+}
+
+function runMapSearch(){
+  var q=document.getElementById('mapSearchInput').value.trim();
+  if(!q)return;
+  var city=document.getElementById('propCity').value;
+  var query=q+(city?', '+city+', سوريا':',سوريا');
+  var res=document.getElementById('mapSearchResults');
+  res.style.display='block';
+  res.innerHTML='<div style="padding:12px;text-align:center;color:#888;font-size:0.8rem"><i class="fas fa-spinner fa-spin"></i> جاري البحث...</div>';
+  fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(query)+'&format=json&limit=7&accept-language=ar&addressdetails=1&countrycodes=sy')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(!data.length){res.innerHTML='<div style="padding:12px;text-align:center;color:#888;font-size:0.8rem">لا توجد نتائج</div>';return;}
+      res.innerHTML=data.map(function(item){
+        var a=item.address||{};
+        var main=a.road||a.pedestrian||a.suburb||a.neighbourhood||item.display_name.split(',')[0];
+        var sub=[a.suburb||a.neighbourhood||a.quarter,a.city||a.town||a.village].filter(Boolean).join('، ');
+        return '<div onclick="selectMapRes('+item.lat+','+item.lon+',''+main.replace(/'/g,"\'")+'')" '
+          +'style="padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer" '
+          +'onmouseover="this.style.background='var(--gray-light)'" onmouseout="this.style.background=''">'
+          +'<div style="font-weight:700;font-size:0.85rem"><i class="fas fa-map-marker-alt" style="color:#e74c3c;margin-left:6px;font-size:0.8rem"></i>'+main+'</div>'
+          +(sub?'<div style="font-size:0.74rem;color:var(--gray);margin-top:2px;margin-right:18px">'+sub+'</div>':'')
+          +'</div>';
+      }).join('');
+    })
+    .catch(function(){res.innerHTML='<div style="padding:12px;text-align:center;color:#888;font-size:0.8rem">خطأ في البحث</div>';});
+}
+
+function selectMapRes(lat,lng,name){
+  lat=parseFloat(lat);lng=parseFloat(lng);
+  document.getElementById('mapSearchResults').style.display='none';
+  document.getElementById('mapSearchInput').value=name;
+  if(modalMap){modalMap.flyTo([lat,lng],17,{duration:0.7});_placeModalMark(lat,lng);_reverseGeo(lat,lng);}
+}
+
+function confirmMapLocation(){
+  if(modalLat==null)return;
+  selLat=+modalLat.toFixed(6); selLng=+modalLng.toFixed(6);
+  var btn=document.getElementById('mapOpenBtn');
+  btn.innerHTML='<i class="fas fa-check-circle" style="color:#27ae60;font-size:1.1rem"></i>'
+    +' تم تحديد الموقع'
+    +' <span style="font-size:0.74rem;opacity:0.7">('+selLat.toFixed(4)+', '+selLng.toFixed(4)+')</span>'
+    +' <i class="fas fa-pencil-alt" style="font-size:0.8rem;opacity:0.7"></i>';
+  btn.style.borderColor='#27ae60'; btn.style.color='#27ae60';
+  var pill=document.getElementById('coordPill');
+  if(pill){pill.style.display='flex';document.getElementById('coordText').textContent=selLat.toFixed(4)+', '+selLng.toFixed(4);}
+  if(pickerMap){pickerMap.setView([selLat,selLng],16);placeMarker(selLat,selLng);}
+  closeMapModal();
+  if(typeof showToast==='function') showToast('تم تحديد الموقع بنجاح');
+}
+</script>
+</body>
+</html>
